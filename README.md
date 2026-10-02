@@ -1,21 +1,49 @@
-# shadcn/ui monorepo template
+# Ship Happens
 
-This is a TanStack Start monorepo template with shadcn/ui.
+Customer-facing RFP sheet filler. Current scaffold: **auth + org + dashboard + settings**.
 
-## Adding components
+## Stack
 
-To add components to your app, run the following command at the root of your `web` app:
+- TanStack Start (Vite) + React
+- Better Auth (email/password, optional Google, organizations)
+- Drizzle + Postgres
+- Redis (session secondary storage)
+- `@workspace/ui` (shadcn)
+
+## Setup
 
 ```bash
-pnpm dlx shadcn@latest add button -c apps/web
+# 1. Env
+cp .env.example .env
+cp .env apps/web/.env   # Vite loads from apps/web
+
+# 2. Infra
+docker compose up -d
+
+# 3. Install + schema
+pnpm install
+pnpm db:push
+
+# 4. Dev
+pnpm --filter web dev
+# → http://localhost:3000
 ```
 
-This will place the ui components in the `packages/ui/src/components` directory.
+Sign up → create/select org → dashboard. Google OAuth is optional (leave blank in `.env`).
 
-## Using components
+## Scripts
 
-To use the components in your app, import them from the `ui` package.
+| Command | What |
+| --- | --- |
+| `pnpm --filter web dev` | App on :3000 |
+| `pnpm db:push` | Push Drizzle schema |
+| `pnpm db:studio` | Drizzle Studio |
+| `pnpm typecheck` | Typecheck via turbo |
 
-```tsx
-import { Button } from "@workspace/ui/components/button";
+## Layout
+
+```
+apps/web          # TanStack Start app
+packages/ui       # Shared UI kit
+project-one-dev/  # Reference only (Linear clone) — ignore for product work
 ```
