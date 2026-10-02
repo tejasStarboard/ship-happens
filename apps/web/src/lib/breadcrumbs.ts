@@ -26,17 +26,11 @@ export function buildBreadcrumbs(matches: MatchLike[]): AppBreadcrumb[] {
   const routeId = leaf.routeId
 
   if (routeId.includes("/settings/profile")) {
-    return [
-      { label: "Settings", to: "/settings" },
-      { label: "Profile" },
-    ]
+    return [{ label: "Settings", to: "/settings" }, { label: "Profile" }]
   }
 
   if (routeId.includes("/settings/preferences")) {
-    return [
-      { label: "Settings", to: "/settings" },
-      { label: "Preferences" },
-    ]
+    return [{ label: "Settings", to: "/settings" }, { label: "Preferences" }]
   }
 
   if (routeId.includes("/settings")) {

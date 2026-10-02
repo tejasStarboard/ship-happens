@@ -1,8 +1,7 @@
 /** Display name used in document titles and Open Graph tags. */
 export const APP_NAME = "Ship Happens"
 
-export const APP_DESCRIPTION =
-  "Automate filing RFP bid sheets"
+export const APP_DESCRIPTION = "Automate filing RFP bid sheets"
 
 /** Build a tab/SEO title like `Sign in · Project One`. */
 export function pageTitle(segment?: string | null): string {

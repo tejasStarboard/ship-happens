@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, dev]
+  push:
+    branches: [main, dev]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: format · lint · typecheck · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      # Stub env so apps/web can typecheck/build without real secrets
+      POSTGRES_URL: postgresql://ci:ci@127.0.0.1:5432/ci
+      POSTGRES_SSL: "false"
+      REDIS_URL: redis://127.0.0.1:6379
+      BETTER_AUTH_SECRET: ci-better-auth-secret-min-32-characters-long
+      BETTER_AUTH_DOMAIN: localhost
+      APP_URL: http://localhost:3000
+      VITE_APP_URL: http://localhost:3000
+      RESEND_API_KEY: re_ci_placeholder
+      BLOB_STORE_ID: local
+      BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format check
+        run: pnpm format:check
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Build
+        run: pnpm build
