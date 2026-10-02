@@ -7,6 +7,7 @@ import { isProduction } from "./lib/constants"
 
 const envPaths = [
   resolve(import.meta.dirname, "../../../.env"),
+  resolve(import.meta.dirname, "../.env"),
 ].filter((path) => existsSync(path))
 
 if (envPaths.length > 0) {
@@ -60,8 +61,8 @@ export const env = createEnv({
     /** Custom template with Python + openpyxl/polars; empty = E2B base image */
     E2B_TEMPLATE_ID: z.string().optional(),
 
-    // Sandbox env vars
-    SANDBOX_STARBOARD_DB_URL: z.url(),
+    /** Read-only Starboard DB URL for rate-payload adapter (optional until adapter is used) */
+    SANDBOX_STARBOARD_DB_URL: z.url().optional(),
   },
   clientPrefix: "VITE_",
   client: {
@@ -73,7 +74,6 @@ export const env = createEnv({
     POSTGRES_MAX_CONNECTIONS: process.env.POSTGRES_MAX_CONNECTIONS,
     POSTGRES_CONNECTION_TIMEOUT: process.env.POSTGRES_CONNECTION_TIMEOUT,
     POSTGRES_IDLE_TIMEOUT: process.env.POSTGRES_IDLE_TIMEOUT,
-    STARBOARD_DB_URL: process.env.STARBOARD_DB_URL,
     REDIS_URL: process.env.REDIS_URL,
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -101,7 +101,6 @@ export const env = createEnv({
     E2B_TEMPLATE_ID: process.env.E2B_TEMPLATE_ID,
 
     SANDBOX_STARBOARD_DB_URL: process.env.SANDBOX_STARBOARD_DB_URL,
-
 
     VITE_APP_URL: process.env.VITE_APP_URL,
   },
