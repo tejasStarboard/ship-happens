@@ -1,15 +1,18 @@
 import { config } from "dotenv"
+import { existsSync } from "node:fs"
 import { resolve } from "node:path"
 import { createEnv } from "@t3-oss/env-core"
 import z from "zod"
 import { isProduction } from "./lib/constants"
 
-config({
-  path: [
-    resolve(import.meta.dirname, "../../../.env"),
-    resolve(import.meta.dirname, "../.env"),
-  ],
-})
+const envPaths = [
+  resolve(import.meta.dirname, "../../../.env"),
+  resolve(import.meta.dirname, "../.env"),
+].filter((path) => existsSync(path))
+
+if (envPaths.length > 0) {
+  config({ path: envPaths })
+}
 
 export const env = createEnv({
   server: {
@@ -26,7 +29,7 @@ export const env = createEnv({
 
     RESEND_API_KEY: z.string().default("re_local_dev_placeholder"),
     EMAIL_SENDER_NAME: z.string().default("Ship Happens"),
-    EMAIL_SENDER_ADDRESS: z.string().default("noreply@localhost"),
+    EMAIL_SENDER_ADDRESS: z.email().default("noreply@example.com"),
 
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_DOMAIN: z.string().min(1).default("localhost"),
@@ -36,8 +39,8 @@ export const env = createEnv({
     APP_URL: z.url(),
     BLOB_STORE_ID: z.string().default("local"),
     BLOB_READ_WRITE_TOKEN: z.string().default("vercel_blob_local_placeholder"),
-    VERCEL_URL: z.string().nullable().default(null),
-    VERCEL_PROJECT_PRODUCTION_URL: z.string().nullable().default(null),
+    VERCEL_URL: z.string().optional(),
+    VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
   },
   clientPrefix: "VITE_",
   client: {
@@ -64,11 +67,10 @@ export const env = createEnv({
     APP_URL: process.env.APP_URL,
     BLOB_STORE_ID: process.env.BLOB_STORE_ID,
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
-    VERCEL_URL: process.env.VERCEL_URL ?? null,
-    VERCEL_PROJECT_PRODUCTION_URL:
-      process.env.VERCEL_PROJECT_PRODUCTION_URL ?? null,
+    VERCEL_URL: process.env.VERCEL_URL,
+    VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
 
     VITE_APP_URL: process.env.VITE_APP_URL,
   },
-  emptyStringAsUndefined: false,
+  emptyStringAsUndefined: true,
 })

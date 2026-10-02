@@ -26,6 +26,8 @@ jobs:
       APP_URL: http://localhost:3000
       VITE_APP_URL: http://localhost:3000
       RESEND_API_KEY: re_ci_placeholder
+      EMAIL_SENDER_NAME: Ship Happens CI
+      EMAIL_SENDER_ADDRESS: noreply@example.com
       BLOB_STORE_ID: local
       BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
 

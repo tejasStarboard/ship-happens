@@ -5,7 +5,28 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".output/**"]
+      "outputs": [".vercel/output/**", ".output/**"],
+      "env": [
+        "POSTGRES_URL",
+        "POSTGRES_URL_UNPOOLED",
+        "POSTGRES_SSL",
+        "REDIS_URL",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_DOMAIN",
+        "GOOGLE_CLIENT_ID",
+        "GOOGLE_CLIENT_SECRET",
+        "APP_URL",
+        "VITE_APP_URL",
+        "RESEND_API_KEY",
+        "EMAIL_SENDER_NAME",
+        "EMAIL_SENDER_ADDRESS",
+        "BLOB_STORE_ID",
+        "BLOB_READ_WRITE_TOKEN",
+        "BLOB_WEBHOOK_PUBLIC_KEY",
+        "VERCEL",
+        "VERCEL_URL",
+        "VERCEL_PROJECT_PRODUCTION_URL"
+      ]
     },
     "lint": {
       "dependsOn": ["^lint"]
