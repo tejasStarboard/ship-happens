@@ -4,7 +4,7 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "dev": "vite dev --port 3000",
+    "dev": "vite dev --port 3000 --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src",
@@ -39,6 +39,8 @@
     "better-auth": "^1.7.6",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "e2b": "^2.52.0",
+    "inngest": "^4.21.1",
     "ioredis": "^6.0.0",
     "lucide-react": "^1.47.0",
     "nanoid": "^6.0.1",
