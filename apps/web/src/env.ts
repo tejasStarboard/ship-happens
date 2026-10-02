@@ -7,7 +7,6 @@ import { isProduction } from "./lib/constants"
 
 const envPaths = [
   resolve(import.meta.dirname, "../../../.env"),
-  resolve(import.meta.dirname, "../.env"),
 ].filter((path) => existsSync(path))
 
 if (envPaths.length > 0) {
@@ -16,6 +15,7 @@ if (envPaths.length > 0) {
 
 export const env = createEnv({
   server: {
+    // database
     POSTGRES_URL: z.url(),
     POSTGRES_SSL: z
       .enum(["true", "false"])
@@ -24,23 +24,44 @@ export const env = createEnv({
     POSTGRES_MAX_CONNECTIONS: z.coerce.number().default(50),
     POSTGRES_CONNECTION_TIMEOUT: z.coerce.number().default(15000),
     POSTGRES_IDLE_TIMEOUT: z.coerce.number().default(30000),
-
     REDIS_URL: z.url(),
 
+    // email
     RESEND_API_KEY: z.string().default("re_local_dev_placeholder"),
     EMAIL_SENDER_NAME: z.string().default("Ship Happens"),
-    EMAIL_SENDER_ADDRESS: z.email().default("noreply@example.com"),
+    EMAIL_SENDER_ADDRESS: z.string().default("noreply@localhost"),
 
+    // auth
     BETTER_AUTH_SECRET: z.string().min(32),
     BETTER_AUTH_DOMAIN: z.string().min(1).default("localhost"),
-    GOOGLE_CLIENT_ID: z.string().optional().default(""),
-    GOOGLE_CLIENT_SECRET: z.string().optional().default(""),
+    GOOGLE_CLIENT_ID: z.string().optional(),
+    GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+    // vercel / blob
     APP_URL: z.url(),
     BLOB_STORE_ID: z.string().default("local"),
     BLOB_READ_WRITE_TOKEN: z.string().default("vercel_blob_local_placeholder"),
     VERCEL_URL: z.string().optional(),
     VERCEL_PROJECT_PRODUCTION_URL: z.string().optional(),
+
+    // ai (Vercel AI Gateway — OIDC on Vercel can substitute when unset)
+    AI_GATEWAY_API_KEY: z.string().optional(),
+
+    // inngest (optional locally — Inngest Dev Server; required in cloud)
+    INNGEST_EVENT_KEY: z.string().optional(),
+    INNGEST_SIGNING_KEY: z.string().optional(),
+    INNGEST_DEV: z
+      .enum(["true", "false", "0", "1"])
+      .optional()
+      .transform((v) => v === "true" || v === "1"),
+
+    // e2b sandbox (required when running fill jobs)
+    E2B_API_KEY: z.string().optional(),
+    /** Custom template with Python + openpyxl/polars; empty = E2B base image */
+    E2B_TEMPLATE_ID: z.string().optional(),
+
+    // Sandbox env vars
+    SANDBOX_STARBOARD_DB_URL: z.url(),
   },
   clientPrefix: "VITE_",
   client: {
@@ -52,7 +73,7 @@ export const env = createEnv({
     POSTGRES_MAX_CONNECTIONS: process.env.POSTGRES_MAX_CONNECTIONS,
     POSTGRES_CONNECTION_TIMEOUT: process.env.POSTGRES_CONNECTION_TIMEOUT,
     POSTGRES_IDLE_TIMEOUT: process.env.POSTGRES_IDLE_TIMEOUT,
-
+    STARBOARD_DB_URL: process.env.STARBOARD_DB_URL,
     REDIS_URL: process.env.REDIS_URL,
 
     RESEND_API_KEY: process.env.RESEND_API_KEY,
@@ -69,6 +90,18 @@ export const env = createEnv({
     BLOB_READ_WRITE_TOKEN: process.env.BLOB_READ_WRITE_TOKEN,
     VERCEL_URL: process.env.VERCEL_URL,
     VERCEL_PROJECT_PRODUCTION_URL: process.env.VERCEL_PROJECT_PRODUCTION_URL,
+
+    AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
+
+    INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
+    INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
+    INNGEST_DEV: process.env.INNGEST_DEV,
+
+    E2B_API_KEY: process.env.E2B_API_KEY,
+    E2B_TEMPLATE_ID: process.env.E2B_TEMPLATE_ID,
+
+    SANDBOX_STARBOARD_DB_URL: process.env.SANDBOX_STARBOARD_DB_URL,
+
 
     VITE_APP_URL: process.env.VITE_APP_URL,
   },
