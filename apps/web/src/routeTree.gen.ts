@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as appRouteImport } from './routes/(app)/_'
 import { Route as authRouteImport } from './routes/(auth)/_'
+import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as appIndexRouteImport } from './routes/(app)/_/index'
 import { Route as appMembersRouteImport } from './routes/(app)/_/members'
 import { Route as appSettingsRouteImport } from './routes/(app)/_/settings'
@@ -29,6 +30,11 @@ const appRoute = appRouteImport.update({
 } as any)
 const authRoute = authRouteImport.update({
   id: '/(auth)/_',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiInngestRoute = ApiInngestRouteImport.update({
+  id: '/api/inngest',
+  path: '/api/inngest',
   getParentRoute: () => rootRouteImport,
 } as any)
 const appIndexRoute = appIndexRouteImport.update({
@@ -89,6 +95,7 @@ const authAcceptInvitationInvitationIdRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/api/inngest': typeof ApiInngestRoute
   '/members': typeof appMembersRoute
   '/settings': typeof appSettingsRouteWithChildren
   '/select-org': typeof authSelectOrgRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByFullPath {
   '/settings/': typeof appSettingsIndexRoute
 }
 export interface FileRoutesByTo {
+  '/api/inngest': typeof ApiInngestRoute
   '/members': typeof appMembersRoute
   '/select-org': typeof authSelectOrgRoute
   '/sign-in': typeof authSignInRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)/_': typeof appRouteWithChildren
   '/(auth)/_': typeof authRouteWithChildren
+  '/api/inngest': typeof ApiInngestRoute
   '/(app)/_/members': typeof appMembersRoute
   '/(app)/_/settings': typeof appSettingsRouteWithChildren
   '/(auth)/_/select-org': typeof authSelectOrgRoute
@@ -132,6 +141,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/api/inngest'
     | '/members'
     | '/settings'
     | '/select-org'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/api/inngest'
     | '/members'
     | '/select-org'
     | '/sign-in'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/(app)/_'
     | '/(auth)/_'
+    | '/api/inngest'
     | '/(app)/_/members'
     | '/(app)/_/settings'
     | '/(auth)/_/select-org'
@@ -175,6 +187,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   appRoute: typeof appRouteWithChildren
   authRoute: typeof authRouteWithChildren
+  ApiInngestRoute: typeof ApiInngestRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
@@ -192,6 +205,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof authRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/inngest': {
+      id: '/api/inngest'
+      path: '/api/inngest'
+      fullPath: '/api/inngest'
+      preLoaderRoute: typeof ApiInngestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/(app)/_/': {
@@ -323,6 +343,7 @@ const authRouteWithChildren = authRoute._addFileChildren(authRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   appRoute: appRouteWithChildren,
   authRoute: authRouteWithChildren,
+  ApiInngestRoute: ApiInngestRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
