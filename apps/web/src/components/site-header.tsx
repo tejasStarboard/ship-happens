@@ -1,3 +1,4 @@
+import { Fragment } from "react"
 import { Link, useMatches } from "@tanstack/react-router"
 import {
   Breadcrumb,
@@ -40,27 +41,29 @@ export function SiteHeader() {
                 </span>
               )
               return (
-                <BreadcrumbItem key={`${crumb.label}-${index}`}>
+                <Fragment key={`${crumb.label}-${index}`}>
                   {index > 0 ? <BreadcrumbSeparator /> : null}
-                  {isLast || !crumb.to ? (
-                    <BreadcrumbPage className="truncate">
-                      {label}
-                    </BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink
-                      render={
-                        <Link
-                          to={crumb.to}
-                          params={crumb.params}
-                          search={crumb.search}
-                        />
-                      }
-                      className="truncate"
-                    >
-                      {label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
+                  <BreadcrumbItem>
+                    {isLast || !crumb.to ? (
+                      <BreadcrumbPage className="truncate">
+                        {label}
+                      </BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink
+                        render={
+                          <Link
+                            to={crumb.to}
+                            params={crumb.params}
+                            search={crumb.search}
+                          />
+                        }
+                        className="truncate"
+                      >
+                        {label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </Fragment>
               )
             })}
           </BreadcrumbList>
