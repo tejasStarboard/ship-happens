@@ -8,11 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
-import {
-  Field,
-  FieldGroup,
-  FieldLabel,
-} from "@workspace/ui/components/field"
+import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
   Table,
@@ -28,7 +24,7 @@ export function RatesQuery() {
   const [queried, setQueried] = React.useState(false)
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-4 lg:px-6 md:py-6">
+    <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Rates</h1>
         <p className="text-sm text-muted-foreground">

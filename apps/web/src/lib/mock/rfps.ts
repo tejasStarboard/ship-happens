@@ -1,9 +1,5 @@
 export type RfpStatus =
-  | "queued"
-  | "running"
-  | "needs_review"
-  | "done"
-  | "failed"
+  "queued" | "running" | "needs_review" | "done" | "failed"
 
 export type MockRfp = {
   id: string

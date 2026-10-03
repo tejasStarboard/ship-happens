@@ -18,11 +18,13 @@ import { RFP_STATUS_LABEL, type MockRfp } from "@/lib/mock/rfps"
 
 export function RfpDetail({ rfp }: { rfp: MockRfp }) {
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-4 lg:px-6 md:py-6">
+    <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{rfp.name}</h1>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {rfp.name}
+            </h1>
             <Badge variant="outline">{RFP_STATUS_LABEL[rfp.status]}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
@@ -58,7 +60,9 @@ export function RfpDetail({ rfp }: { rfp: MockRfp }) {
           <Card>
             <CardHeader>
               <CardTitle>Run logs</CardTitle>
-              <CardDescription>Job step output for ops debugging.</CardDescription>
+              <CardDescription>
+                Job step output for ops debugging.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <pre className="overflow-auto rounded-lg bg-muted p-3 font-mono text-xs text-muted-foreground">

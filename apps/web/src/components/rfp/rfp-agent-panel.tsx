@@ -141,7 +141,9 @@ function ChatMessage({ message }: { message: AgentChatMessage }) {
         {message.todos ? <TodoList todos={message.todos} /> : null}
 
         {message.durationLabel ? (
-          <p className="text-xs text-muted-foreground">{message.durationLabel}</p>
+          <p className="text-xs text-muted-foreground">
+            {message.durationLabel}
+          </p>
         ) : null}
 
         <AgentMarkdown text={message.text} />
@@ -332,9 +334,7 @@ export function RfpAgentPanel({ rfp }: { rfp: MockRfp }) {
               <InputGroupAddon align="block-end" className="justify-between">
                 <DropdownMenu>
                   <DropdownMenuTrigger
-                    render={
-                      <InputGroupButton variant="ghost" size="xs" />
-                    }
+                    render={<InputGroupButton variant="ghost" size="xs" />}
                   >
                     {mode}
                     <IconChevronDown data-icon="inline-end" />

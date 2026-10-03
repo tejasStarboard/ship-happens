@@ -12,7 +12,7 @@ import { formatBytes, type MockTemplate } from "@/lib/mock/templates"
 
 export function TemplateDetail({ template }: { template: MockTemplate }) {
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-4 lg:px-6 md:py-6">
+    <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight">
@@ -25,11 +25,7 @@ export function TemplateDetail({ template }: { template: MockTemplate }) {
             variant="outline"
             size="sm"
             render={
-              <a
-                href={template.fileUrl}
-                target="_blank"
-                rel="noreferrer"
-              />
+              <a href={template.fileUrl} target="_blank" rel="noreferrer" />
             }
             nativeButton={false}
           >
@@ -39,9 +35,7 @@ export function TemplateDetail({ template }: { template: MockTemplate }) {
           <Button
             variant="outline"
             size="sm"
-            render={
-              <a href={template.fileUrl} download={template.fileName} />
-            }
+            render={<a href={template.fileUrl} download={template.fileName} />}
             nativeButton={false}
           >
             <IconDownload data-icon="inline-start" />
@@ -74,9 +68,7 @@ export function TemplateDetail({ template }: { template: MockTemplate }) {
             </div>
             <div>
               <dt className="text-muted-foreground">Size</dt>
-              <dd className="font-medium">
-                {formatBytes(template.sizeBytes)}
-              </dd>
+              <dd className="font-medium">{formatBytes(template.sizeBytes)}</dd>
             </div>
             <div>
               <dt className="text-muted-foreground">MIME type</dt>

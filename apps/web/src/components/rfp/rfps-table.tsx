@@ -10,11 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import {
-  MOCK_RFPS,
-  RFP_STATUS_LABEL,
-  type RfpStatus,
-} from "@/lib/mock/rfps"
+import { MOCK_RFPS, RFP_STATUS_LABEL, type RfpStatus } from "@/lib/mock/rfps"
 
 function statusVariant(
   status: RfpStatus

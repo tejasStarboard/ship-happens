@@ -132,7 +132,10 @@ export const rfps = pgTable(
   },
   (table) => [
     index("rfps_organization_id_idx").on(table.organizationId),
-    index("rfps_organization_status_idx").on(table.organizationId, table.status),
+    index("rfps_organization_status_idx").on(
+      table.organizationId,
+      table.status
+    ),
     index("rfps_organization_updated_idx").on(
       table.organizationId,
       table.updatedAt
@@ -234,7 +237,10 @@ export const rfpFillReportCells = pgTable(
   },
   (table) => [
     index("rfp_fill_report_cells_report_id_idx").on(table.reportId),
-    index("rfp_fill_report_cells_outcome_idx").on(table.reportId, table.outcome),
+    index("rfp_fill_report_cells_outcome_idx").on(
+      table.reportId,
+      table.outcome
+    ),
   ]
 )
 
@@ -315,7 +321,11 @@ export const rfpMessageVotes = pgTable(
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (table) => [
-    uniqueIndex("rfp_message_votes_pk").on(table.chatId, table.messageId, table.userId),
+    uniqueIndex("rfp_message_votes_pk").on(
+      table.chatId,
+      table.messageId,
+      table.userId
+    ),
   ]
 )
 
