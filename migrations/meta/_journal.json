@@ -8,6 +8,13 @@
       "when": 1790972485333,
       "tag": "0000_empty_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790986318930,
+      "tag": "0001_hesitant_tarantula",
+      "breakpoints": true
     }
   ]
 }
