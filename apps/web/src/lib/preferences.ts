@@ -3,9 +3,9 @@ export const PREFERENCES_STORAGE_KEY = "preferences:v1"
 export const HOME_VIEW_OPTIONS = [
   {
     value: "dashboard",
-    label: "Dashboard",
-    description: "Your Ship Happens home",
-    path: "/",
+    label: "RFPs",
+    description: "Your RFP fill workspace",
+    path: "/rfp",
   },
 ] as const
 
@@ -80,9 +80,9 @@ export function writePreferences(preferences: UserPreferences) {
   }
 }
 
-export function homeViewPath(view: HomeView): "/" {
+export function homeViewPath(view: HomeView): "/rfp" {
   const match = HOME_VIEW_OPTIONS.find((option) => option.value === view)
-  return (match?.path ?? "/") as "/"
+  return (match?.path ?? "/rfp") as "/rfp"
 }
 
 export function homeViewLabel(view: HomeView) {

@@ -1,10 +1,5 @@
 import * as React from "react"
-import {
-  createFileRoute,
-  Link,
-  redirect,
-  useRouter,
-} from "@tanstack/react-router"
+import { createFileRoute, redirect, useRouter } from "@tanstack/react-router"
 import { IconBuilding, IconPlus } from "@tabler/icons-react"
 import {
   Avatar,
@@ -103,7 +98,7 @@ function SelectOrgPage() {
                         await authClient.organization.setActive({
                           organizationId: org.id,
                         })
-                        await router.navigate({ to: "/members" })
+                        await router.navigate({ to: "/rfp" })
                       } finally {
                         setPendingId(null)
                       }
@@ -171,10 +166,12 @@ function SelectOrgPage() {
           variant="link"
           size="sm"
           className="h-auto p-0 text-muted-foreground"
-          render={<Link to="/" />}
-          nativeButton={false}
+          onClick={async () => {
+            await authClient.signOut()
+            await router.navigate({ to: "/sign-in" })
+          }}
         >
-          Back to home
+          Log out
         </Button>
       </AuthFooter>
     </AuthCard>

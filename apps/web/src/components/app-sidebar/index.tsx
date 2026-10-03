@@ -1,9 +1,10 @@
 import * as React from "react"
 import {
+  IconCurrencyDollar,
+  IconFileSpreadsheet,
   IconHelp,
-  IconLayoutDashboard,
   IconSettings,
-  IconUsers,
+  IconTemplate,
 } from "@tabler/icons-react"
 
 import { NavMain } from "./nav-main"
@@ -19,14 +20,19 @@ import {
 
 const navMain = [
   {
-    title: "Dashboard",
-    url: "/",
-    icon: IconLayoutDashboard,
+    title: "RFPs",
+    url: "/rfp",
+    icon: IconFileSpreadsheet,
   },
   {
-    title: "Members",
-    url: "/members",
-    icon: IconUsers,
+    title: "Templates",
+    url: "/templates",
+    icon: IconTemplate,
+  },
+  {
+    title: "Rates",
+    url: "/rates",
+    icon: IconCurrencyDollar,
   },
 ]
 

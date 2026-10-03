@@ -125,7 +125,7 @@ export function CreateOrgForm({
           await authClient.organization.setActive({ organizationId: data.id })
         }
 
-        await navigate({ to: "/members" })
+        await navigate({ to: "/rfp" })
       } catch (err) {
         setFormError(
           err instanceof Error ? err.message : "Could not create organization"
@@ -353,7 +353,10 @@ export function CreateOrgForm({
         <Button
           variant="link"
           className="h-auto p-0 px-1"
-          onClick={() => void authClient.signOut()}
+          onClick={async () => {
+            await authClient.signOut()
+            await navigate({ to: "/sign-in" })
+          }}
         >
           Logout
         </Button>
