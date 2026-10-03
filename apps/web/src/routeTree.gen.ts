@@ -13,15 +13,22 @@ import { Route as appRouteImport } from './routes/(app)/_'
 import { Route as authRouteImport } from './routes/(auth)/_'
 import { Route as ApiInngestRouteImport } from './routes/api/inngest'
 import { Route as appIndexRouteImport } from './routes/(app)/_/index'
-import { Route as appMembersRouteImport } from './routes/(app)/_/members'
+import { Route as appRatesRouteImport } from './routes/(app)/_/rates'
+import { Route as appRfpRouteImport } from './routes/(app)/_/rfp'
 import { Route as appSettingsRouteImport } from './routes/(app)/_/settings'
+import { Route as appTemplatesRouteImport } from './routes/(app)/_/templates'
 import { Route as authSelectOrgRouteImport } from './routes/(auth)/_/select-org'
 import { Route as authSignInRouteImport } from './routes/(auth)/_/sign-in'
 import { Route as authSignUpRouteImport } from './routes/(auth)/_/sign-up'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as appRfpIndexRouteImport } from './routes/(app)/_/rfp/index'
+import { Route as appRfpIdRouteImport } from './routes/(app)/_/rfp/$id'
 import { Route as appSettingsIndexRouteImport } from './routes/(app)/_/settings/index'
+import { Route as appSettingsMembersRouteImport } from './routes/(app)/_/settings/members'
 import { Route as appSettingsPreferencesRouteImport } from './routes/(app)/_/settings/preferences'
 import { Route as appSettingsProfileRouteImport } from './routes/(app)/_/settings/profile'
+import { Route as appTemplatesIndexRouteImport } from './routes/(app)/_/templates/index'
+import { Route as appTemplatesTemplateIdRouteImport } from './routes/(app)/_/templates/$templateId'
 import { Route as authAcceptInvitationInvitationIdRouteImport } from './routes/(auth)/_/accept-invitation/$invitationId'
 
 const appRoute = appRouteImport.update({
@@ -42,14 +49,24 @@ const appIndexRoute = appIndexRouteImport.update({
   path: '/',
   getParentRoute: () => appRoute,
 } as any)
-const appMembersRoute = appMembersRouteImport.update({
-  id: '/members',
-  path: '/members',
+const appRatesRoute = appRatesRouteImport.update({
+  id: '/rates',
+  path: '/rates',
+  getParentRoute: () => appRoute,
+} as any)
+const appRfpRoute = appRfpRouteImport.update({
+  id: '/rfp',
+  path: '/rfp',
   getParentRoute: () => appRoute,
 } as any)
 const appSettingsRoute = appSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => appRoute,
+} as any)
+const appTemplatesRoute = appTemplatesRouteImport.update({
+  id: '/templates',
+  path: '/templates',
   getParentRoute: () => appRoute,
 } as any)
 const authSelectOrgRoute = authSelectOrgRouteImport.update({
@@ -72,9 +89,24 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const appRfpIndexRoute = appRfpIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appRfpRoute,
+} as any)
+const appRfpIdRoute = appRfpIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => appRfpRoute,
+} as any)
 const appSettingsIndexRoute = appSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => appSettingsRoute,
+} as any)
+const appSettingsMembersRoute = appSettingsMembersRouteImport.update({
+  id: '/members',
+  path: '/members',
   getParentRoute: () => appSettingsRoute,
 } as any)
 const appSettingsPreferencesRoute = appSettingsPreferencesRouteImport.update({
@@ -87,6 +119,16 @@ const appSettingsProfileRoute = appSettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => appSettingsRoute,
 } as any)
+const appTemplatesIndexRoute = appTemplatesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => appTemplatesRoute,
+} as any)
+const appTemplatesTemplateIdRoute = appTemplatesTemplateIdRouteImport.update({
+  id: '/$templateId',
+  path: '/$templateId',
+  getParentRoute: () => appTemplatesRoute,
+} as any)
 const authAcceptInvitationInvitationIdRoute =
   authAcceptInvitationInvitationIdRouteImport.update({
     id: '/accept-invitation/$invitationId',
@@ -96,92 +138,130 @@ const authAcceptInvitationInvitationIdRoute =
 
 export interface FileRoutesByFullPath {
   '/api/inngest': typeof ApiInngestRoute
-  '/members': typeof appMembersRoute
+  '/rates': typeof appRatesRoute
+  '/rfp': typeof appRfpRouteWithChildren
   '/settings': typeof appSettingsRouteWithChildren
+  '/templates': typeof appTemplatesRouteWithChildren
   '/select-org': typeof authSelectOrgRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/': typeof appIndexRoute
+  '/rfp/$id': typeof appRfpIdRoute
+  '/settings/members': typeof appSettingsMembersRoute
   '/settings/preferences': typeof appSettingsPreferencesRoute
   '/settings/profile': typeof appSettingsProfileRoute
+  '/templates/$templateId': typeof appTemplatesTemplateIdRoute
   '/accept-invitation/$invitationId': typeof authAcceptInvitationInvitationIdRoute
+  '/rfp/': typeof appRfpIndexRoute
   '/settings/': typeof appSettingsIndexRoute
+  '/templates/': typeof appTemplatesIndexRoute
 }
 export interface FileRoutesByTo {
   '/api/inngest': typeof ApiInngestRoute
-  '/members': typeof appMembersRoute
+  '/rates': typeof appRatesRoute
   '/select-org': typeof authSelectOrgRoute
   '/sign-in': typeof authSignInRoute
   '/sign-up': typeof authSignUpRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/': typeof appIndexRoute
+  '/rfp/$id': typeof appRfpIdRoute
+  '/settings/members': typeof appSettingsMembersRoute
   '/settings/preferences': typeof appSettingsPreferencesRoute
   '/settings/profile': typeof appSettingsProfileRoute
+  '/templates/$templateId': typeof appTemplatesTemplateIdRoute
   '/accept-invitation/$invitationId': typeof authAcceptInvitationInvitationIdRoute
+  '/rfp': typeof appRfpIndexRoute
   '/settings': typeof appSettingsIndexRoute
+  '/templates': typeof appTemplatesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/(app)/_': typeof appRouteWithChildren
   '/(auth)/_': typeof authRouteWithChildren
   '/api/inngest': typeof ApiInngestRoute
-  '/(app)/_/members': typeof appMembersRoute
+  '/(app)/_/rates': typeof appRatesRoute
+  '/(app)/_/rfp': typeof appRfpRouteWithChildren
   '/(app)/_/settings': typeof appSettingsRouteWithChildren
+  '/(app)/_/templates': typeof appTemplatesRouteWithChildren
   '/(auth)/_/select-org': typeof authSelectOrgRoute
   '/(auth)/_/sign-in': typeof authSignInRoute
   '/(auth)/_/sign-up': typeof authSignUpRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/(app)/_/': typeof appIndexRoute
+  '/(app)/_/rfp/$id': typeof appRfpIdRoute
+  '/(app)/_/settings/members': typeof appSettingsMembersRoute
   '/(app)/_/settings/preferences': typeof appSettingsPreferencesRoute
   '/(app)/_/settings/profile': typeof appSettingsProfileRoute
+  '/(app)/_/templates/$templateId': typeof appTemplatesTemplateIdRoute
   '/(auth)/_/accept-invitation/$invitationId': typeof authAcceptInvitationInvitationIdRoute
+  '/(app)/_/rfp/': typeof appRfpIndexRoute
   '/(app)/_/settings/': typeof appSettingsIndexRoute
+  '/(app)/_/templates/': typeof appTemplatesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/api/inngest'
-    | '/members'
+    | '/rates'
+    | '/rfp'
     | '/settings'
+    | '/templates'
     | '/select-org'
     | '/sign-in'
     | '/sign-up'
     | '/api/auth/$'
     | '/'
+    | '/rfp/$id'
+    | '/settings/members'
     | '/settings/preferences'
     | '/settings/profile'
+    | '/templates/$templateId'
     | '/accept-invitation/$invitationId'
+    | '/rfp/'
     | '/settings/'
+    | '/templates/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/api/inngest'
-    | '/members'
+    | '/rates'
     | '/select-org'
     | '/sign-in'
     | '/sign-up'
     | '/api/auth/$'
     | '/'
+    | '/rfp/$id'
+    | '/settings/members'
     | '/settings/preferences'
     | '/settings/profile'
+    | '/templates/$templateId'
     | '/accept-invitation/$invitationId'
+    | '/rfp'
     | '/settings'
+    | '/templates'
   id:
     | '__root__'
     | '/(app)/_'
     | '/(auth)/_'
     | '/api/inngest'
-    | '/(app)/_/members'
+    | '/(app)/_/rates'
+    | '/(app)/_/rfp'
     | '/(app)/_/settings'
+    | '/(app)/_/templates'
     | '/(auth)/_/select-org'
     | '/(auth)/_/sign-in'
     | '/(auth)/_/sign-up'
     | '/api/auth/$'
     | '/(app)/_/'
+    | '/(app)/_/rfp/$id'
+    | '/(app)/_/settings/members'
     | '/(app)/_/settings/preferences'
     | '/(app)/_/settings/profile'
+    | '/(app)/_/templates/$templateId'
     | '/(auth)/_/accept-invitation/$invitationId'
+    | '/(app)/_/rfp/'
     | '/(app)/_/settings/'
+    | '/(app)/_/templates/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -221,11 +301,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appIndexRouteImport
       parentRoute: typeof appRoute
     }
-    '/(app)/_/members': {
-      id: '/(app)/_/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof appMembersRouteImport
+    '/(app)/_/rates': {
+      id: '/(app)/_/rates'
+      path: '/rates'
+      fullPath: '/rates'
+      preLoaderRoute: typeof appRatesRouteImport
+      parentRoute: typeof appRoute
+    }
+    '/(app)/_/rfp': {
+      id: '/(app)/_/rfp'
+      path: '/rfp'
+      fullPath: '/rfp'
+      preLoaderRoute: typeof appRfpRouteImport
       parentRoute: typeof appRoute
     }
     '/(app)/_/settings': {
@@ -233,6 +320,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof appSettingsRouteImport
+      parentRoute: typeof appRoute
+    }
+    '/(app)/_/templates': {
+      id: '/(app)/_/templates'
+      path: '/templates'
+      fullPath: '/templates'
+      preLoaderRoute: typeof appTemplatesRouteImport
       parentRoute: typeof appRoute
     }
     '/(auth)/_/select-org': {
@@ -263,11 +357,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/(app)/_/rfp/': {
+      id: '/(app)/_/rfp/'
+      path: '/'
+      fullPath: '/rfp/'
+      preLoaderRoute: typeof appRfpIndexRouteImport
+      parentRoute: typeof appRfpRoute
+    }
+    '/(app)/_/rfp/$id': {
+      id: '/(app)/_/rfp/$id'
+      path: '/$id'
+      fullPath: '/rfp/$id'
+      preLoaderRoute: typeof appRfpIdRouteImport
+      parentRoute: typeof appRfpRoute
+    }
     '/(app)/_/settings/': {
       id: '/(app)/_/settings/'
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof appSettingsIndexRouteImport
+      parentRoute: typeof appSettingsRoute
+    }
+    '/(app)/_/settings/members': {
+      id: '/(app)/_/settings/members'
+      path: '/members'
+      fullPath: '/settings/members'
+      preLoaderRoute: typeof appSettingsMembersRouteImport
       parentRoute: typeof appSettingsRoute
     }
     '/(app)/_/settings/preferences': {
@@ -284,6 +399,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof appSettingsProfileRouteImport
       parentRoute: typeof appSettingsRoute
     }
+    '/(app)/_/templates/': {
+      id: '/(app)/_/templates/'
+      path: '/'
+      fullPath: '/templates/'
+      preLoaderRoute: typeof appTemplatesIndexRouteImport
+      parentRoute: typeof appTemplatesRoute
+    }
+    '/(app)/_/templates/$templateId': {
+      id: '/(app)/_/templates/$templateId'
+      path: '/$templateId'
+      fullPath: '/templates/$templateId'
+      preLoaderRoute: typeof appTemplatesTemplateIdRouteImport
+      parentRoute: typeof appTemplatesRoute
+    }
     '/(auth)/_/accept-invitation/$invitationId': {
       id: '/(auth)/_/accept-invitation/$invitationId'
       path: '/accept-invitation/$invitationId'
@@ -294,13 +423,28 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface appRfpRouteChildren {
+  appRfpIdRoute: typeof appRfpIdRoute
+  appRfpIndexRoute: typeof appRfpIndexRoute
+}
+
+const appRfpRouteChildren: appRfpRouteChildren = {
+  appRfpIdRoute: appRfpIdRoute,
+  appRfpIndexRoute: appRfpIndexRoute,
+}
+
+const appRfpRouteWithChildren =
+  appRfpRoute._addFileChildren(appRfpRouteChildren)
+
 interface appSettingsRouteChildren {
+  appSettingsMembersRoute: typeof appSettingsMembersRoute
   appSettingsPreferencesRoute: typeof appSettingsPreferencesRoute
   appSettingsProfileRoute: typeof appSettingsProfileRoute
   appSettingsIndexRoute: typeof appSettingsIndexRoute
 }
 
 const appSettingsRouteChildren: appSettingsRouteChildren = {
+  appSettingsMembersRoute: appSettingsMembersRoute,
   appSettingsPreferencesRoute: appSettingsPreferencesRoute,
   appSettingsProfileRoute: appSettingsProfileRoute,
   appSettingsIndexRoute: appSettingsIndexRoute,
@@ -310,15 +454,33 @@ const appSettingsRouteWithChildren = appSettingsRoute._addFileChildren(
   appSettingsRouteChildren,
 )
 
+interface appTemplatesRouteChildren {
+  appTemplatesTemplateIdRoute: typeof appTemplatesTemplateIdRoute
+  appTemplatesIndexRoute: typeof appTemplatesIndexRoute
+}
+
+const appTemplatesRouteChildren: appTemplatesRouteChildren = {
+  appTemplatesTemplateIdRoute: appTemplatesTemplateIdRoute,
+  appTemplatesIndexRoute: appTemplatesIndexRoute,
+}
+
+const appTemplatesRouteWithChildren = appTemplatesRoute._addFileChildren(
+  appTemplatesRouteChildren,
+)
+
 interface appRouteChildren {
-  appMembersRoute: typeof appMembersRoute
+  appRatesRoute: typeof appRatesRoute
+  appRfpRoute: typeof appRfpRouteWithChildren
   appSettingsRoute: typeof appSettingsRouteWithChildren
+  appTemplatesRoute: typeof appTemplatesRouteWithChildren
   appIndexRoute: typeof appIndexRoute
 }
 
 const appRouteChildren: appRouteChildren = {
-  appMembersRoute: appMembersRoute,
+  appRatesRoute: appRatesRoute,
+  appRfpRoute: appRfpRouteWithChildren,
   appSettingsRoute: appSettingsRouteWithChildren,
+  appTemplatesRoute: appTemplatesRouteWithChildren,
   appIndexRoute: appIndexRoute,
 }
 

@@ -3,6 +3,7 @@ import {
   IconAdjustmentsHorizontal,
   IconChevronRight,
   IconUser,
+  IconUsers,
 } from "@tabler/icons-react"
 import { pageMeta } from "@/lib/seo"
 
@@ -53,6 +54,31 @@ function SettingsIndexPage() {
                 <div className="text-sm font-medium">Profile</div>
                 <div className="truncate text-xs text-muted-foreground">
                   Name, email, username, and profile picture
+                </div>
+              </div>
+              <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-2">
+        <h2 className="px-1 text-sm font-medium text-muted-foreground">
+          Organization
+        </h2>
+        <div className="overflow-hidden rounded-lg border">
+          <div className="divide-y">
+            <Link
+              to="/settings/members"
+              className="flex items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/40"
+            >
+              <div className="flex size-9 shrink-0 items-center justify-center rounded-md border bg-muted/40">
+                <IconUsers className="size-4 text-muted-foreground" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium">Members</div>
+                <div className="truncate text-xs text-muted-foreground">
+                  Invite and manage organization members
                 </div>
               </div>
               <IconChevronRight className="size-4 shrink-0 text-muted-foreground" />

@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router"
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router"
 import {
   MembersTable,
   type MemberRow,
@@ -28,21 +28,35 @@ function toMemberRows(
   }))
 }
 
-export const Route = createFileRoute("/(app)/_/members")({
+export const Route = createFileRoute("/(app)/_/settings/members")({
   loader: async () => {
     const data = await listMembers()
     return { members: toMemberRows(data) }
   },
   head: () => pageMeta({ title: "Members", noIndex: true }),
-  component: MembersPage,
+  component: SettingsMembersPage,
 })
 
-function MembersPage() {
+function SettingsMembersPage() {
   const { members } = Route.useLoaderData()
   const router = useRouter()
 
   return (
     <div className="flex flex-1 flex-col gap-4 py-4 md:gap-6 md:py-6">
+      <div className="px-4 lg:px-6">
+        <Link
+          to="/settings"
+          className="text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Settings
+        </Link>
+        <div className="mt-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Invite and manage organization members.
+          </p>
+        </div>
+      </div>
       <MembersTable
         data={members}
         onInvited={() => {
