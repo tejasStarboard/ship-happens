@@ -45,16 +45,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // CI serves the Nitro build so Vite HMR/dep-opt cannot reload mid-test
-    command: isCI ? "pnpm start" : "pnpm dev",
+    // Nitro production SSR currently 500s (duplicate React); use Vite with HMR off in CI
+    command: "pnpm dev",
     url: baseURL,
     reuseExistingServer: !isCI,
-    timeout: isCI ? 180_000 : 120_000,
+    timeout: 120_000,
     stdout: "pipe",
     stderr: "pipe",
-    env: {
-      ...process.env,
-      PORT: "3000",
-    },
   },
 })

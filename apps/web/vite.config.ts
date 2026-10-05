@@ -5,6 +5,8 @@ import viteReact from "@vitejs/plugin-react"
 import tailwindcss from "@tailwindcss/vite"
 import { nitro } from "nitro/vite"
 
+const isCI = !!process.env.CI
+
 const config = defineConfig({
   resolve: { tsconfigPaths: true },
   // Pre-bundle auth deps so first navigation does not trigger a mid-test reload
@@ -20,6 +22,15 @@ const config = defineConfig({
       "@better-auth/core/utils/string",
       "@better-auth/core/utils/url",
     ],
+  },
+  server: {
+    // HMR/file watches abort in-flight auth handlers during Playwright runs
+    ...(isCI
+      ? {
+          hmr: false,
+          watch: null,
+        }
+      : {}),
   },
   plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact()],
 })

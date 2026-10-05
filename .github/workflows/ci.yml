@@ -122,10 +122,6 @@ jobs:
       - name: Push database schema
         run: pnpm db:push
 
-      # Build before Playwright so CI serves a stable preview (no Vite HMR/dep reload)
-      - name: Build web app
-        run: pnpm --filter web build
-
       - name: Run e2e tests
         run: pnpm test:e2e
 
