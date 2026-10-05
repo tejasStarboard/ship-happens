@@ -99,9 +99,17 @@ function SelectOrgPage() {
                       onClick={async () => {
                         setPendingId(org.id)
                         try {
-                          await authClient.organization.setActive({
-                            organizationId: org.id,
-                          })
+                          const { error } =
+                            await authClient.organization.setActive({
+                              organizationId: org.id,
+                            })
+                          if (error) {
+                            console.error(
+                              "Failed to set active organization",
+                              error
+                            )
+                            return
+                          }
                           await router.navigate({ to: "/rfp" })
                         } finally {
                           setPendingId(null)

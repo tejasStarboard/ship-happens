@@ -6,15 +6,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const authFile = path.join(__dirname, "e2e/.auth/user.json")
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000"
+const isCI = !!process.env.CI
 
 export default defineConfig({
   testDir: "./e2e",
   // Shared Better Auth session (storageState) is not safe across parallel workers
   fullyParallel: false,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  forbidOnly: isCI,
+  retries: isCI ? 2 : 0,
   workers: 1,
-  reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : "list",
+  reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
   timeout: 60_000,
   expect: { timeout: 15_000 },
   use: {
@@ -44,11 +45,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "pnpm dev",
+    // CI serves the Nitro build so Vite HMR/dep-opt cannot reload mid-test
+    command: isCI ? "pnpm start" : "pnpm dev",
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
+    reuseExistingServer: !isCI,
+    timeout: isCI ? 180_000 : 120_000,
     stdout: "pipe",
     stderr: "pipe",
+    env: {
+      ...process.env,
+      PORT: "3000",
+    },
   },
 })

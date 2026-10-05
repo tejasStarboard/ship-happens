@@ -85,9 +85,47 @@ export async function createOrganization(
 }
 
 export async function selectOrganization(page: Page, orgName: string) {
+  await waitForAppReady(page)
   await expect(page.getByText("Choose an organization")).toBeVisible()
-  await page.getByRole("button", { name: orgName }).click()
-  await expect(page).toHaveURL(/\/rfp/)
+
+  const orgButton = page.getByRole("button", { name: orgName })
+
+  // Retry once: Vite dep-opt reloads (dev) can abort the first click/handler.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await expect(orgButton).toBeEnabled()
+    await waitForAppReady(page)
+
+    try {
+      const [response] = await Promise.all([
+        page.waitForResponse(
+          (res) =>
+            res.request().method() === "POST" &&
+            /\/organization\/set-active(?:\?|$)/.test(
+              new URL(res.url()).pathname
+            ),
+          { timeout: 30_000 }
+        ),
+        orgButton.click(),
+      ])
+
+      if (!response.ok()) {
+        throw new Error(
+          `organization set-active failed: ${response.status()} ${await response.text()}`
+        )
+      }
+
+      await expect(page).toHaveURL(/\/rfp/, { timeout: 30_000 })
+      return
+    } catch (error) {
+      if (attempt === 1 || !page.url().includes("/select-org")) {
+        throw error
+      }
+      // Full reload recovers from aborted Vite module graph updates
+      await page.reload()
+      await waitForAppReady(page)
+      await expect(page.getByText("Choose an organization")).toBeVisible()
+    }
+  }
 }
 
 export async function openUserMenu(page: Page) {

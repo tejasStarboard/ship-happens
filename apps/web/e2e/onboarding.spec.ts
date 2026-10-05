@@ -6,6 +6,7 @@ import {
   signOut,
   signUp,
   uniqueCredentials,
+  waitForAppReady,
 } from "./helpers"
 
 test.describe("auth onboarding", () => {
@@ -27,6 +28,7 @@ test.describe("auth onboarding", () => {
     await expect(page).toHaveURL(/\/sign-in/)
 
     await signIn(page, credentials)
+    await waitForAppReady(page)
     // Default post-auth path is /select-org even when orgs exist
     if (new URL(page.url()).pathname.includes("select-org")) {
       await selectOrganization(page, credentials.orgName)
