@@ -27,6 +27,7 @@ import {
   AuthCard,
   AuthFooter,
   AuthHeader,
+  AuthPage,
 } from "@/components/auth/auth-shell"
 import { CreateOrgForm } from "@/components/auth/create-org-form"
 import { authClient } from "@/lib/auth/client"
@@ -63,16 +64,19 @@ function SelectOrgPage() {
 
   if (mode === "create") {
     return (
-      <CreateOrgForm
-        onCancel={
-          organizations.length > 0 ? () => setMode("choose") : undefined
-        }
-      />
+      <AuthPage>
+        <CreateOrgForm
+          onCancel={
+            organizations.length > 0 ? () => setMode("choose") : undefined
+          }
+        />
+      </AuthPage>
     )
   }
 
   return (
-    <AuthCard>
+    <AuthPage>
+      <AuthCard>
       <AuthBody className="gap-6">
         <AuthHeader
           title="Choose an organization"
@@ -174,6 +178,7 @@ function SelectOrgPage() {
           Log out
         </Button>
       </AuthFooter>
-    </AuthCard>
+      </AuthCard>
+    </AuthPage>
   )
 }

@@ -20,3 +20,9 @@ todos.json
 
 tmp/
 .vercel
+
+# Playwright
+apps/web/test-results/
+apps/web/playwright-report/
+apps/web/blob-report/
+apps/web/e2e/.auth/

@@ -12,7 +12,9 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "inngest:dev": "pnpm dlx inngest-cli@latest dev -u http://localhost:3000/api/inngest"
+    "inngest:dev": "pnpm dlx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
+    "test:e2e": "pnpm --filter web test:e2e",
+    "test:e2e:ui": "pnpm --filter web test:e2e:ui"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.10",

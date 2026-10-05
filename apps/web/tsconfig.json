@@ -6,6 +6,12 @@
     "prettier.config.js",
     "vite.config.ts"
   ],
+  "exclude": [
+    "e2e",
+    "playwright.config.ts",
+    "playwright-report",
+    "test-results"
+  ],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
