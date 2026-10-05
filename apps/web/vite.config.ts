@@ -32,7 +32,18 @@ const config = defineConfig({
         }
       : {}),
   },
-  plugins: [devtools(), tailwindcss(), tanstackStart(), nitro(), viteReact()],
+  plugins: [
+    devtools(),
+    tailwindcss(),
+    tanstackStart(),
+    // Rolldown can leave bare createRequire("react") in Base UI / use-sync-external-store
+    // CJS chunks; without tracing, Vercel serverless has no node_modules/react.
+    // https://github.com/nitrojs/nitro/issues/4171
+    nitro({
+      traceDeps: ["react", "react-dom"],
+    }),
+    viteReact(),
+  ],
 })
 
 export default config
