@@ -77,107 +77,107 @@ function SelectOrgPage() {
   return (
     <AuthPage>
       <AuthCard>
-      <AuthBody className="gap-6">
-        <AuthHeader
-          title="Choose an organization"
-          description="Select the organization with which you wish to continue."
-        />
+        <AuthBody className="gap-6">
+          <AuthHeader
+            title="Choose an organization"
+            description="Select the organization with which you wish to continue."
+          />
 
-        <ItemGroup className="gap-0 overflow-hidden rounded-xl border">
-          {organizations.map((org, index) => (
-            <React.Fragment key={org.id}>
-              {index > 0 ? <Separator /> : null}
-              <Item
-                size="sm"
-                className="rounded-none"
-                render={
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    disabled={pendingId !== null}
-                    className="h-auto w-full justify-start rounded-none px-3.5 py-3 font-normal hover:bg-muted/60"
-                    onClick={async () => {
-                      setPendingId(org.id)
-                      try {
-                        await authClient.organization.setActive({
-                          organizationId: org.id,
-                        })
-                        await router.navigate({ to: "/rfp" })
-                      } finally {
-                        setPendingId(null)
-                      }
-                    }}
-                  />
-                }
-              >
-                <ItemMedia>
-                  <Avatar className="size-9 rounded-lg after:rounded-lg">
-                    {org.logo ? <AvatarImage src={org.logo} alt="" /> : null}
-                    <AvatarFallback className="rounded-lg bg-foreground text-background">
-                      <IconBuilding className="size-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                </ItemMedia>
-                <ItemContent>
-                  <ItemTitle>{org.name}</ItemTitle>
-                  <ItemDescription>{org.slug}</ItemDescription>
-                </ItemContent>
-                {pendingId === org.id ? <Spinner /> : null}
-              </Item>
-            </React.Fragment>
-          ))}
+          <ItemGroup className="gap-0 overflow-hidden rounded-xl border">
+            {organizations.map((org, index) => (
+              <React.Fragment key={org.id}>
+                {index > 0 ? <Separator /> : null}
+                <Item
+                  size="sm"
+                  className="rounded-none"
+                  render={
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      disabled={pendingId !== null}
+                      className="h-auto w-full justify-start rounded-none px-3.5 py-3 font-normal hover:bg-muted/60"
+                      onClick={async () => {
+                        setPendingId(org.id)
+                        try {
+                          await authClient.organization.setActive({
+                            organizationId: org.id,
+                          })
+                          await router.navigate({ to: "/rfp" })
+                        } finally {
+                          setPendingId(null)
+                        }
+                      }}
+                    />
+                  }
+                >
+                  <ItemMedia>
+                    <Avatar className="size-9 rounded-lg after:rounded-lg">
+                      {org.logo ? <AvatarImage src={org.logo} alt="" /> : null}
+                      <AvatarFallback className="rounded-lg bg-foreground text-background">
+                        <IconBuilding className="size-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                  </ItemMedia>
+                  <ItemContent>
+                    <ItemTitle>{org.name}</ItemTitle>
+                    <ItemDescription>{org.slug}</ItemDescription>
+                  </ItemContent>
+                  {pendingId === org.id ? <Spinner /> : null}
+                </Item>
+              </React.Fragment>
+            ))}
 
-          {organizations.length > 0 ? <Separator /> : null}
+            {organizations.length > 0 ? <Separator /> : null}
 
-          <Item
+            <Item
+              size="sm"
+              className="rounded-none"
+              render={
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="h-auto w-full justify-start rounded-none px-3.5 py-3 font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  onClick={() => setMode("create")}
+                />
+              }
+            >
+              <ItemMedia>
+                <Avatar className="size-9 rounded-lg border border-dashed border-border after:hidden">
+                  <AvatarFallback className="rounded-lg bg-transparent text-muted-foreground">
+                    <IconPlus className="size-4" />
+                  </AvatarFallback>
+                </Avatar>
+              </ItemMedia>
+              <ItemContent>
+                <ItemTitle>Create organization</ItemTitle>
+              </ItemContent>
+            </Item>
+          </ItemGroup>
+
+          {organizations.length === 0 ? (
+            <Empty className="border-0 p-0">
+              <EmptyHeader>
+                <EmptyDescription>
+                  You are not a member of any organization yet.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          ) : null}
+        </AuthBody>
+
+        <AuthFooter>
+          <Button
+            variant="link"
             size="sm"
-            className="rounded-none"
-            render={
-              <Button
-                type="button"
-                variant="ghost"
-                className="h-auto w-full justify-start rounded-none px-3.5 py-3 font-normal text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                onClick={() => setMode("create")}
-              />
-            }
+            className="h-auto p-0 text-muted-foreground"
+            onClick={async () => {
+              await authClient.signOut()
+              await router.navigate({ to: "/sign-in" })
+            }}
           >
-            <ItemMedia>
-              <Avatar className="size-9 rounded-lg border border-dashed border-border after:hidden">
-                <AvatarFallback className="rounded-lg bg-transparent text-muted-foreground">
-                  <IconPlus className="size-4" />
-                </AvatarFallback>
-              </Avatar>
-            </ItemMedia>
-            <ItemContent>
-              <ItemTitle>Create organization</ItemTitle>
-            </ItemContent>
-          </Item>
-        </ItemGroup>
-
-        {organizations.length === 0 ? (
-          <Empty className="border-0 p-0">
-            <EmptyHeader>
-              <EmptyDescription>
-                You are not a member of any organization yet.
-              </EmptyDescription>
-            </EmptyHeader>
-          </Empty>
-        ) : null}
-      </AuthBody>
-
-      <AuthFooter>
-        <Button
-          variant="link"
-          size="sm"
-          className="h-auto p-0 text-muted-foreground"
-          onClick={async () => {
-            await authClient.signOut()
-            await router.navigate({ to: "/sign-in" })
-          }}
-        >
-          Log out
-        </Button>
-      </AuthFooter>
+            Log out
+          </Button>
+        </AuthFooter>
       </AuthCard>
     </AuthPage>
   )

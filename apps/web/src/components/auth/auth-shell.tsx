@@ -50,9 +50,7 @@ export function AuthCard({
 }
 
 export function AuthBrand({ className }: { className?: string }) {
-  return (
-    <ShipHappensMark className={cn("size-11", className)} aria-hidden />
-  )
+  return <ShipHappensMark className={cn("size-11", className)} aria-hidden />
 }
 
 export function AuthHeader({

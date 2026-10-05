@@ -63,13 +63,13 @@ export function AuthMarketingPage({
   return (
     <div
       className={cn(
-        "relative min-h-svh overflow-x-hidden bg-brand-glass text-foreground",
+        "bg-brand-glass relative min-h-svh overflow-x-hidden text-foreground",
         className
       )}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 bg-brand-glass-grid"
+        className="bg-brand-glass-grid pointer-events-none absolute inset-0"
       />
 
       <div className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
@@ -85,10 +85,10 @@ export function AuthMarketingPage({
             <section className="flex flex-col gap-8">
               <div className={cn(fadeUp, "hidden flex-col gap-5 lg:flex")}>
                 <ShipHappensLogo size="xl" className="leading-[1.05]" />
-                <h1 className="max-w-xl text-2xl font-medium tracking-tight text-foreground/90 text-balance">
+                <h1 className="max-w-xl text-2xl font-medium tracking-tight text-balance text-foreground/90">
                   Turn messy RFP bid sheets into filled workbooks—fast.
                 </h1>
-                <p className="max-w-lg text-base leading-relaxed text-muted-foreground text-pretty">
+                <p className="max-w-lg text-base leading-relaxed text-pretty text-muted-foreground">
                   Upload the customer template, match Starboard contract rates,
                   and let the fill agent complete the sheet while your team
                   reviews exceptions.
@@ -100,7 +100,10 @@ export function AuthMarketingPage({
 
             <section
               aria-labelledby="auth-features-heading"
-              className={cn(fadeUp, "delay-200 flex flex-col gap-8 pb-6 lg:pb-10")}
+              className={cn(
+                fadeUp,
+                "flex flex-col gap-8 pb-6 delay-200 lg:pb-10"
+              )}
             >
               <div className="flex flex-col gap-2">
                 <h2
@@ -109,7 +112,7 @@ export function AuthMarketingPage({
                 >
                   Everything your pricing desk needs
                 </h2>
-                <p className="max-w-lg text-sm leading-relaxed text-muted-foreground text-pretty">
+                <p className="max-w-lg text-sm leading-relaxed text-pretty text-muted-foreground">
                   From template intake to filled download—built for freight
                   teams running high-volume bid seasons.
                 </p>
@@ -127,7 +130,7 @@ export function AuthMarketingPage({
                         {feature.title}
                       </h3>
                     </div>
-                    <p className="text-sm leading-relaxed text-muted-foreground text-pretty">
+                    <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
                       {feature.description}
                     </p>
                   </li>
@@ -145,7 +148,7 @@ export function AuthMarketingPage({
             <div
               className={cn(
                 fadeUp,
-                "delay-100 mx-auto w-full max-w-[25rem] lg:mx-0 lg:max-w-none"
+                "mx-auto w-full max-w-[25rem] delay-100 lg:mx-0 lg:max-w-none"
               )}
             >
               {children}
@@ -158,7 +161,12 @@ export function AuthMarketingPage({
 }
 
 const PREVIEW_ROWS = [
-  { lane: "CNSHA → USLAX", carrier: "OOCL", status: "filled", delay: "delay-0" },
+  {
+    lane: "CNSHA → USLAX",
+    carrier: "OOCL",
+    status: "filled",
+    delay: "delay-0",
+  },
   {
     lane: "CNNGB → USLGB",
     carrier: "MSC",
@@ -195,7 +203,9 @@ function BidSheetPreview({ className }: { className?: string }) {
             Nordstrom_FCL_Bid_Q2.xlsx
           </span>
         </div>
-        <span className="text-xs text-muted-foreground">3 / 4 cells filled</span>
+        <span className="text-xs text-muted-foreground">
+          3 / 4 cells filled
+        </span>
       </div>
 
       <div className="relative px-4 py-4">

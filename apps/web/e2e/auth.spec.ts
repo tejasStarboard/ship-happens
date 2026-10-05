@@ -6,8 +6,12 @@ test.describe("unauthenticated auth pages", () => {
     await page.goto("/sign-in")
     await waitForAppReady(page)
 
-    await expect(page.getByText("Sign in", { exact: true }).first()).toBeVisible()
-    await expect(page.locator("#sign-in-form").getByLabel("Email address")).toBeVisible()
+    await expect(
+      page.getByText("Sign in", { exact: true }).first()
+    ).toBeVisible()
+    await expect(
+      page.locator("#sign-in-form").getByLabel("Email address")
+    ).toBeVisible()
     await expect(
       page.locator("#sign-in-form").getByLabel("Password", { exact: true })
     ).toBeVisible()
@@ -64,12 +68,16 @@ test.describe("unauthenticated auth pages", () => {
 
     await page.getByRole("button", { name: "Sign in" }).click()
     await page.waitForURL(/\/sign-in/)
-    await expect(page.getByText("Sign in", { exact: true }).first()).toBeVisible()
+    await expect(
+      page.getByText("Sign in", { exact: true }).first()
+    ).toBeVisible()
   })
 
   test("protected /rfp redirects to sign-in", async ({ page }) => {
     await page.goto("/rfp")
     await page.waitForURL(/\/sign-in/)
-    await expect(page.getByText("Sign in", { exact: true }).first()).toBeVisible()
+    await expect(
+      page.getByText("Sign in", { exact: true }).first()
+    ).toBeVisible()
   })
 })

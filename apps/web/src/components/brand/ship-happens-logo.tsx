@@ -64,9 +64,33 @@ export function ShipHappensMark({
       <rect width="40" height="40" rx="11" fill={`url(#${gid}-bg)`} />
 
       {/* Bid-sheet grid (cargo / sail) */}
-      <rect x="9" y="9" width="6.5" height="6.5" rx="1.4" fill="white" fillOpacity="0.92" />
-      <rect x="16.75" y="9" width="6.5" height="6.5" rx="1.4" fill="white" fillOpacity="0.55" />
-      <rect x="9" y="16.75" width="6.5" height="6.5" rx="1.4" fill="white" fillOpacity="0.4" />
+      <rect
+        x="9"
+        y="9"
+        width="6.5"
+        height="6.5"
+        rx="1.4"
+        fill="white"
+        fillOpacity="0.92"
+      />
+      <rect
+        x="16.75"
+        y="9"
+        width="6.5"
+        height="6.5"
+        rx="1.4"
+        fill="white"
+        fillOpacity="0.55"
+      />
+      <rect
+        x="9"
+        y="16.75"
+        width="6.5"
+        height="6.5"
+        rx="1.4"
+        fill="white"
+        fillOpacity="0.4"
+      />
       <rect
         x="16.75"
         y="16.75"
@@ -87,7 +111,15 @@ export function ShipHappensMark({
         fill="white"
       />
       {/* Stack */}
-      <rect x="25.1" y="17.2" width="2.2" height="3.2" rx="0.7" fill="white" fillOpacity="0.85" />
+      <rect
+        x="25.1"
+        y="17.2"
+        width="2.2"
+        height="3.2"
+        rx="0.7"
+        fill="white"
+        fillOpacity="0.85"
+      />
       {/* Wake */}
       <path
         d="M10 34.2C14.5 35.1 20.2 35.2 25.5 34.5C28.8 34.05 31.6 33.3 33.5 32.5"
@@ -111,7 +143,7 @@ export function ShipHappensWordmark({
   return (
     <span
       className={cn(
-        "font-brand inline-flex items-baseline font-semibold tracking-[-0.02em]",
+        "inline-flex items-baseline font-brand font-semibold tracking-[-0.02em]",
         SIZE[size].text,
         className
       )}

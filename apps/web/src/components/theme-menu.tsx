@@ -31,8 +31,7 @@ export function ThemeMenu() {
   }, [])
 
   const active = (theme ?? "system") as ThemeValue
-  const TriggerIcon =
-    !mounted || resolvedTheme === "dark" ? IconMoon : IconSun
+  const TriggerIcon = !mounted || resolvedTheme === "dark" ? IconMoon : IconSun
 
   return (
     <div className="fixed right-4 bottom-4 z-50">
@@ -67,7 +66,7 @@ export function ThemeMenu() {
                   key={option.value}
                   type="button"
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground",
+                    "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors outline-none hover:bg-accent hover:text-accent-foreground",
                     selected && "bg-accent/70"
                   )}
                   onClick={() => setTheme(option.value)}

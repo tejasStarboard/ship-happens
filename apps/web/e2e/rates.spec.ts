@@ -17,6 +17,8 @@ test.describe("Rates mock surface", () => {
 
     await expect(page.getByText("OOCL")).toBeVisible()
     await expect(page.getByText("MSC")).toBeVisible()
-    await expect(page.getByRole("columnheader", { name: "Carrier" })).toBeVisible()
+    await expect(
+      page.getByRole("columnheader", { name: "Carrier" })
+    ).toBeVisible()
   })
 })
