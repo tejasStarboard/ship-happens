@@ -3,7 +3,7 @@ import { PageNotFound } from "@/components/page-not-found"
 import { ThemeProvider } from "@/components/theme"
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 import { Toaster } from "@workspace/ui/components/sonner"
-import { APP_DESCRIPTION, APP_NAME, pageMeta } from "@/lib/seo"
+import { APP_DESCRIPTION, pageMeta } from "@/lib/seo"
 
 import appCss from "@workspace/ui/globals.css?url"
 
@@ -19,9 +19,12 @@ export const Route = createRootRoute({
       },
       {
         name: "theme-color",
-        content: "#09090b",
+        content: "#0B2F3F",
       },
-      { name: "application-name", content: APP_NAME },
+      {
+        name: "msapplication-TileColor",
+        content: "#0B2F3F",
+      },
       ...defaultMeta.meta,
     ],
     links: [
@@ -30,8 +33,38 @@ export const Route = createRootRoute({
         href: appCss,
       },
       {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Syne:wght@600;700&display=swap",
+      },
+      {
+        rel: "icon",
+        href: "/favicon.svg",
+        type: "image/svg+xml",
+      },
+      {
+        rel: "icon",
+        href: "/favicon-32x32.png",
+        type: "image/png",
+        sizes: "32x32",
+      },
+      {
         rel: "icon",
         href: "/favicon.ico",
+        sizes: "48x48",
+      },
+      {
+        rel: "apple-touch-icon",
+        href: "/apple-touch-icon.png",
+        sizes: "180x180",
       },
       {
         rel: "manifest",
