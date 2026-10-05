@@ -43,6 +43,21 @@ Sign up → create/select org → dashboard. Google OAuth is optional (leave bla
 | `pnpm db:push` | Push Drizzle schema |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm typecheck` | Typecheck via turbo |
+| `pnpm test:e2e` | Playwright e2e (headless) |
+| `pnpm test:e2e:ui` | Playwright UI mode |
+
+## E2E tests
+
+Playwright lives in `apps/web/e2e`. Requires Postgres + Redis (same as local Docker).
+
+```bash
+docker compose up -d
+pnpm db:push
+pnpm test:e2e          # headless
+pnpm test:e2e:ui       # interactive UI
+```
+
+Specs cover auth (sign-up / sign-in / org / logout), app navigation, settings, and mock RFP / rates / templates surfaces. CI runs the same suite against Postgres and Redis service containers.
 
 ## Layout
 

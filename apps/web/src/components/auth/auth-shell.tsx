@@ -1,7 +1,5 @@
 import type { ReactNode } from "react"
-import { IconSparkles } from "@tabler/icons-react"
 import { cn } from "@workspace/ui/lib/utils"
-import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
 import {
   Card,
   CardContent,
@@ -11,6 +9,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { Separator } from "@workspace/ui/components/separator"
+import { ShipHappensMark } from "@/components/brand/ship-happens-logo"
 
 export function AuthPage({
   children,
@@ -22,7 +21,7 @@ export function AuthPage({
   return (
     <div
       className={cn(
-        "flex min-h-svh w-full flex-col items-center justify-center bg-muted px-4 py-10 dark:bg-background",
+        "flex min-h-svh w-full flex-col items-center justify-center bg-background px-4 py-10",
         className
       )}
     >
@@ -51,17 +50,7 @@ export function AuthCard({
 }
 
 export function AuthBrand({ className }: { className?: string }) {
-  return (
-    <Avatar
-      size="lg"
-      className={cn("rounded-xl after:rounded-xl", className)}
-      aria-hidden
-    >
-      <AvatarFallback className="rounded-xl bg-foreground text-background">
-        <IconSparkles className="size-5" />
-      </AvatarFallback>
-    </Avatar>
-  )
+  return <ShipHappensMark className={cn("size-11", className)} aria-hidden />
 }
 
 export function AuthHeader({

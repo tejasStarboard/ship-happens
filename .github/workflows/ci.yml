@@ -10,6 +10,20 @@ concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  # Stub env so apps/web can typecheck/build/e2e without real secrets
+  POSTGRES_SSL: "false"
+  REDIS_URL: redis://127.0.0.1:6379
+  BETTER_AUTH_SECRET: ci-better-auth-secret-min-32-characters-long
+  BETTER_AUTH_DOMAIN: localhost
+  APP_URL: http://127.0.0.1:3000
+  VITE_APP_URL: http://127.0.0.1:3000
+  RESEND_API_KEY: re_ci_placeholder
+  EMAIL_SENDER_NAME: Ship Happens CI
+  EMAIL_SENDER_ADDRESS: noreply@example.com
+  BLOB_STORE_ID: local
+  BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
+
 jobs:
   ci:
     name: format · lint · typecheck · build
@@ -17,19 +31,7 @@ jobs:
     timeout-minutes: 20
 
     env:
-      # Stub env so apps/web can typecheck/build without real secrets
       POSTGRES_URL: postgresql://ci:ci@127.0.0.1:5432/ci
-      POSTGRES_SSL: "false"
-      REDIS_URL: redis://127.0.0.1:6379
-      BETTER_AUTH_SECRET: ci-better-auth-secret-min-32-characters-long
-      BETTER_AUTH_DOMAIN: localhost
-      APP_URL: http://localhost:3000
-      VITE_APP_URL: http://localhost:3000
-      RESEND_API_KEY: re_ci_placeholder
-      EMAIL_SENDER_NAME: Ship Happens CI
-      EMAIL_SENDER_ADDRESS: noreply@example.com
-      BLOB_STORE_ID: local
-      BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
 
     steps:
       - name: Checkout
@@ -60,3 +62,75 @@ jobs:
 
       - name: Build
         run: pnpm build
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: []
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ship_happens
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ship_happens"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/ship_happens
+      CI: "true"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Push database schema
+        run: pnpm db:push
+
+      - name: Run e2e tests
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report/
+            apps/web/test-results/
+          retention-days: 7

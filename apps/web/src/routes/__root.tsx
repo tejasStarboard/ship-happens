@@ -1,6 +1,8 @@
+import { AppReady } from "@/components/app-ready"
 import { GlobalErrorBoundary } from "@/components/global-error-boundary"
 import { PageNotFound } from "@/components/page-not-found"
 import { ThemeProvider } from "@/components/theme"
+import { ThemeMenu } from "@/components/theme-menu"
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 import { Toaster } from "@workspace/ui/components/sonner"
 import { APP_DESCRIPTION, pageMeta } from "@/lib/seo"
@@ -85,7 +87,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-svh">
         <ThemeProvider>
+          <AppReady />
           {children}
+          <ThemeMenu />
           <Toaster richColors closeButton />
         </ThemeProvider>
         <Scripts />
