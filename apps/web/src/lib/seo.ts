@@ -45,7 +45,8 @@ type PageMetaOptions = {
 
 function absoluteUrl(pathOrUrl: string): string {
   if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
-  if (APP_URL) return `${APP_URL}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`
+  if (APP_URL)
+    return `${APP_URL}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`
   return pathOrUrl
 }
 
@@ -72,7 +73,10 @@ export function pageMeta({
     { property: "og:description", content: resolvedDescription },
     { property: "og:type", content: ogType },
     { property: "og:site_name", content: APP_NAME },
-    { name: "twitter:card", content: resolvedImage ? "summary_large_image" : "summary" },
+    {
+      name: "twitter:card",
+      content: resolvedImage ? "summary_large_image" : "summary",
+    },
     { name: "twitter:title", content: resolvedTitle },
     { name: "twitter:description", content: resolvedDescription },
   ]
