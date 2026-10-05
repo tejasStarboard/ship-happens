@@ -7,10 +7,13 @@
     "dev": "vite dev --port 3000 --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "node .output/server/index.mjs",
     "lint": "eslint src",
     "format": "prettier --write \"**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx}\"",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@ai-sdk/openai": "^4.0.69",
@@ -61,6 +64,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tanstack/devtools-vite": "latest",
     "@tanstack/eslint-config": "latest",
     "@types/node": "^22",

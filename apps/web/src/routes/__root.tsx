@@ -1,6 +1,8 @@
+import { AppReady } from "@/components/app-ready"
 import { GlobalErrorBoundary } from "@/components/global-error-boundary"
 import { PageNotFound } from "@/components/page-not-found"
 import { ThemeProvider } from "@/components/theme"
+import { ThemeMenu } from "@/components/theme-menu"
 import { HeadContent, Scripts, createRootRoute } from "@tanstack/react-router"
 import { Toaster } from "@workspace/ui/components/sonner"
 import { APP_DESCRIPTION, APP_NAME, pageMeta } from "@/lib/seo"
@@ -19,7 +21,7 @@ export const Route = createRootRoute({
       },
       {
         name: "theme-color",
-        content: "#09090b",
+        content: "#0B2F3F",
       },
       { name: "application-name", content: APP_NAME },
       ...defaultMeta.meta,
@@ -28,6 +30,24 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.googleapis.com",
+      },
+      {
+        rel: "preconnect",
+        href: "https://fonts.gstatic.com",
+        crossOrigin: "anonymous",
+      },
+      {
+        rel: "stylesheet",
+        href: "https://fonts.googleapis.com/css2?family=Syne:wght@600;700&display=swap",
+      },
+      {
+        rel: "icon",
+        href: "/brand/ship-happens-mark.svg",
+        type: "image/svg+xml",
       },
       {
         rel: "icon",
@@ -52,7 +72,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="min-h-svh">
         <ThemeProvider>
+          <AppReady />
           {children}
+          <ThemeMenu />
           <Toaster richColors closeButton />
         </ThemeProvider>
         <Scripts />
