@@ -14,7 +14,9 @@
     "db:studio": "drizzle-kit studio",
     "inngest:dev": "pnpm dlx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
     "test:e2e": "pnpm --filter web test:e2e",
-    "test:e2e:ui": "pnpm --filter web test:e2e:ui"
+    "test:e2e:ui": "pnpm --filter web test:e2e:ui",
+    "dev:web_v2": "pnpm --filter web_v2 dev",
+    "db:migrate:web_v2": "pnpm --filter web_v2 db:migrate"
   },
   "devDependencies": {
     "drizzle-kit": "^0.31.10",

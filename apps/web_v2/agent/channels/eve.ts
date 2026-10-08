@@ -1,0 +1,14 @@
+import { eveChannel } from "eve/channels/eve";
+import { localDev, vercelOidc } from "eve/channels/auth";
+import { betterAuthEveAuth } from "@/lib/eve-auth";
+
+export default eveChannel({
+  auth: [
+    // Prefer the Better Auth browser session when present.
+    betterAuthEveAuth,
+    // Lets the eve TUI and your Vercel deployments reach the deployed agent.
+    vercelOidc(),
+    // Open on localhost for `eve dev` and the REPL; ignored in production.
+    localDev(),
+  ],
+});

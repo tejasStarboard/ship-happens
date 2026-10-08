@@ -4,6 +4,8 @@ dist
 dist-ssr
 *.local
 .env*
+!.env.example
+!**/.env.example
 .nitro
 .tanstack
 .wrangler
@@ -26,3 +28,10 @@ apps/web/test-results/
 apps/web/playwright-report/
 apps/web/blob-report/
 apps/web/e2e/.auth/
+
+# Next.js / eve (web_v2)
+apps/web_v2/.next/
+apps/web_v2/.eve/
+apps/web_v2/data/*.db
+apps/web_v2/data/*.db-*
+apps/web_v2/data/workspaces/
