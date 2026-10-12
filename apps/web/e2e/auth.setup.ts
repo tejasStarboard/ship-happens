@@ -13,7 +13,7 @@ setup("authenticate seeded user", async ({ page }) => {
   const credentials = uniqueCredentials("seed")
   await signUp(page, credentials)
   await createOrganization(page, credentials)
-  await expect(page.getByRole("heading", { name: "RFPs" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
 
   mkdirSync(AUTH_DIR, { recursive: true })
   persistCredentials(credentials)

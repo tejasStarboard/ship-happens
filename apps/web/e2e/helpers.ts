@@ -83,7 +83,7 @@ export async function createOrganization(
 
   await page.getByRole("button", { name: "Create Organization" }).click()
   await expect(page).toHaveURL(/\/rfp/)
-  await expect(page.getByRole("heading", { name: "RFPs" })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
 }
 
 export async function selectOrganization(page: Page, orgName: string) {

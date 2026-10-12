@@ -142,6 +142,35 @@ export const rfps = pgTable(
   ]
 )
 
+/** Uploaded BCO originals for a fill (Blob + parse metadata). */
+export const rfpSourceFiles = pgTable(
+  "rfp_source_files",
+  {
+    id: text("id").primaryKey(),
+    rfpId: text("rfp_id")
+      .notNull()
+      .references(() => rfps.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    mimeType: text("mime_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    fileUrl: text("file_url").notNull(),
+    blobPathname: text("blob_pathname"),
+    checksumSha256: text("checksum_sha256"),
+    sheetNames: jsonb("sheet_names").$type<string[]>().default([]),
+    parseMetadata: jsonb("parse_metadata")
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("rfp_source_files_rfp_id_idx").on(table.rfpId),
+    index("rfp_source_files_organization_id_idx").on(table.organizationId),
+  ]
+)
+
 /** Ordered high-level pipeline stages for the Progress tab. */
 export const rfpProgressSteps = pgTable(
   "rfp_progress_steps",
@@ -354,10 +383,22 @@ export const rfpsRelations = relations(rfps, ({ one, many }) => ({
     fields: [rfps.ownerUserId],
     references: [user.id],
   }),
+  sourceFiles: many(rfpSourceFiles),
   progressSteps: many(rfpProgressSteps),
   logs: many(rfpLogs),
   fillReport: one(rfpFillReports),
   chat: one(rfpChats),
+}))
+
+export const rfpSourceFilesRelations = relations(rfpSourceFiles, ({ one }) => ({
+  rfp: one(rfps, {
+    fields: [rfpSourceFiles.rfpId],
+    references: [rfps.id],
+  }),
+  organization: one(organization, {
+    fields: [rfpSourceFiles.organizationId],
+    references: [organization.id],
+  }),
 }))
 
 export const rfpProgressStepsRelations = relations(

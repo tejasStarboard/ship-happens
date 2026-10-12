@@ -1,8 +1,6 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { IconUpload } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
 import {
   Table,
   TableBody,
@@ -11,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
+import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
 import { formatBytes } from "@/lib/mock/templates"
 import type { TemplateListItem } from "@/lib/server/templates"
 import { formatDateTime } from "@/lib/shared/string"
@@ -31,10 +30,7 @@ export function TemplatesTable({
             Uploaded bid-sheet documents and metadata.
           </p>
         </div>
-        <Button size="sm" disabled>
-          <IconUpload data-icon="inline-start" />
-          Upload
-        </Button>
+        <UploadTemplateDialog />
       </div>
 
       <div className="px-4 lg:px-6">

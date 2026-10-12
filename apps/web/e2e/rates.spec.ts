@@ -5,7 +5,9 @@ test.describe("Rates mock surface", () => {
   test("empty hint then search shows mock results", async ({ page }) => {
     await page.goto("/rates")
     await waitForAppReady(page)
-    await expect(page.getByRole("heading", { name: "Rates" })).toBeVisible()
+    await expect(
+      page.getByRole("heading", { name: "Starboard rates" })
+    ).toBeVisible()
     await expect(
       page.getByText("Run a search to see mock rate rows.")
     ).toBeVisible()
