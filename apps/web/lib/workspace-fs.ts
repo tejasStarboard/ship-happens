@@ -8,13 +8,34 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises"
+import { tmpdir } from "node:os"
 import path from "node:path"
 import { isTextPath, type WorkspaceEntry } from "@/lib/workspace-types"
 
 export type { WorkspaceEntry } from "@/lib/workspace-types"
 export { isTextPath } from "@/lib/workspace-types"
 
-const WORKSPACES_ROOT = path.join(process.cwd(), "data", "workspaces")
+/**
+ * Host-side workspace mirror for RFP files.
+ * - Local: `apps/web/.ship-happens/workspaces` (gitignored, durable for the machine)
+ * - Vercel/serverless: `/tmp/.ship-happens/workspaces` (ephemeral per instance)
+ * Override with WORKSPACES_ROOT when needed.
+ */
+function resolveWorkspacesRoot(): string {
+  const override = process.env.WORKSPACES_ROOT?.trim()
+  if (override) return override
+
+  const onServerless = Boolean(
+    process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
+  )
+  if (onServerless) {
+    return path.join(tmpdir(), ".ship-happens", "workspaces")
+  }
+
+  return path.join(process.cwd(), ".ship-happens", "workspaces")
+}
+
+const WORKSPACES_ROOT = resolveWorkspacesRoot()
 
 const SKIP_DIR_NAMES = new Set([
   ".git",

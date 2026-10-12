@@ -7,7 +7,7 @@ import {
 } from "@/lib/workspace-sync"
 
 /**
- * Keep the host workspace mirror (`data/workspaces/<workspaceId>`) and the
+ * Keep the host workspace mirror (`WORKSPACES_ROOT/<workspaceId>`) and the
  * session sandbox `/workspace` in sync. Multiple chats in one workspace share
  * the same host files; each chat session has its own sandbox.
  */

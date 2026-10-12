@@ -11,5 +11,6 @@ dist
 data/*.db
 data/*.db-*
 data/workspaces/
+.ship-happens/
 !.env.example
 

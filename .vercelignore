@@ -11,6 +11,7 @@ node_modules
 **/*.db
 **/*.db-*
 **/data/workspaces
+**/.ship-happens
 .env
 .env.*
 !.env.example

@@ -35,3 +35,4 @@ apps/web/.eve/
 apps/web/data/*.db
 apps/web/data/*.db-*
 apps/web/data/workspaces/
+apps/web/.ship-happens/

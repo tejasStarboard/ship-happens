@@ -8,7 +8,7 @@ with the eve agent workspace embedded in **RFP → Agent**.
 - Next.js App Router + eve
 - Better Auth (Postgres + org plugin + Redis secondary storage)
 - Drizzle schema under `lib/db/schema` (owned by root `drizzle.config.ts`)
-- Workspace files on disk: `data/workspaces/{rfpId}`
+- Workspace files on disk: `.ship-happens/workspaces/{rfpId}` (local); `/tmp/.ship-happens/workspaces/{rfpId}` (Vercel)
 - Chat metadata: `rfps.metadata.workspaceChats` + primary `rfp_chats` row
 
 ## Setup
