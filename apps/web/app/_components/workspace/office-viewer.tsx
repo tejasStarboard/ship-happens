@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
+import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { cn } from "@/lib/utils"
 import type { OfficeViewerKind } from "@/lib/workspace-types"
 
@@ -9,11 +10,14 @@ export function OfficeViewer({
   sessionId,
   path,
   kind,
+  publicUrl,
   onDownload,
 }: {
   readonly sessionId: string
   readonly path: string
   readonly kind: OfficeViewerKind
+  /** Public HTTPS Blob URL — preferred for spreadsheet Office Online embeds. */
+  readonly publicUrl?: string | null
   readonly onDownload: () => void
 }) {
   const previewUrl = `/api/workspace/${encodeURIComponent(sessionId)}/preview?path=${encodeURIComponent(path)}`
@@ -58,6 +62,17 @@ export function OfficeViewer({
   }
 
   if (kind === "xlsx") {
+    if (publicUrl) {
+      return (
+        <div className="h-full min-h-0 p-2">
+          <OfficeSpreadsheetViewer
+            className="relative size-full min-h-0 overflow-hidden rounded-xl border bg-muted/20"
+            fileUrl={publicUrl}
+            title={path.split("/").pop() ?? path}
+          />
+        </div>
+      )
+    }
     return (
       <XlsxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />
     )

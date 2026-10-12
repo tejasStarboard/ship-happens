@@ -17,6 +17,8 @@ export type EditorTab = {
   readonly editable: boolean
   readonly encoding: "utf-8" | "binary"
   readonly viewerKind: OfficeViewerKind | null
+  /** Public Blob URL when available (Office Online embed for spreadsheets). */
+  readonly publicUrl?: string | null
 }
 
 export function FileEditorPanel({
@@ -127,6 +129,7 @@ export function FileEditorPanel({
                 kind={viewerKind}
                 onDownload={() => onDownload(active.path)}
                 path={active.path}
+                publicUrl={active.publicUrl}
                 sessionId={sessionId}
               />
             </div>
