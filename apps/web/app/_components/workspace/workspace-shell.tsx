@@ -51,6 +51,7 @@ export function WorkspaceShell({
   const refreshTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const tabsRef = useRef(tabs)
   tabsRef.current = tabs
+  const didAutoOpenWorkbookRef = useRef<string | null>(null)
 
   const fileList = useMemo(() => flattenFiles(tree), [tree])
   const openTabs = useMemo(() => tabs.map((tab) => tab.path), [tabs])
@@ -181,6 +182,18 @@ export function WorkspaceShell({
     },
     [workspaceId]
   )
+
+  useEffect(() => {
+    if (!workspaceId) return
+    if (didAutoOpenWorkbookRef.current === workspaceId) return
+    if (tabsRef.current.length > 0) return
+
+    const defaultPath = pickDefaultWorkbookPath(flattenFiles(tree))
+    if (!defaultPath) return
+
+    didAutoOpenWorkbookRef.current = workspaceId
+    void openFile(defaultPath)
+  }, [workspaceId, tree, openFile])
 
   const closeTab = useCallback(
     (path: string) => {
@@ -562,4 +575,17 @@ function flattenFiles(entries: WorkspaceEntry[]): string[] {
   }
   walk(entries)
   return files
+}
+
+/** Prefer the intake workbook under `source/`, else any spreadsheet in the tree. */
+function pickDefaultWorkbookPath(files: readonly string[]): string | null {
+  const spreadsheets = files.filter(
+    (path) => getOfficeViewerKind(path) === "xlsx"
+  )
+  if (spreadsheets.length === 0) return null
+  return (
+    spreadsheets.find((path) => path.startsWith("source/")) ??
+    spreadsheets[0] ??
+    null
+  )
 }
