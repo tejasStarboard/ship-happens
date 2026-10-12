@@ -1,6 +1,9 @@
 import { defineHook } from "eve/hooks"
 import { mergeWorkspaceFiles } from "@/lib/workspace-fs"
-import { workspaceIdForSync } from "@/lib/workspace-registry"
+import {
+  hydrateWorkspaceFromSourceFiles,
+  workspaceIdForSync,
+} from "@/lib/workspace-registry"
 import {
   pullSandboxToWorkspace,
   pushWorkspaceToSandbox,
@@ -17,6 +20,8 @@ export default defineHook({
       try {
         const sessionId = ctx.session.id
         const workspaceId = await workspaceIdForSync(sessionId)
+        // Blob-backed source workbooks → host FS before sandbox push (Vercel /tmp).
+        await hydrateWorkspaceFromSourceFiles(workspaceId)
         // If bind raced the first turn, also push any files already under the session folder.
         if (workspaceId !== sessionId) {
           await mergeWorkspaceFiles(sessionId, workspaceId)

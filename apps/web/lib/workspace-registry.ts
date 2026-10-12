@@ -4,13 +4,19 @@ import { access, readdir, rm } from "node:fs/promises"
 import { constants as fsConstants } from "node:fs"
 import path from "node:path"
 import { db } from "@/lib/db"
-import { rfpChats, rfps } from "@/lib/db/schema"
+import { rfpChats, rfpSourceFiles, rfps } from "@/lib/db/schema"
+import {
+  extensionForMime,
+  sanitizeFileName,
+} from "@/lib/storage/spreadsheet-constants"
 import {
   ensureWorkspace,
   isValidSessionId,
   mergeWorkspaceFiles,
   WORKSPACES_ROOT,
+  workspaceFileExists,
   workspaceRoot,
+  writeWorkspaceFile,
 } from "@/lib/workspace-fs"
 
 export type WorkspaceChatRecord = {
@@ -299,6 +305,8 @@ export async function ensureRfpWorkspace(input: {
   }
 
   await ensureWorkspace(rfp.id)
+  // Durable Blob → ephemeral host FS (needed on Vercel /tmp cold starts).
+  await hydrateWorkspaceFromSourceFiles(rfp.id)
   return (await getWorkspace(rfp.id))!
 }
 
@@ -393,13 +401,72 @@ export async function bindChatSession(
   return bound
 }
 
+/**
+ * Re-seed `source/` files from durable Blob URLs when the host workspace
+ * mirror is empty (common on Vercel `/tmp` after cold starts).
+ */
+export async function hydrateWorkspaceFromSourceFiles(
+  workspaceId: string
+): Promise<number> {
+  if (!isValidWorkspaceId(workspaceId)) return 0
+
+  const sources = await db
+    .select({
+      fileName: rfpSourceFiles.fileName,
+      fileUrl: rfpSourceFiles.fileUrl,
+      mimeType: rfpSourceFiles.mimeType,
+    })
+    .from(rfpSourceFiles)
+    .where(eq(rfpSourceFiles.rfpId, workspaceId))
+
+  if (sources.length === 0) return 0
+
+  await ensureWorkspace(workspaceId)
+  let written = 0
+
+  for (const source of sources) {
+    const safeName =
+      sanitizeFileName(source.fileName) ||
+      `workbook${extensionForMime(source.mimeType, source.fileName)}`
+    const relativePath = `source/${safeName}`
+
+    if (await workspaceFileExists(workspaceId, relativePath)) continue
+
+    try {
+      const response = await fetch(source.fileUrl)
+      if (!response.ok) {
+        console.warn(
+          "[workspace] failed to hydrate source file",
+          workspaceId,
+          relativePath,
+          response.status
+        )
+        continue
+      }
+      const buffer = Buffer.from(await response.arrayBuffer())
+      if (buffer.byteLength === 0) continue
+      await writeWorkspaceFile(workspaceId, relativePath, buffer)
+      written += 1
+    } catch (error) {
+      console.warn(
+        "[workspace] hydrate source file error",
+        workspaceId,
+        relativePath,
+        error
+      )
+    }
+  }
+
+  return written
+}
+
 export async function reconcileWorkspaceFiles(
   workspaceId: string
 ): Promise<number> {
   const workspace = await getWorkspace(workspaceId)
   if (!workspace) return 0
   await ensureWorkspace(workspaceId)
-  let copied = 0
+  let copied = await hydrateWorkspaceFromSourceFiles(workspaceId)
   for (const chat of workspace.chats) {
     if (!chat.sessionId) continue
     copied += await mergeWorkspaceFiles(chat.sessionId, workspaceId)
