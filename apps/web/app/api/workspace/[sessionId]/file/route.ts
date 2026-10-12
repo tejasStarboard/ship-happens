@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { resolveWorkspacePublicFileUrl } from "@/lib/server/workspace-public-url"
 import { getServerSession } from "@/lib/session"
 import {
   deleteWorkspacePath,
@@ -31,7 +32,10 @@ export async function GET(
   }
 
   try {
-    const file = await readWorkspaceFile(sessionId, filePath)
+    const [file, publicUrl] = await Promise.all([
+      readWorkspaceFile(sessionId, filePath),
+      resolveWorkspacePublicFileUrl(sessionId, filePath),
+    ])
     if (file.encoding === "utf-8") {
       return NextResponse.json({
         path: filePath,
@@ -39,6 +43,7 @@ export async function GET(
         content: file.content,
         size: file.size,
         editable: isTextPath(filePath),
+        publicUrl,
       })
     }
     return NextResponse.json({
@@ -47,6 +52,7 @@ export async function GET(
       content: null,
       size: file.size,
       editable: false,
+      publicUrl,
     })
   } catch (error) {
     return NextResponse.json(

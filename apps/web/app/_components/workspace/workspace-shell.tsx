@@ -162,6 +162,7 @@ export function WorkspaceShell({
         content: string | null
         encoding: "utf-8" | "binary"
         editable: boolean
+        publicUrl?: string | null
       }
       const viewerKind = getOfficeViewerKind(body.path)
       setTabs((prev) => {
@@ -175,6 +176,7 @@ export function WorkspaceShell({
             editable: !viewerKind && body.editable && body.encoding === "utf-8",
             encoding: body.encoding,
             viewerKind,
+            publicUrl: body.publicUrl ?? null,
           },
         ]
       })
