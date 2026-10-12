@@ -13,16 +13,17 @@ export default defineConfig({
   // Shared Better Auth session (storageState) is not safe across parallel workers
   fullyParallel: false,
   forbidOnly: isCI,
-  retries: isCI ? 2 : 0,
+  retries: isCI ? 1 : 0,
   workers: 1,
   reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
-  timeout: 60_000,
-  expect: { timeout: 15_000 },
+  timeout: 45_000,
+  expect: { timeout: 10_000 },
   use: {
     baseURL,
     trace: "on-first-retry",
     screenshot: "only-on-failure",
-    video: "retain-on-failure",
+    // Video is expensive; keep only in CI failures
+    video: isCI ? "retain-on-failure" : "off",
   },
   projects: [
     {
@@ -45,11 +46,12 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // Nitro production SSR currently 500s (duplicate React); use Vite with HMR off in CI
-    command: "pnpm dev",
+    // Local: reuse `pnpm --filter web dev` if already on :3000 (much faster).
+    // CI: production server avoids Next compile-on-demand stalls.
+    command: isCI ? "pnpm build && pnpm start" : "pnpm dev",
     url: baseURL,
     reuseExistingServer: !isCI,
-    timeout: 120_000,
+    timeout: isCI ? 300_000 : 120_000,
     stdout: "pipe",
     stderr: "pipe",
   },

@@ -90,7 +90,7 @@ export async function selectOrganization(page: Page, orgName: string) {
 
   const orgButton = page.getByRole("button", { name: orgName })
 
-  // Retry once: Vite dep-opt reloads (dev) can abort the first click/handler.
+  // Retry once: a first navigation race can abort set-active before redirect.
   for (let attempt = 0; attempt < 2; attempt++) {
     await expect(orgButton).toBeEnabled()
     await waitForAppReady(page)
@@ -120,7 +120,6 @@ export async function selectOrganization(page: Page, orgName: string) {
       if (attempt === 1 || !page.url().includes("/select-org")) {
         throw error
       }
-      // Full reload recovers from aborted Vite module graph updates
       await page.reload()
       await waitForAppReady(page)
       await expect(page.getByText("Choose an organization")).toBeVisible()
