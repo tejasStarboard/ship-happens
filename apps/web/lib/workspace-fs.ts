@@ -17,8 +17,8 @@ export { isTextPath } from "@/lib/workspace-types"
 
 /**
  * Host-side workspace mirror for RFP files.
- * - Local: `apps/web/data/workspaces` (gitignored, durable for the machine)
- * - Vercel/serverless: `/tmp/...` (only writable path; ephemeral per instance)
+ * - Local: `apps/web/.ship-happens/workspaces` (gitignored, durable for the machine)
+ * - Vercel/serverless: `/tmp/.ship-happens/workspaces` (ephemeral per instance)
  * Override with WORKSPACES_ROOT when needed.
  */
 function resolveWorkspacesRoot(): string {
@@ -29,10 +29,10 @@ function resolveWorkspacesRoot(): string {
     process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
   )
   if (onServerless) {
-    return path.join(tmpdir(), "ship-happens", "workspaces")
+    return path.join(tmpdir(), ".ship-happens", "workspaces")
   }
 
-  return path.join(process.cwd(), "data", "workspaces")
+  return path.join(process.cwd(), ".ship-happens", "workspaces")
 }
 
 const WORKSPACES_ROOT = resolveWorkspacesRoot()
