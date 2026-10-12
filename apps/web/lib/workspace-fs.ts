@@ -8,7 +8,6 @@ import {
   stat,
   writeFile,
 } from "node:fs/promises"
-import { tmpdir } from "node:os"
 import path from "node:path"
 import { isTextPath, type WorkspaceEntry } from "@/lib/workspace-types"
 
@@ -20,6 +19,9 @@ export { isTextPath } from "@/lib/workspace-types"
  * - Local: `apps/web/.ship-happens/workspaces` (gitignored, durable for the machine)
  * - Vercel/serverless: `/tmp/.ship-happens/workspaces` (ephemeral per instance)
  * Override with WORKSPACES_ROOT when needed.
+ *
+ * Runtime paths intentionally live outside (or beside) the deploy bundle. FS
+ * calls use `turbopackIgnore` so Next does not NFT-trace the whole project.
  */
 function resolveWorkspacesRoot(): string {
   const override = process.env.WORKSPACES_ROOT?.trim()
@@ -29,9 +31,11 @@ function resolveWorkspacesRoot(): string {
     process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME
   )
   if (onServerless) {
-    return path.join(tmpdir(), ".ship-happens", "workspaces")
+    // Literal absolute root — writable on Vercel; not part of the app tree.
+    return "/tmp/.ship-happens/workspaces"
   }
 
+  // Statically scoped under cwd so Turbopack can bound local tracing.
   return path.join(process.cwd(), ".ship-happens", "workspaces")
 }
 
@@ -57,7 +61,7 @@ export function workspaceRoot(sessionId: string): string {
   if (!isValidSessionId(sessionId)) {
     throw new Error("Invalid session id")
   }
-  return path.join(WORKSPACES_ROOT, sessionId)
+  return path.join(/*turbopackIgnore: true*/ WORKSPACES_ROOT, sessionId)
 }
 
 /** Resolve a workspace-relative path; throws if it escapes the root. */
@@ -70,8 +74,8 @@ export function resolveWorkspacePath(
   if (normalized.length === 0 || normalized.includes("\0")) {
     throw new Error("Invalid path")
   }
-  const absolute = path.resolve(root, normalized)
-  const relative = path.relative(root, absolute)
+  const absolute = path.resolve(/*turbopackIgnore: true*/ root, normalized)
+  const relative = path.relative(/*turbopackIgnore: true*/ root, absolute)
   if (relative.startsWith("..") || path.isAbsolute(relative)) {
     throw new Error("Path escapes workspace")
   }
@@ -83,12 +87,15 @@ export function toWorkspaceRelative(
   absolutePath: string
 ): string {
   const root = workspaceRoot(sessionId)
-  return path.relative(root, absolutePath).split(path.sep).join("/")
+  return path
+    .relative(/*turbopackIgnore: true*/ root, absolutePath)
+    .split(path.sep)
+    .join("/")
 }
 
 export async function ensureWorkspace(sessionId: string): Promise<string> {
   const root = workspaceRoot(sessionId)
-  await mkdir(root, { recursive: true })
+  await mkdir(/*turbopackIgnore: true*/ root, { recursive: true })
   return root
 }
 
@@ -100,15 +107,18 @@ export async function listWorkspaceTree(
 }
 
 async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
-  const names = await readdir(dir)
+  const names = await readdir(/*turbopackIgnore: true*/ dir)
   names.sort((a, b) => a.localeCompare(b))
   const entries: WorkspaceEntry[] = []
 
   for (const name of names) {
     if (SKIP_DIR_NAMES.has(name)) continue
-    const absolute = path.join(dir, name)
-    const info = await stat(absolute)
-    const relative = path.relative(root, absolute).split(path.sep).join("/")
+    const absolute = path.join(/*turbopackIgnore: true*/ dir, name)
+    const info = await stat(/*turbopackIgnore: true*/ absolute)
+    const relative = path
+      .relative(/*turbopackIgnore: true*/ root, absolute)
+      .split(path.sep)
+      .join("/")
     if (info.isDirectory()) {
       entries.push({
         type: "dir",
@@ -149,11 +159,11 @@ export async function readWorkspaceFile(
   | { content: Buffer; encoding: "binary"; size: number }
 > {
   const absolute = resolveWorkspacePath(sessionId, relativePath)
-  const info = await stat(absolute)
+  const info = await stat(/*turbopackIgnore: true*/ absolute)
   if (!info.isFile()) {
     throw new Error("Not a file")
   }
-  const buffer = await readFile(absolute)
+  const buffer = await readFile(/*turbopackIgnore: true*/ absolute)
   if (
     isTextPath(relativePath) &&
     buffer.byteLength <= MAX_TEXT_BYTES &&
@@ -174,8 +184,10 @@ export async function writeWorkspaceFile(
   content: string | Buffer
 ): Promise<void> {
   const absolute = resolveWorkspacePath(sessionId, relativePath)
-  await mkdir(path.dirname(absolute), { recursive: true })
-  await writeFile(absolute, content)
+  await mkdir(/*turbopackIgnore: true*/ path.dirname(absolute), {
+    recursive: true,
+  })
+  await writeFile(/*turbopackIgnore: true*/ absolute, content)
 }
 
 export async function deleteWorkspacePath(
@@ -183,7 +195,10 @@ export async function deleteWorkspacePath(
   relativePath: string
 ): Promise<void> {
   const absolute = resolveWorkspacePath(sessionId, relativePath)
-  await rm(absolute, { recursive: true, force: true })
+  await rm(/*turbopackIgnore: true*/ absolute, {
+    recursive: true,
+    force: true,
+  })
 }
 
 export async function renameWorkspacePath(
@@ -197,7 +212,7 @@ export async function renameWorkspacePath(
 
   let destinationExists = false
   try {
-    await stat(to)
+    await stat(/*turbopackIgnore: true*/ to)
     destinationExists = true
   } catch {
     destinationExists = false
@@ -206,8 +221,8 @@ export async function renameWorkspacePath(
     throw new Error("A file already exists at the destination")
   }
 
-  await mkdir(path.dirname(to), { recursive: true })
-  await rename(from, to)
+  await mkdir(/*turbopackIgnore: true*/ path.dirname(to), { recursive: true })
+  await rename(/*turbopackIgnore: true*/ from, to)
 }
 
 export async function collectSyncFiles(
@@ -230,9 +245,9 @@ export async function mergeWorkspaceFiles(
   if (fromId === toId) return 0
   if (!isValidSessionId(fromId) || !isValidSessionId(toId)) return 0
 
-  const fromRoot = path.join(WORKSPACES_ROOT, fromId)
+  const fromRoot = path.join(/*turbopackIgnore: true*/ WORKSPACES_ROOT, fromId)
   try {
-    await stat(fromRoot)
+    await stat(/*turbopackIgnore: true*/ fromRoot)
   } catch {
     return 0
   }
@@ -243,7 +258,7 @@ export async function mergeWorkspaceFiles(
   for (const file of files) {
     const dest = resolveWorkspacePath(toId, file.path)
     try {
-      await stat(dest)
+      await stat(/*turbopackIgnore: true*/ dest)
       continue // keep existing workspace file
     } catch {
       // missing — copy
@@ -261,21 +276,27 @@ async function collectFiles(
 ): Promise<void> {
   let names: string[]
   try {
-    names = await readdir(dir)
+    names = await readdir(/*turbopackIgnore: true*/ dir)
   } catch {
     return
   }
   for (const name of names) {
     if (SKIP_DIR_NAMES.has(name)) continue
-    const absolute = path.join(dir, name)
-    const info = await stat(absolute)
+    const absolute = path.join(/*turbopackIgnore: true*/ dir, name)
+    const info = await stat(/*turbopackIgnore: true*/ absolute)
     if (info.isDirectory()) {
       await collectFiles(root, absolute, out)
       continue
     }
     if (!info.isFile() || info.size > MAX_SYNC_FILE_BYTES) continue
-    const relative = path.relative(root, absolute).split(path.sep).join("/")
-    out.push({ path: relative, bytes: await readFile(absolute) })
+    const relative = path
+      .relative(/*turbopackIgnore: true*/ root, absolute)
+      .split(path.sep)
+      .join("/")
+    out.push({
+      path: relative,
+      bytes: await readFile(/*turbopackIgnore: true*/ absolute),
+    })
   }
 }
 
