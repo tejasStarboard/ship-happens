@@ -178,6 +178,19 @@ export async function readWorkspaceFile(
   return { content: buffer, encoding: "binary", size: buffer.byteLength }
 }
 
+export async function workspaceFileExists(
+  sessionId: string,
+  relativePath: string
+): Promise<boolean> {
+  try {
+    const absolute = resolveWorkspacePath(sessionId, relativePath)
+    const info = await stat(/*turbopackIgnore: true*/ absolute)
+    return info.isFile()
+  } catch {
+    return false
+  }
+}
+
 export async function writeWorkspaceFile(
   sessionId: string,
   relativePath: string,
