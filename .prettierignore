@@ -5,7 +5,10 @@ node_modules/
 .nitro/
 .tanstack/
 .vinxi/
+.next/
 coverage/
 pnpm-lock.yaml
 .pnpm-store/
 **/routeTree.gen.ts
+# Next regenerates this; do not fight Prettier vs Next's semicolons.
+**/next-env.d.ts

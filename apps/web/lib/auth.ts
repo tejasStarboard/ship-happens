@@ -26,6 +26,14 @@ const googleEnabled = Boolean(
   env.GOOGLE_CLIENT_ID?.trim() && env.GOOGLE_CLIENT_SECRET?.trim()
 )
 
+/** Skip verification when Resend is a stub (local/CI) so sign-up can create a session. */
+const emailDeliveryEnabled = (() => {
+  const key = env.RESEND_API_KEY.trim()
+  return (
+    key.length > 0 && !key.includes("placeholder") && !key.includes("local_dev")
+  )
+})()
+
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -89,7 +97,7 @@ export const auth = betterAuth({
         }),
       })
     },
-    sendOnSignUp: isProduction,
+    sendOnSignUp: isProduction && emailDeliveryEnabled,
   },
   emailAndPassword: {
     enabled: true,
@@ -106,7 +114,7 @@ export const auth = betterAuth({
         }),
       })
     },
-    requireEmailVerification: isProduction,
+    requireEmailVerification: isProduction && emailDeliveryEnabled,
   },
   user: {
     additionalFields: {

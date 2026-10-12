@@ -17,6 +17,7 @@ env:
   BETTER_AUTH_SECRET: ci-better-auth-secret-min-32-characters-long
   BETTER_AUTH_DOMAIN: localhost
   APP_URL: http://127.0.0.1:3000
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3000
   RESEND_API_KEY: re_ci_placeholder
   EMAIL_SENDER_NAME: Ship Happens CI
   EMAIL_SENDER_ADDRESS: noreply@example.com
