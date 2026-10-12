@@ -32,9 +32,13 @@ test.describe("settings", () => {
     await nameInput.fill(nextName)
     await nameInput.blur()
 
-    await expect(page.getByText("Profile updated")).toBeVisible({
-      timeout: 15_000,
-    })
+    // Toast can be cleared by router.refresh(); assert the saved value instead.
+    await expect
+      .poll(async () => nameInput.inputValue(), { timeout: 15_000 })
+      .toBe(nextName)
+    await expect(
+      page.getByRole("button", { name: new RegExp(nextName) })
+    ).toBeVisible({ timeout: 15_000 })
 
     await page.reload()
     await waitForAppReady(page)
@@ -50,10 +54,9 @@ test.describe("settings", () => {
     await expect(page.getByRole("table")).toBeVisible()
 
     await page.getByRole("button", { name: /Invite/ }).click()
-    await expect(page.getByText("Invite member").first()).toBeVisible()
-    await expect(page.locator("#invite-user-form")).toBeVisible()
-    await expect(
-      page.locator("#invite-user-form").getByLabel("Email")
-    ).toBeVisible()
+    const inviteDialog = page.getByRole("dialog", { name: "Invite member" })
+    await expect(inviteDialog).toBeVisible()
+    await expect(inviteDialog.locator("#invite-user-form")).toBeVisible()
+    await expect(inviteDialog.getByLabel("Email")).toBeVisible()
   })
 })

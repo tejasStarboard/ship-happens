@@ -1,14 +1,14 @@
-import { config } from "dotenv";
-import { resolve } from "node:path";
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
-import { isProduction } from "@/lib/constants";
+import { config } from "dotenv"
+import { resolve } from "node:path"
+import { createEnv } from "@t3-oss/env-nextjs"
+import { z } from "zod"
+import { isProduction } from "@/lib/constants"
 
 // Root monorepo secrets first, then app-local overrides. dotenv no-ops if missing.
-config({ path: resolve(process.cwd(), "../../.env") });
-config({ path: resolve(process.cwd(), "../../.env.local") });
-config({ path: resolve(process.cwd(), ".env"), override: true });
-config({ path: resolve(process.cwd(), ".env.local"), override: true });
+config({ path: resolve(process.cwd(), "../../.env") })
+config({ path: resolve(process.cwd(), "../../.env.local") })
+config({ path: resolve(process.cwd(), ".env"), override: true })
+config({ path: resolve(process.cwd(), ".env.local"), override: true })
 
 export const env = createEnv({
   server: {
@@ -67,8 +67,7 @@ export const env = createEnv({
 
     SANDBOX_STARBOARD_DB_URL: process.env.SANDBOX_STARBOARD_DB_URL,
 
-    NEXT_PUBLIC_APP_URL:
-      process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL,
   },
   emptyStringAsUndefined: true,
-});
+})

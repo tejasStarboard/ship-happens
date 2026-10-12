@@ -1,22 +1,22 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import { Button } from "@workspace/ui/components/button";
-import { signOut, useSession } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation"
+import { Button } from "@workspace/ui/components/button"
+import { signOut, useSession } from "@/lib/auth-client"
+import { cn } from "@/lib/utils"
 
 export function UserMenu({
   className,
   variant = "fixed",
 }: {
-  readonly className?: string;
-  readonly variant?: "fixed" | "inline";
+  readonly className?: string
+  readonly variant?: "fixed" | "inline"
 }) {
-  const router = useRouter();
-  const { data: session } = useSession();
+  const router = useRouter()
+  const { data: session } = useSession()
 
   if (!session?.user) {
-    return null;
+    return null
   }
 
   return (
@@ -26,15 +26,17 @@ export function UserMenu({
         variant === "fixed"
           ? "fixed top-3 right-3 z-50 rounded-lg border border-border bg-card/90 px-3 py-1.5 shadow-xs backdrop-blur"
           : "px-1",
-        className,
+        className
       )}
     >
-      <span className="max-w-40 truncate text-muted-foreground">{session.user.email}</span>
+      <span className="max-w-40 truncate text-muted-foreground">
+        {session.user.email}
+      </span>
       <Button
         onClick={async () => {
-          await signOut();
-          router.push("/sign-in");
-          router.refresh();
+          await signOut()
+          router.push("/sign-in")
+          router.refresh()
         }}
         size="sm"
         type="button"
@@ -43,5 +45,5 @@ export function UserMenu({
         Sign out
       </Button>
     </div>
-  );
+  )
 }

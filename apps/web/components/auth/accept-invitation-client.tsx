@@ -1,30 +1,30 @@
-"use client";
+"use client"
 
-import * as React from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Alert, AlertDescription } from "@workspace/ui/components/alert";
-import { Button } from "@workspace/ui/components/button";
+import * as React from "react"
+import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { Alert, AlertDescription } from "@workspace/ui/components/alert"
+import { Button } from "@workspace/ui/components/button"
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
-} from "@workspace/ui/components/empty";
-import { Spinner } from "@workspace/ui/components/spinner";
+} from "@workspace/ui/components/empty"
+import { Spinner } from "@workspace/ui/components/spinner"
 import {
   AuthBody,
   AuthCard,
   AuthFooter,
   AuthHeader,
   AuthPage,
-} from "@/components/auth/auth-shell";
-import { authClient } from "@/lib/auth/client";
+} from "@/components/auth/auth-shell"
+import { authClient } from "@/lib/auth/client"
 
 type InvitationSummary = {
-  organizationName: string;
-  inviterEmail: string;
-  role: string;
-};
+  organizationName: string
+  inviterEmail: string
+  role: string
+}
 
 export function AcceptInvitationClient({
   invitationId,
@@ -32,58 +32,56 @@ export function AcceptInvitationClient({
   loadError,
   userEmail,
 }: {
-  invitationId: string;
-  invitation: InvitationSummary | null;
-  loadError: string | null;
-  userEmail: string;
+  invitationId: string
+  invitation: InvitationSummary | null
+  loadError: string | null
+  userEmail: string
 }) {
-  const router = useRouter();
-  const [pending, setPending] = React.useState<"accept" | "reject" | null>(
-    null,
-  );
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const router = useRouter()
+  const [pending, setPending] = React.useState<"accept" | "reject" | null>(null)
+  const [actionError, setActionError] = React.useState<string | null>(null)
 
   async function accept() {
-    setActionError(null);
-    setPending("accept");
+    setActionError(null)
+    setPending("accept")
     try {
       const { error } = await authClient.organization.acceptInvitation({
         invitationId,
-      });
+      })
       if (error) {
-        setActionError(error.message ?? "Could not accept invitation");
-        setPending(null);
-        return;
+        setActionError(error.message ?? "Could not accept invitation")
+        setPending(null)
+        return
       }
-      router.push("/rfp");
-      router.refresh();
+      router.push("/rfp")
+      router.refresh()
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Could not accept invitation",
-      );
-      setPending(null);
+        err instanceof Error ? err.message : "Could not accept invitation"
+      )
+      setPending(null)
     }
   }
 
   async function reject() {
-    setActionError(null);
-    setPending("reject");
+    setActionError(null)
+    setPending("reject")
     try {
       const { error } = await authClient.organization.rejectInvitation({
         invitationId,
-      });
+      })
       if (error) {
-        setActionError(error.message ?? "Could not reject invitation");
-        setPending(null);
-        return;
+        setActionError(error.message ?? "Could not reject invitation")
+        setPending(null)
+        return
       }
-      router.push("/select-org");
-      router.refresh();
+      router.push("/select-org")
+      router.refresh()
     } catch (err) {
       setActionError(
-        err instanceof Error ? err.message : "Could not reject invitation",
-      );
-      setPending(null);
+        err instanceof Error ? err.message : "Could not reject invitation"
+      )
+      setPending(null)
     }
   }
 
@@ -126,7 +124,7 @@ export function AcceptInvitationClient({
           </AuthBody>
         </AuthCard>
       </AuthPage>
-    );
+    )
   }
 
   return (
@@ -188,5 +186,5 @@ export function AcceptInvitationClient({
         </AuthFooter>
       </AuthCard>
     </AuthPage>
-  );
+  )
 }

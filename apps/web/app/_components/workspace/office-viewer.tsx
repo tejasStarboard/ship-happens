@@ -1,9 +1,9 @@
-"use client";
+"use client"
 
-import { useEffect, useRef, useState } from "react";
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@/lib/utils";
-import type { OfficeViewerKind } from "@/lib/workspace-types";
+import { useEffect, useRef, useState } from "react"
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@/lib/utils"
+import type { OfficeViewerKind } from "@/lib/workspace-types"
 
 export function OfficeViewer({
   sessionId,
@@ -11,12 +11,12 @@ export function OfficeViewer({
   kind,
   onDownload,
 }: {
-  readonly sessionId: string;
-  readonly path: string;
-  readonly kind: OfficeViewerKind;
-  readonly onDownload: () => void;
+  readonly sessionId: string
+  readonly path: string
+  readonly kind: OfficeViewerKind
+  readonly onDownload: () => void
 }) {
-  const previewUrl = `/api/workspace/${encodeURIComponent(sessionId)}/preview?path=${encodeURIComponent(path)}`;
+  const previewUrl = `/api/workspace/${encodeURIComponent(sessionId)}/preview?path=${encodeURIComponent(path)}`
 
   if (kind === "pdf") {
     return (
@@ -25,16 +25,20 @@ export function OfficeViewer({
         src={previewUrl}
         title={path}
       />
-    );
+    )
   }
 
   if (kind === "image") {
     return (
       <div className="flex h-full min-h-0 items-center justify-center overflow-auto bg-muted p-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img alt={path} className="max-h-full max-w-full object-contain shadow-sm" src={previewUrl} />
+        <img
+          alt={path}
+          className="max-h-full max-w-full object-contain shadow-sm"
+          src={previewUrl}
+        />
       </div>
-    );
+    )
   }
 
   if (kind === "unsupported-office") {
@@ -44,22 +48,34 @@ export function OfficeViewer({
         onDownload={onDownload}
         path={path}
       />
-    );
+    )
   }
 
   if (kind === "docx") {
-    return <DocxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />;
+    return (
+      <DocxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />
+    )
   }
 
   if (kind === "xlsx") {
-    return <XlsxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />;
+    return (
+      <XlsxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />
+    )
   }
 
   if (kind === "pptx") {
-    return <PptxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />;
+    return (
+      <PptxViewer onDownload={onDownload} path={path} previewUrl={previewUrl} />
+    )
   }
 
-  return <Fallback message="Unsupported file type." onDownload={onDownload} path={path} />;
+  return (
+    <Fallback
+      message="Unsupported file type."
+      onDownload={onDownload}
+      path={path}
+    />
+  )
 }
 
 function Fallback({
@@ -67,18 +83,18 @@ function Fallback({
   message,
   onDownload,
 }: {
-  readonly path: string;
-  readonly message: string;
-  readonly onDownload: () => void;
+  readonly path: string
+  readonly message: string
+  readonly onDownload: () => void
 }) {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground text-sm">
+    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
       <p>{message}</p>
       <Button onClick={onDownload} type="button" variant="outline">
         Download {path.split("/").pop()}
       </Button>
     </div>
-  );
+  )
 }
 
 function DocxViewer({
@@ -86,30 +102,30 @@ function DocxViewer({
   path,
   onDownload,
 }: {
-  readonly previewUrl: string;
-  readonly path: string;
-  readonly onDownload: () => void;
+  readonly previewUrl: string
+  readonly path: string
+  readonly onDownload: () => void
 }) {
-  const hostRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
+  const hostRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string>()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let cancelled = false;
-    const host = hostRef.current;
-    if (!host) return;
+    let cancelled = false
+    const host = hostRef.current
+    if (!host) return
 
-    host.innerHTML = "";
-    setLoading(true);
-    setError(undefined);
+    host.innerHTML = ""
+    setLoading(true)
+    setError(undefined)
 
     void (async () => {
       try {
-        const { renderAsync } = await import("docx-preview");
-        const response = await fetch(previewUrl);
-        if (!response.ok) throw new Error("Failed to load document");
-        const buffer = await response.arrayBuffer();
-        if (cancelled) return;
+        const { renderAsync } = await import("docx-preview")
+        const response = await fetch(previewUrl)
+        if (!response.ok) throw new Error("Failed to load document")
+        const buffer = await response.arrayBuffer()
+        if (cancelled) return
         await renderAsync(buffer, host, undefined, {
           className: "eve-docx",
           inWrapper: true,
@@ -117,23 +133,27 @@ function DocxViewer({
           breakPages: true,
           renderHeaders: true,
           renderFooters: true,
-        });
+        })
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to render Word document");
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Failed to render Word document"
+          )
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
-    })();
+    })()
 
     return () => {
-      cancelled = true;
-    };
-  }, [previewUrl]);
+      cancelled = true
+    }
+  }, [previewUrl])
 
   if (error) {
-    return <Fallback message={error} onDownload={onDownload} path={path} />;
+    return <Fallback message={error} onDownload={onDownload} path={path} />
   }
 
   return (
@@ -142,12 +162,12 @@ function DocxViewer({
       <div
         className={cn(
           "eve-docx-host mx-auto max-w-4xl px-4 py-6 [&_section.eve-docx]:mx-auto [&_section.eve-docx]:mb-6 [&_section.eve-docx]:bg-white [&_section.eve-docx]:p-6 [&_section.eve-docx]:text-neutral-900 [&_section.eve-docx]:shadow-sm",
-          loading && "invisible",
+          loading && "invisible"
         )}
         ref={hostRef}
       />
     </div>
-  );
+  )
 }
 
 function XlsxViewer({
@@ -155,88 +175,96 @@ function XlsxViewer({
   path,
   onDownload,
 }: {
-  readonly previewUrl: string;
-  readonly path: string;
-  readonly onDownload: () => void;
+  readonly previewUrl: string
+  readonly path: string
+  readonly onDownload: () => void
 }) {
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
-  const [sheetNames, setSheetNames] = useState<string[]>([]);
-  const [activeSheet, setActiveSheet] = useState(0);
-  const [rows, setRows] = useState<string[][]>([]);
+  const [error, setError] = useState<string>()
+  const [loading, setLoading] = useState(true)
+  const [sheetNames, setSheetNames] = useState<string[]>([])
+  const [activeSheet, setActiveSheet] = useState(0)
+  const [rows, setRows] = useState<string[][]>([])
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(undefined);
+    let cancelled = false
+    setLoading(true)
+    setError(undefined)
 
     void (async () => {
       try {
-        const XLSX = await import("xlsx");
-        const response = await fetch(previewUrl);
-        if (!response.ok) throw new Error("Failed to load spreadsheet");
-        const buffer = await response.arrayBuffer();
-        if (cancelled) return;
-        const workbook = XLSX.read(buffer, { type: "array" });
-        const names = workbook.SheetNames;
-        setSheetNames(names);
-        setActiveSheet(0);
-        const sheet = workbook.Sheets[names[0] ?? ""];
+        const XLSX = await import("xlsx")
+        const response = await fetch(previewUrl)
+        if (!response.ok) throw new Error("Failed to load spreadsheet")
+        const buffer = await response.arrayBuffer()
+        if (cancelled) return
+        const workbook = XLSX.read(buffer, { type: "array" })
+        const names = workbook.SheetNames
+        setSheetNames(names)
+        setActiveSheet(0)
+        const sheet = workbook.Sheets[names[0] ?? ""]
         const data = sheet
-          ? (XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as unknown[][])
-          : [];
-        setRows(normalizeRows(data));
+          ? (XLSX.utils.sheet_to_json(sheet, {
+              header: 1,
+              defval: "",
+            }) as unknown[][])
+          : []
+        setRows(normalizeRows(data))
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to render spreadsheet");
+          setError(
+            err instanceof Error ? err.message : "Failed to render spreadsheet"
+          )
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
-    })();
+    })()
 
     return () => {
-      cancelled = true;
-    };
-  }, [previewUrl]);
+      cancelled = true
+    }
+  }, [previewUrl])
 
   const selectSheet = async (index: number) => {
-    setActiveSheet(index);
-    setLoading(true);
+    setActiveSheet(index)
+    setLoading(true)
     try {
-      const XLSX = await import("xlsx");
-      const response = await fetch(previewUrl);
-      if (!response.ok) throw new Error("Failed to load spreadsheet");
-      const buffer = await response.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      const name = workbook.SheetNames[index];
-      const sheet = name ? workbook.Sheets[name] : undefined;
+      const XLSX = await import("xlsx")
+      const response = await fetch(previewUrl)
+      if (!response.ok) throw new Error("Failed to load spreadsheet")
+      const buffer = await response.arrayBuffer()
+      const workbook = XLSX.read(buffer, { type: "array" })
+      const name = workbook.SheetNames[index]
+      const sheet = name ? workbook.Sheets[name] : undefined
       const data = sheet
-        ? (XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" }) as unknown[][])
-        : [];
-      setRows(normalizeRows(data));
+        ? (XLSX.utils.sheet_to_json(sheet, {
+            header: 1,
+            defval: "",
+          }) as unknown[][])
+        : []
+      setRows(normalizeRows(data))
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to switch sheet");
+      setError(err instanceof Error ? err.message : "Failed to switch sheet")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   if (error) {
-    return <Fallback message={error} onDownload={onDownload} path={path} />;
+    return <Fallback message={error} onDownload={onDownload} path={path} />
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col">
       {sheetNames.length > 1 ? (
-        <div className="flex shrink-0 gap-1 overflow-x-auto border-border border-b bg-muted/30 px-2 py-1">
+        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border bg-muted/30 px-2 py-1">
           {sheetNames.map((name, index) => (
             <button
               className={cn(
                 "rounded px-2 py-1 text-[11px]",
                 index === activeSheet
                   ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:bg-background/70",
+                  : "text-muted-foreground hover:bg-background/70"
               )}
               key={name}
               onClick={() => void selectSheet(index)}
@@ -252,13 +280,13 @@ function XlsxViewer({
         <table className="min-w-full border-collapse font-mono text-[11px]">
           <tbody>
             {rows.map((row, rowIndex) => (
-              <tr className="border-border border-b" key={`r-${rowIndex}`}>
+              <tr className="border-b border-border" key={`r-${rowIndex}`}>
                 <td className="sticky left-0 bg-muted/80 px-2 py-1 text-right text-muted-foreground">
                   {rowIndex + 1}
                 </td>
                 {row.map((cell, cellIndex) => (
                   <td
-                    className="max-w-64 truncate border-border border-r px-2 py-1 whitespace-pre"
+                    className="max-w-64 truncate border-r border-border px-2 py-1 whitespace-pre"
                     key={`c-${rowIndex}-${cellIndex}`}
                     title={cell}
                   >
@@ -270,11 +298,11 @@ function XlsxViewer({
           </tbody>
         </table>
         {!loading && rows.length === 0 ? (
-          <p className="p-4 text-muted-foreground text-sm">Sheet is empty.</p>
+          <p className="p-4 text-sm text-muted-foreground">Sheet is empty.</p>
         ) : null}
       </div>
     </div>
-  );
+  )
 }
 
 function PptxViewer({
@@ -282,82 +310,87 @@ function PptxViewer({
   path,
   onDownload,
 }: {
-  readonly previewUrl: string;
-  readonly path: string;
-  readonly onDownload: () => void;
+  readonly previewUrl: string
+  readonly path: string
+  readonly onDownload: () => void
 }) {
-  const hostRef = useRef<HTMLDivElement>(null);
-  const [error, setError] = useState<string>();
-  const [loading, setLoading] = useState(true);
+  const hostRef = useRef<HTMLDivElement>(null)
+  const [error, setError] = useState<string>()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let cancelled = false;
-    const host = hostRef.current;
-    if (!host) return;
+    let cancelled = false
+    const host = hostRef.current
+    if (!host) return
 
-    host.innerHTML = "";
-    setLoading(true);
-    setError(undefined);
+    host.innerHTML = ""
+    setLoading(true)
+    setError(undefined)
 
     void (async () => {
       try {
-        const { init } = await import("pptx-preview");
-        const response = await fetch(previewUrl);
-        if (!response.ok) throw new Error("Failed to load presentation");
-        const buffer = await response.arrayBuffer();
-        if (cancelled) return;
-        const width = Math.max(640, host.clientWidth - 32);
+        const { init } = await import("pptx-preview")
+        const response = await fetch(previewUrl)
+        if (!response.ok) throw new Error("Failed to load presentation")
+        const buffer = await response.arrayBuffer()
+        if (cancelled) return
+        const width = Math.max(640, host.clientWidth - 32)
         const previewer = init(host, {
           width,
           height: Math.round((width * 9) / 16),
-        });
-        await previewer.preview(buffer);
+        })
+        await previewer.preview(buffer)
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err.message : "Failed to render PowerPoint");
+          setError(
+            err instanceof Error ? err.message : "Failed to render PowerPoint"
+          )
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) setLoading(false)
       }
-    })();
+    })()
 
     return () => {
-      cancelled = true;
-    };
-  }, [previewUrl]);
+      cancelled = true
+    }
+  }, [previewUrl])
 
   if (error) {
-    return <Fallback message={error} onDownload={onDownload} path={path} />;
+    return <Fallback message={error} onDownload={onDownload} path={path} />
   }
 
   return (
     <div className="relative h-full min-h-0 overflow-auto bg-muted p-4">
       {loading ? <LoadingLabel label="Rendering PowerPoint…" /> : null}
-      <div className={cn("flex justify-center", loading && "invisible")} ref={hostRef} />
+      <div
+        className={cn("flex justify-center", loading && "invisible")}
+        ref={hostRef}
+      />
     </div>
-  );
+  )
 }
 
 function LoadingLabel({ label }: { readonly label: string }) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-muted-foreground text-sm">
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 text-sm text-muted-foreground">
       {label}
     </div>
-  );
+  )
 }
 
 function normalizeRows(data: unknown[][]): string[][] {
-  const limited = data.slice(0, 500);
+  const limited = data.slice(0, 500)
   const width = Math.min(
     40,
-    limited.reduce((max, row) => Math.max(max, row.length), 0),
-  );
+    limited.reduce((max, row) => Math.max(max, row.length), 0)
+  )
   return limited.map((row) => {
-    const cells: string[] = [];
+    const cells: string[] = []
     for (let i = 0; i < width; i += 1) {
-      const value = row[i];
-      cells.push(value == null ? "" : String(value));
+      const value = row[i]
+      cells.push(value == null ? "" : String(value))
     }
-    return cells;
-  });
+    return cells
+  })
 }

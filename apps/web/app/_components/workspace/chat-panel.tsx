@@ -1,15 +1,18 @@
-"use client";
+"use client"
 
-import { PlusIcon, XIcon } from "lucide-react";
-import { AgentChat, type WorkspaceChatContext } from "@/app/_components/agent-chat";
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@/lib/utils";
+import { PlusIcon, XIcon } from "lucide-react"
+import {
+  AgentChat,
+  type WorkspaceChatContext,
+} from "@/app/_components/agent-chat"
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@/lib/utils"
 
 export type ChatTabState = {
-  readonly id: string;
-  readonly sessionId: string | null;
-  readonly title: string;
-};
+  readonly id: string
+  readonly sessionId: string | null
+  readonly title: string
+}
 
 export function ChatPanel({
   workspaceId,
@@ -25,34 +28,37 @@ export function ChatPanel({
   onRenameChat,
   onInsertTextConsumed,
 }: {
-  readonly workspaceId: string;
-  readonly chats: readonly ChatTabState[];
-  readonly activeChatId: string;
-  readonly workspaceContext: WorkspaceChatContext;
-  readonly insertText?: string | null;
-  readonly onSelectChat: (chatId: string) => void;
-  readonly onAddChat: () => void | Promise<void>;
-  readonly onCloseChat: (chatId: string) => void | Promise<void>;
-  readonly onBindSession: (chatId: string, sessionId: string) => void | Promise<void>;
-  readonly onIdle: () => void;
-  readonly onRenameChat: (chatId: string, title: string) => void | Promise<void>;
-  readonly onInsertTextConsumed?: () => void;
+  readonly workspaceId: string
+  readonly chats: readonly ChatTabState[]
+  readonly activeChatId: string
+  readonly workspaceContext: WorkspaceChatContext
+  readonly insertText?: string | null
+  readonly onSelectChat: (chatId: string) => void
+  readonly onAddChat: () => void | Promise<void>
+  readonly onCloseChat: (chatId: string) => void | Promise<void>
+  readonly onBindSession: (
+    chatId: string,
+    sessionId: string
+  ) => void | Promise<void>
+  readonly onIdle: () => void
+  readonly onRenameChat: (chatId: string, title: string) => void | Promise<void>
+  readonly onInsertTextConsumed?: () => void
 }) {
-  const active = chats.find((chat) => chat.id === activeChatId) ?? chats[0];
+  const active = chats.find((chat) => chat.id === activeChatId) ?? chats[0]
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex h-9 shrink-0 items-end gap-px border-border border-b bg-muted/40 px-1">
+      <div className="flex h-9 shrink-0 items-end gap-px border-b border-border bg-muted/40 px-1">
         <div className="flex min-w-0 flex-1 items-end gap-px overflow-x-auto">
           {chats.map((chat) => {
-            const selected = chat.id === active?.id;
+            const selected = chat.id === active?.id
             return (
               <div
                 className={cn(
-                  "group flex max-w-40 shrink-0 items-center gap-1 border-transparent border-b-2 px-2 py-1.5 text-xs",
+                  "group flex max-w-40 shrink-0 items-center gap-1 border-b-2 border-transparent px-2 py-1.5 text-xs",
                   selected
                     ? "border-foreground bg-background text-foreground"
-                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                    : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
                 )}
                 key={chat.id}
               >
@@ -75,7 +81,7 @@ export function ChatPanel({
                   </button>
                 ) : null}
               </div>
-            );
+            )
           })}
         </div>
         <Button
@@ -98,11 +104,11 @@ export function ChatPanel({
             onIdle={onIdle}
             onInsertTextConsumed={onInsertTextConsumed}
             onSessionId={(sessionId) => {
-              void onBindSession(active.id, sessionId);
+              void onBindSession(active.id, sessionId)
             }}
             onTitleHint={(title) => {
               if (active.title.startsWith("Chat ")) {
-                void onRenameChat(active.id, title);
+                void onRenameChat(active.id, title)
               }
             }}
             sessionId={active.sessionId ?? undefined}
@@ -116,5 +122,5 @@ export function ChatPanel({
         ) : null}
       </div>
     </div>
-  );
+  )
 }

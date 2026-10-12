@@ -1,13 +1,13 @@
-import { redirect } from "next/navigation";
-import { getServerSession } from "@/lib/session";
+import { redirect } from "next/navigation"
+import { getServerSession } from "@/lib/session"
 
 export default async function Page() {
-  const session = await getServerSession();
+  const session = await getServerSession()
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in")
   }
   if (!session.session.activeOrganizationId) {
-    redirect("/select-org");
+    redirect("/select-org")
   }
-  redirect("/rfp");
+  redirect("/rfp")
 }

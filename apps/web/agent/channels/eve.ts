@@ -1,6 +1,6 @@
-import { eveChannel } from "eve/channels/eve";
-import { localDev, vercelOidc } from "eve/channels/auth";
-import { betterAuthEveAuth } from "@/lib/eve-auth";
+import { eveChannel } from "eve/channels/eve"
+import { localDev, vercelOidc } from "eve/channels/auth"
+import { betterAuthEveAuth } from "@/lib/eve-auth"
 
 export default eveChannel({
   auth: [
@@ -11,4 +11,4 @@ export default eveChannel({
     // Open on localhost for `eve dev` and the REPL; ignored in production.
     localDev(),
   ],
-});
+})

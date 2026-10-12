@@ -1,22 +1,19 @@
-import { ProfileForm } from "@/components/settings/profile-form";
-import { getSession, listOrganizations } from "@/lib/auth/session";
+import { ProfileForm } from "@/components/settings/profile-form"
+import { getSession, listOrganizations } from "@/lib/auth/session"
 
 export default async function SettingsProfilePage() {
-  const [session, orgs] = await Promise.all([
-    getSession(),
-    listOrganizations(),
-  ]);
+  const [session, orgs] = await Promise.all([getSession(), listOrganizations()])
 
   if (!session) {
-    return null;
+    return null
   }
 
   const userRecord = session.user as typeof session.user & {
-    username?: string | null;
-  };
-  const activeOrgId = session.session.activeOrganizationId;
+    username?: string | null
+  }
+  const activeOrgId = session.session.activeOrganizationId
   const organization =
-    orgs?.find((org) => org.id === activeOrgId) ?? orgs?.[0] ?? null;
+    orgs?.find((org) => org.id === activeOrgId) ?? orgs?.[0] ?? null
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-6 lg:px-6">
@@ -34,11 +31,9 @@ export default async function SettingsProfilePage() {
           username: userRecord.username ?? null,
         }}
         organization={
-          organization
-            ? { id: organization.id, name: organization.name }
-            : null
+          organization ? { id: organization.id, name: organization.name } : null
         }
       />
     </div>
-  );
+  )
 }

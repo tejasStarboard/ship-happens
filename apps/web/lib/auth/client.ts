@@ -4,4 +4,4 @@ export {
   signOut,
   signUp,
   useSession,
-} from "@/lib/auth-client";
+} from "@/lib/auth-client"

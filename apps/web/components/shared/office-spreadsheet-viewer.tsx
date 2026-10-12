@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { IconAlertTriangle, IconExternalLink } from "@tabler/icons-react"
 import {

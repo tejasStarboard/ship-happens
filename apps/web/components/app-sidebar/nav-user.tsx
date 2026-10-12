@@ -100,16 +100,12 @@ export function NavUser({ user }: { user: NavUserData }) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem
-                onClick={() =>
-                  void router.push("/settings/profile")
-                }
+                onClick={() => void router.push("/settings/profile")}
               >
                 <IconUserCircle />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={() => void router.push("/settings")}
-              >
+              <DropdownMenuItem onClick={() => void router.push("/settings")}>
                 <IconSettings />
                 Settings
               </DropdownMenuItem>

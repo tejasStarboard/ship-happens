@@ -36,7 +36,9 @@ export function persistCredentials(credentials: E2ECredentials) {
 /** Wait until client React has hydrated so form handlers are attached. */
 export async function waitForAppReady(page: Page) {
   await page.waitForFunction(
-    () => document.documentElement.dataset.appReady === "true"
+    () => document.documentElement.dataset.appReady === "true",
+    undefined,
+    { timeout: 15_000 }
   )
 }
 

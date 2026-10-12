@@ -31,8 +31,8 @@ import { authClient } from "@/lib/auth/client"
 import {
   ALLOWED_ORG_LOGO_TYPES,
   MAX_ORG_LOGO_BYTES,
-  uploadOrgLogo,
-} from "@/lib/storage/org-logo"
+} from "@/lib/storage/org-logo-constants"
+import { uploadOrgLogo } from "@/lib/storage/org-logo"
 
 const createOrgSchema = z.object({
   name: z.string().min(2, "Organization name is required"),

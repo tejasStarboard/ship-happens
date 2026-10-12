@@ -66,7 +66,9 @@ export function TemplatesTable({
                     className="cursor-pointer"
                     onClick={() => router.push(`/templates/${template.id}`)}
                   >
-                    <TableCell className="font-medium">{template.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {template.name}
+                    </TableCell>
                     <TableCell>{template.customer ?? "—"}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {template.fileName}

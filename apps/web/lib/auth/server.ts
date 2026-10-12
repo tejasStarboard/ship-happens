@@ -1,1 +1,1 @@
-export { auth, type Session } from "@/lib/auth";
+export { auth, type Session } from "@/lib/auth"

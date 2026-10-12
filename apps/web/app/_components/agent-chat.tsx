@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import type { UserContent, UIMessage } from "ai";
-import { useEveAgent } from "eve/react";
+import type { UserContent, UIMessage } from "ai"
+import { useEveAgent } from "eve/react"
 import {
   AlertCircleIcon,
   BrainIcon,
@@ -10,14 +10,14 @@ import {
   MessageSquareIcon,
   PlusIcon,
   SquareIcon,
-} from "lucide-react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+} from "lucide-react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Attachment,
   AttachmentPreview,
   AttachmentRemove,
   Attachments,
-} from "@workspace/ui/ai-elements/attachments";
+} from "@workspace/ui/ai-elements/attachments"
 import {
   Conversation,
   ConversationContent,
@@ -25,8 +25,8 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
   ConversationTopFade,
-} from "@workspace/ui/ai-elements/conversation";
-import { Message, MessageContent } from "@workspace/ui/ai-elements/message";
+} from "@workspace/ui/ai-elements/conversation"
+import { Message, MessageContent } from "@workspace/ui/ai-elements/message"
 import {
   ModelSelector,
   ModelSelectorContent,
@@ -39,7 +39,7 @@ import {
   ModelSelectorLogoGroup,
   ModelSelectorName,
   ModelSelectorTrigger,
-} from "@workspace/ui/ai-elements/model-selector";
+} from "@workspace/ui/ai-elements/model-selector"
 import {
   PromptInput,
   PromptInputActionAddAttachments,
@@ -55,24 +55,24 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputAttachments,
-} from "@workspace/ui/ai-elements/prompt-input";
-import { Shimmer } from "@workspace/ui/ai-elements/shimmer";
-import { SpeechInput } from "@workspace/ui/ai-elements/speech-input";
-import { Suggestion, Suggestions } from "@workspace/ui/ai-elements/suggestion";
-import { Button } from "@workspace/ui/components/button";
+} from "@workspace/ui/ai-elements/prompt-input"
+import { Shimmer } from "@workspace/ui/ai-elements/shimmer"
+import { SpeechInput } from "@workspace/ui/ai-elements/speech-input"
+import { Suggestion, Suggestions } from "@workspace/ui/ai-elements/suggestion"
+import { Button } from "@workspace/ui/components/button"
 import {
   CHAT_MODEL_CHEFS,
   CHAT_MODELS,
   DEFAULT_CHAT_MODEL_ID,
   getChatModel,
   type ChatModelId,
-} from "@/lib/chat-models";
-import { cn } from "@/lib/utils";
-import { WEB_CHAT_AGENT } from "@/app/eve-agent";
-import { AgentMessage } from "./agent-message";
+} from "@/lib/chat-models"
+import { cn } from "@/lib/utils"
+import { WEB_CHAT_AGENT } from "@/app/eve-agent"
+import { AgentMessage } from "./agent-message"
 
-const DEFAULT_AGENT_NAME = "eve-nextjs";
-const AGENT_NAME = WEB_CHAT_AGENT ?? DEFAULT_AGENT_NAME;
+const DEFAULT_AGENT_NAME = "eve-nextjs"
+const AGENT_NAME = WEB_CHAT_AGENT ?? DEFAULT_AGENT_NAME
 
 const SUGGESTIONS = [
   "What are the latest trends in AI?",
@@ -81,14 +81,14 @@ const SUGGESTIONS = [
   "Best practices for React development",
   "Tell me about TypeScript benefits",
   "How to optimize database queries?",
-];
+]
 
 export type WorkspaceChatContext = {
-  readonly workspaceId?: string;
-  readonly workspaceFiles: readonly string[];
-  readonly openTabs: readonly string[];
-  readonly activeTab: string | null;
-};
+  readonly workspaceId?: string
+  readonly workspaceFiles: readonly string[]
+  readonly openTabs: readonly string[]
+  readonly activeTab: string | null
+}
 
 export function AgentChat({
   sessionId,
@@ -102,25 +102,25 @@ export function AgentChat({
   insertText,
   onInsertTextConsumed,
 }: {
-  readonly sessionId?: string;
-  readonly sessionless?: boolean;
-  readonly variant?: "page" | "panel";
-  readonly workspaceContext?: WorkspaceChatContext;
-  readonly onSessionId?: (sessionId: string) => void;
-  readonly onIdle?: () => void;
-  readonly onTitleHint?: (title: string) => void;
+  readonly sessionId?: string
+  readonly sessionless?: boolean
+  readonly variant?: "page" | "panel"
+  readonly workspaceContext?: WorkspaceChatContext
+  readonly onSessionId?: (sessionId: string) => void
+  readonly onIdle?: () => void
+  readonly onTitleHint?: (title: string) => void
   /** When false, skip rewriting the browser URL on session create (multi-chat panel). */
-  readonly syncUrl?: boolean;
-  readonly insertText?: string | null;
-  readonly onInsertTextConsumed?: () => void;
+  readonly syncUrl?: boolean
+  readonly insertText?: string | null
+  readonly onInsertTextConsumed?: () => void
 }) {
-  const [cancellationError, setCancellationError] = useState<string>();
-  const [text, setText] = useState("");
-  const [model, setModel] = useState<ChatModelId>(DEFAULT_CHAT_MODEL_ID);
-  const [modelSelectorOpen, setModelSelectorOpen] = useState(false);
-  const [useWebSearch, setUseWebSearch] = useState(false);
-  const isPanel = variant === "panel";
-  const titleHintSent = useRef(false);
+  const [cancellationError, setCancellationError] = useState<string>()
+  const [text, setText] = useState("")
+  const [model, setModel] = useState<ChatModelId>(DEFAULT_CHAT_MODEL_ID)
+  const [modelSelectorOpen, setModelSelectorOpen] = useState(false)
+  const [useWebSearch, setUseWebSearch] = useState(false)
+  const isPanel = variant === "panel"
+  const titleHintSent = useRef(false)
 
   const agent = useEveAgent({
     agent: WEB_CHAT_AGENT,
@@ -134,42 +134,48 @@ export function AgentChat({
           },
     resume: sessionId !== undefined,
     onSessionChange(session) {
-      if (session === undefined) return;
-      onSessionId?.(session.sessionId);
+      if (session === undefined) return
+      onSessionId?.(session.sessionId)
       if (syncUrl && sessionId === undefined) {
         // Next patches window.history to navigate, which would detach the active stream.
         History.prototype.replaceState.call(
           window.history,
           window.history.state,
           "",
-          `/s/${encodeURIComponent(session.sessionId)}`,
-        );
+          `/s/${encodeURIComponent(session.sessionId)}`
+        )
       }
     },
-  });
+  })
 
-  const selectedModel = useMemo(() => getChatModel(model), [model]);
-  const isBusy = agent.status === "submitted" || agent.status === "streaming";
-  const isResuming = agent.status === "resuming";
-  const isEmpty = agent.data.messages.length === 0;
-  const lastMessage = agent.data.messages.at(-1);
+  const selectedModel = useMemo(() => getChatModel(model), [model])
+  const isBusy = agent.status === "submitted" || agent.status === "streaming"
+  const isResuming = agent.status === "resuming"
+  const isEmpty = agent.data.messages.length === 0
+  const lastMessage = agent.data.messages.at(-1)
   const isPendingAssistantShell =
     lastMessage?.role === "assistant" &&
-    lastMessage.parts.every((part) => part.type === "step-start");
+    lastMessage.parts.every((part) => part.type === "step-start")
   const showPendingThinking =
     isBusy &&
-    (agent.status === "submitted" || lastMessage?.role !== "assistant" || isPendingAssistantShell);
-  const turnFailure = isBusy || isResuming ? undefined : getLatestTurnFailure(agent.events);
-  const errorMessage = cancellationError ?? agent.error?.message ?? turnFailure;
-  const hasConversationContent = sessionless || !isEmpty || errorMessage !== undefined;
-  const showConversationLayout = isResuming || hasConversationContent;
-  const activeSessionId = sessionId ?? agent.session?.sessionId;
+    (agent.status === "submitted" ||
+      lastMessage?.role !== "assistant" ||
+      isPendingAssistantShell)
+  const turnFailure =
+    isBusy || isResuming ? undefined : getLatestTurnFailure(agent.events)
+  const errorMessage = cancellationError ?? agent.error?.message ?? turnFailure
+  const hasConversationContent =
+    sessionless || !isEmpty || errorMessage !== undefined
+  const showConversationLayout = isResuming || hasConversationContent
+  const activeSessionId = sessionId ?? agent.session?.sessionId
   const canRespond = (requestId: string) =>
-    !isResuming && agent.data.inputs[requestId]?.status === "open";
+    !isResuming && agent.data.inputs[requestId]?.status === "open"
   const questionsFor = (callId: string) =>
     Object.values(agent.data.inputs).filter(
-      (input) => input.request.kind === "question" && input.request.action.callId === callId,
-    );
+      (input) =>
+        input.request.kind === "question" &&
+        input.request.action.callId === callId
+    )
 
   const turnOptions = useCallback(
     (busy: boolean) => ({
@@ -192,68 +198,74 @@ export function AgentChat({
                 files: [...workspaceContext.workspaceFiles],
                 openTabs: [...workspaceContext.openTabs],
                 activeTab: workspaceContext.activeTab,
-                note:
-                  "The IDE mirrors /workspace. Prefer read_file/write_file/bash on these paths. Open tabs are what the user is viewing now. Multiple chats share this workspace.",
+                note: "The IDE mirrors /workspace. Prefer read_file/write_file/bash on these paths. Open tabs are what the user is viewing now. Multiple chats share this workspace.",
               },
             }
           : {}),
       },
     }),
-    [model, useWebSearch, workspaceContext],
-  );
+    [model, useWebSearch, workspaceContext]
+  )
 
-  const wasBusyRef = useRef(false);
+  const wasBusyRef = useRef(false)
   useEffect(() => {
-    const busy = agent.status === "submitted" || agent.status === "streaming";
+    const busy = agent.status === "submitted" || agent.status === "streaming"
     if (wasBusyRef.current && !busy) {
-      onIdle?.();
+      onIdle?.()
     }
-    wasBusyRef.current = busy;
-  }, [agent.status, onIdle]);
+    wasBusyRef.current = busy
+  }, [agent.status, onIdle])
 
   useEffect(() => {
-    if (titleHintSent.current || !onTitleHint) return;
-    const firstUser = agent.data.messages.find((message) => message.role === "user");
-    if (!firstUser) return;
+    if (titleHintSent.current || !onTitleHint) return
+    const firstUser = agent.data.messages.find(
+      (message) => message.role === "user"
+    )
+    if (!firstUser) return
     const textPart = firstUser.parts.find(
-      (part) => part.type === "text" && "text" in part && typeof part.text === "string",
-    ) as { text?: string } | undefined;
-    const hint = textPart?.text?.trim().replace(/\s+/g, " ").slice(0, 36);
-    if (!hint) return;
-    titleHintSent.current = true;
-    onTitleHint(hint.length < (textPart?.text?.trim().length ?? 0) ? `${hint}…` : hint);
-  }, [agent.data.messages, onTitleHint]);
+      (part) =>
+        part.type === "text" && "text" in part && typeof part.text === "string"
+    ) as { text?: string } | undefined
+    const hint = textPart?.text?.trim().replace(/\s+/g, " ").slice(0, 36)
+    if (!hint) return
+    titleHintSent.current = true
+    onTitleHint(
+      hint.length < (textPart?.text?.trim().length ?? 0) ? `${hint}…` : hint
+    )
+  }, [agent.data.messages, onTitleHint])
 
   useEffect(() => {
-    if (!insertText) return;
-    setText((prev) => (prev.trim() ? `${prev.trim()} ${insertText}` : insertText));
-    onInsertTextConsumed?.();
-  }, [insertText, onInsertTextConsumed]);
+    if (!insertText) return
+    setText((prev) =>
+      prev.trim() ? `${prev.trim()} ${insertText}` : insertText
+    )
+    onInsertTextConsumed?.()
+  }, [insertText, onInsertTextConsumed])
 
   const requestCancellation = () => {
-    setCancellationError(undefined);
+    setCancellationError(undefined)
     void agent.cancel().catch((error: unknown) => {
-      setCancellationError(toErrorMessage(error));
-    });
-  };
+      setCancellationError(toErrorMessage(error))
+    })
+  }
 
   const sendText = useCallback(
     async (raw: string, files: PromptInputMessage["files"] = []) => {
-      const next = raw.trim();
-      if ((next.length === 0 && files.length === 0) || isResuming) return;
+      const next = raw.trim()
+      if ((next.length === 0 && files.length === 0) || isResuming) return
 
-      setText("");
-      setCancellationError(undefined);
-      const options = turnOptions(isBusy);
+      setText("")
+      setCancellationError(undefined)
+      const options = turnOptions(isBusy)
 
       if (files.length === 0) {
-        await agent.send(next, options);
-        return;
+        await agent.send(next, options)
+        return
       }
 
-      const parts: UserContent = [];
+      const parts: UserContent = []
       if (next.length > 0) {
-        parts.push({ text: next, type: "text" });
+        parts.push({ text: next, type: "text" })
       }
       for (const file of files) {
         parts.push({
@@ -261,26 +273,31 @@ export function AgentChat({
           filename: file.filename,
           mediaType: file.mediaType,
           type: "file",
-        });
+        })
       }
 
-      await agent.send(parts, options);
+      await agent.send(parts, options)
     },
-    [agent, isBusy, isResuming, turnOptions],
-  );
+    [agent, isBusy, isResuming, turnOptions]
+  )
 
   const handleSubmit = async (message: PromptInputMessage) => {
-    await sendText(message.text, message.files);
-  };
+    await sendText(message.text, message.files)
+  }
 
   const handleSuggestion = (suggestion: string) => {
-    void sendText(suggestion);
-  };
+    void sendText(suggestion)
+  }
 
-  const downloadMessages = agent.data.messages as unknown as UIMessage[];
+  const downloadMessages = agent.data.messages as unknown as UIMessage[]
 
   const composer = (
-    <PromptInput accept="image/*,application/pdf,text/*" globalDrop multiple onSubmit={handleSubmit}>
+    <PromptInput
+      accept="image/*,application/pdf,text/*"
+      globalDrop
+      multiple
+      onSubmit={handleSubmit}
+    >
       <PromptInputHeader>
         <PromptInputAttachmentsDisplay />
       </PromptInputHeader>
@@ -288,7 +305,9 @@ export function AgentChat({
         <PromptInputTextarea
           disabled={isResuming}
           onChange={(event) => setText(event.currentTarget.value)}
-          placeholder={useWebSearch ? "Ask with web search preference…" : "Send a message…"}
+          placeholder={
+            useWebSearch ? "Ask with web search preference…" : "Send a message…"
+          }
           value={text}
         />
       </PromptInputBody>
@@ -313,16 +332,25 @@ export function AgentChat({
             className="size-8"
             disabled={isResuming}
             onTranscriptionChange={(transcript) => {
-              setText((prev) => (prev.trim() ? `${prev.trim()} ${transcript}` : transcript));
+              setText((prev) =>
+                prev.trim() ? `${prev.trim()} ${transcript}` : transcript
+              )
             }}
             size="icon-sm"
             type="button"
             variant="ghost"
           />
-          <ModelSelector onOpenChange={setModelSelectorOpen} open={modelSelectorOpen}>
+          <ModelSelector
+            onOpenChange={setModelSelectorOpen}
+            open={modelSelectorOpen}
+          >
             <ModelSelectorTrigger
               render={
-                <PromptInputButton className="gap-2" type="button" variant="ghost">
+                <PromptInputButton
+                  className="gap-2"
+                  type="button"
+                  variant="ghost"
+                >
                   <ModelSelectorLogo provider={selectedModel.chefSlug} />
                   <ModelSelectorName className="max-w-28 sm:max-w-40">
                     {selectedModel.name}
@@ -336,28 +364,37 @@ export function AgentChat({
                 <ModelSelectorEmpty>No models found.</ModelSelectorEmpty>
                 {CHAT_MODEL_CHEFS.map((chef) => (
                   <ModelSelectorGroup heading={chef} key={chef}>
-                    {CHAT_MODELS.filter((entry) => entry.chef === chef).map((entry) => {
-                      const isSelected = entry.id === model;
-                      return (
-                        <ModelSelectorItem
-                          key={entry.id}
-                          onSelect={() => {
-                            setModel(entry.id);
-                            setModelSelectorOpen(false);
-                          }}
-                          value={`${entry.name} ${entry.id}`}
-                        >
-                          <ModelSelectorLogo provider={entry.chefSlug} />
-                          <ModelSelectorName>{entry.name}</ModelSelectorName>
-                          <ModelSelectorLogoGroup>
-                            {entry.providers.map((provider) => (
-                              <ModelSelectorLogo key={provider} provider={provider} />
-                            ))}
-                          </ModelSelectorLogoGroup>
-                          {isSelected ? <CheckIcon className="size-4" /> : <span className="size-4" />}
-                        </ModelSelectorItem>
-                      );
-                    })}
+                    {CHAT_MODELS.filter((entry) => entry.chef === chef).map(
+                      (entry) => {
+                        const isSelected = entry.id === model
+                        return (
+                          <ModelSelectorItem
+                            key={entry.id}
+                            onSelect={() => {
+                              setModel(entry.id)
+                              setModelSelectorOpen(false)
+                            }}
+                            value={`${entry.name} ${entry.id}`}
+                          >
+                            <ModelSelectorLogo provider={entry.chefSlug} />
+                            <ModelSelectorName>{entry.name}</ModelSelectorName>
+                            <ModelSelectorLogoGroup>
+                              {entry.providers.map((provider) => (
+                                <ModelSelectorLogo
+                                  key={provider}
+                                  provider={provider}
+                                />
+                              ))}
+                            </ModelSelectorLogoGroup>
+                            {isSelected ? (
+                              <CheckIcon className="size-4" />
+                            ) : (
+                              <span className="size-4" />
+                            )}
+                          </ModelSelectorItem>
+                        )
+                      }
+                    )}
                   </ModelSelectorGroup>
                 ))}
               </ModelSelectorList>
@@ -373,7 +410,7 @@ export function AgentChat({
         />
       </PromptInputFooter>
     </PromptInput>
-  );
+  )
 
   const messages = (
     <>
@@ -385,7 +422,9 @@ export function AgentChat({
               ? "Ask about workspace files, or attach something to edit."
               : "Ask a question, attach a file, or pick a suggestion below."
           }
-          icon={<MessageSquareIcon className={isPanel ? "size-7" : "size-10"} />}
+          icon={
+            <MessageSquareIcon className={isPanel ? "size-7" : "size-10"} />
+          }
           title={isPanel ? "Agent" : `Chat with ${AGENT_NAME}`}
         />
       ) : null}
@@ -395,27 +434,30 @@ export function AgentChat({
         message.id === lastMessage.id ? null : (
           <AgentMessage
             canRespond={canRespond}
-            isStreaming={agent.status === "streaming" && index === agent.data.messages.length - 1}
+            isStreaming={
+              agent.status === "streaming" &&
+              index === agent.data.messages.length - 1
+            }
             key={message.id}
             message={message}
             questionsFor={questionsFor}
             onInputResponses={(inputResponses) => {
-              setCancellationError(undefined);
-              return agent.respond(inputResponses, turnOptions(false));
+              setCancellationError(undefined)
+              return agent.respond(inputResponses, turnOptions(false))
             }}
           />
-        ),
+        )
       )}
       {showPendingThinking ? <PendingThinking /> : null}
       {errorMessage ? <ErrorMessage message={errorMessage} /> : null}
     </>
-  );
+  )
 
   if (isPanel) {
     return (
       <div className="flex h-full min-h-0 flex-col bg-background">
-        <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-border border-b px-2">
-          <span className="truncate px-1 font-medium text-[11px] text-muted-foreground uppercase tracking-wide">
+        <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-border px-2">
+          <span className="truncate px-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
             {selectedModel.name}
           </span>
           {downloadMessages && !isEmpty ? (
@@ -438,13 +480,17 @@ export function AgentChat({
               : `eve:web-chat-scroll:${activeSessionId}`
           }
         >
-          <ConversationContent className="gap-4 px-3 pt-3 pb-4">{messages}</ConversationContent>
+          <ConversationContent className="gap-4 px-3 pt-3 pb-4">
+            {messages}
+          </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
 
-        <div className="shrink-0 border-border border-t bg-background p-2">{composer}</div>
+        <div className="shrink-0 border-t border-border bg-background p-2">
+          {composer}
+        </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -481,20 +527,26 @@ export function AgentChat({
           "mx-auto w-full px-4 sm:px-6",
           showConversationLayout
             ? "fixed bottom-0 left-1/2 z-20 max-w-3xl -translate-x-1/2 bg-gradient-to-t from-background via-background to-transparent pt-4 pb-6"
-            : "flex max-w-2xl flex-1 flex-col items-center justify-center gap-8 pb-[8vh]",
+            : "flex max-w-2xl flex-1 flex-col items-center justify-center gap-8 pb-[8vh]"
         )}
       >
         {showConversationLayout ? null : (
           <div className="flex w-full flex-col items-center gap-6 text-center">
             <div className="space-y-2">
-              <h1 className="font-medium text-5xl tracking-tighter">{AGENT_NAME}</h1>
-              <p className="text-muted-foreground text-sm">
+              <h1 className="text-5xl font-medium tracking-tighter">
+                {AGENT_NAME}
+              </h1>
+              <p className="text-sm text-muted-foreground">
                 Durable agent chat · pick a model below
               </p>
             </div>
             <Suggestions className="px-1">
               {SUGGESTIONS.map((suggestion) => (
-                <Suggestion key={suggestion} onClick={handleSuggestion} suggestion={suggestion} />
+                <Suggestion
+                  key={suggestion}
+                  onClick={handleSuggestion}
+                  suggestion={suggestion}
+                />
               ))}
             </Suggestions>
           </div>
@@ -503,7 +555,11 @@ export function AgentChat({
           {showConversationLayout && isEmpty && !errorMessage ? (
             <Suggestions className="px-1">
               {SUGGESTIONS.map((suggestion) => (
-                <Suggestion key={suggestion} onClick={handleSuggestion} suggestion={suggestion} />
+                <Suggestion
+                  key={suggestion}
+                  onClick={handleSuggestion}
+                  suggestion={suggestion}
+                />
               ))}
             </Suggestions>
           ) : null}
@@ -511,27 +567,33 @@ export function AgentChat({
         </div>
       </div>
     </main>
-  );
+  )
 }
 
 function PromptInputAttachmentsDisplay() {
-  const attachments = usePromptInputAttachments();
+  const attachments = usePromptInputAttachments()
 
   if (attachments.files.length === 0) {
-    return null;
+    return null
   }
 
   return (
     <Attachments className="w-full" variant="inline">
       {attachments.files.map((file) => (
-        <Attachment data={file} key={file.id} onRemove={() => attachments.remove(file.id)}>
+        <Attachment
+          data={file}
+          key={file.id}
+          onRemove={() => attachments.remove(file.id)}
+        >
           <AttachmentPreview />
-          <span className="max-w-40 truncate text-xs">{file.filename ?? "Attachment"}</span>
+          <span className="max-w-40 truncate text-xs">
+            {file.filename ?? "Attachment"}
+          </span>
           <AttachmentRemove />
         </Attachment>
       ))}
     </Attachments>
-  );
+  )
 }
 
 function ComposerAction({
@@ -541,14 +603,14 @@ function ComposerAction({
   onCancel,
   status,
 }: {
-  readonly hasInputText: boolean;
-  readonly isBusy: boolean;
-  readonly isResuming: boolean;
-  readonly onCancel: () => void;
-  readonly status: ReturnType<typeof useEveAgent>["status"];
+  readonly hasInputText: boolean
+  readonly isBusy: boolean
+  readonly isResuming: boolean
+  readonly onCancel: () => void
+  readonly status: ReturnType<typeof useEveAgent>["status"]
 }) {
-  const attachments = usePromptInputAttachments();
-  const canSubmit = hasInputText || attachments.files.length > 0;
+  const attachments = usePromptInputAttachments()
+  const canSubmit = hasInputText || attachments.files.length > 0
 
   if (!isBusy || canSubmit) {
     return (
@@ -562,14 +624,19 @@ function ComposerAction({
             : undefined
         }
       />
-    );
+    )
   }
 
   return (
-    <PromptInputButton aria-label="Stop" className="static" onClick={onCancel} variant="outline">
+    <PromptInputButton
+      aria-label="Stop"
+      className="static"
+      onClick={onCancel}
+      variant="outline"
+    >
       <SquareIcon className="size-3 fill-current" />
     </PromptInputButton>
-  );
+  )
 }
 
 function ErrorMessage({ message }: { readonly message: string }) {
@@ -588,7 +655,7 @@ function ErrorMessage({ message }: { readonly message: string }) {
         </div>
       </MessageContent>
     </Message>
-  );
+  )
 }
 
 function ChatHeader({
@@ -596,16 +663,20 @@ function ChatHeader({
   downloadMessages,
   modelName,
 }: {
-  readonly canStartNewChat: boolean;
-  readonly downloadMessages?: UIMessage[];
-  readonly modelName: string;
+  readonly canStartNewChat: boolean
+  readonly downloadMessages?: UIMessage[]
+  readonly modelName: string
 }) {
   return (
     <header className="pointer-events-none fixed top-0 right-0 left-0 z-20 h-14">
       <div className="relative mx-auto flex h-full w-full max-w-3xl items-center justify-center bg-background px-24">
         <div className="flex min-w-0 flex-col items-center">
-          <span className="truncate text-muted-foreground text-sm">{AGENT_NAME}</span>
-          <span className="truncate text-muted-foreground/80 text-xs">{modelName}</span>
+          <span className="truncate text-sm text-muted-foreground">
+            {AGENT_NAME}
+          </span>
+          <span className="truncate text-xs text-muted-foreground/80">
+            {modelName}
+          </span>
         </div>
         <div className="pointer-events-auto fixed top-3 left-6 flex items-center gap-1">
           {downloadMessages ? (
@@ -627,51 +698,55 @@ function ChatHeader({
             variant="ghost"
           >
             <PlusIcon className="size-4" />
-            <span className="hidden font-normal text-sm sm:inline">New chat</span>
+            <span className="hidden text-sm font-normal sm:inline">
+              New chat
+            </span>
           </Button>
         ) : null}
       </div>
     </header>
-  );
+  )
 }
 
 function PendingThinking() {
   return (
     <Message aria-live="polite" from="assistant">
       <MessageContent>
-        <div className="mb-4 flex w-full items-center gap-2 text-muted-foreground text-sm">
+        <div className="mb-4 flex w-full items-center gap-2 text-sm text-muted-foreground">
           <BrainIcon className="size-4" />
           <Shimmer duration={1}>Thinking</Shimmer>
         </div>
       </MessageContent>
     </Message>
-  );
+  )
 }
 
 function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : "Unable to cancel the response.";
+  return error instanceof Error
+    ? error.message
+    : "Unable to cancel the response."
 }
 
 function getLatestTurnFailure(
-  events: ReturnType<typeof useEveAgent>["events"],
+  events: ReturnType<typeof useEveAgent>["events"]
 ): string | undefined {
   for (let index = events.length - 1; index >= 0; index -= 1) {
-    const event = events[index];
+    const event = events[index]
 
     if (event.type === "turn.failed") {
       return event.data.code === "MODEL_CALL_FAILED"
         ? "The model is temporarily unavailable. Please try again."
-        : event.data.message;
+        : event.data.message
     }
 
     if (event.type === "turn.completed" || event.type === "turn.cancelled") {
-      return undefined;
+      return undefined
     }
 
     if (event.type === "message.received") {
-      return undefined;
+      return undefined
     }
   }
 
-  return undefined;
+  return undefined
 }

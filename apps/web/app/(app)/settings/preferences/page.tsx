@@ -1,4 +1,4 @@
-import { PreferencesForm } from "@/components/settings/preferences-form";
+import { PreferencesForm } from "@/components/settings/preferences-form"
 
 export default function SettingsPreferencesPage() {
   return (
@@ -11,5 +11,5 @@ export default function SettingsPreferencesPage() {
       </div>
       <PreferencesForm />
     </div>
-  );
+  )
 }

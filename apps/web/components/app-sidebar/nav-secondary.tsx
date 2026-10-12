@@ -41,7 +41,7 @@ export function NavSecondary({
                     return
                   }
                   if (item.url && item.url !== "#") {
-                    router.push(item.url )
+                    router.push(item.url)
                   }
                 }}
               >

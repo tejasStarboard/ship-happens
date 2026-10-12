@@ -36,18 +36,18 @@ export const CHAT_MODELS = [
     contextWindowTokens: 200_000,
     reasoning: "low" as const,
   },
-] as const;
+] as const
 
-export type ChatModelId = (typeof CHAT_MODELS)[number]["id"];
+export type ChatModelId = (typeof CHAT_MODELS)[number]["id"]
 
-export const DEFAULT_CHAT_MODEL_ID: ChatModelId = "claude-sonnet-5";
+export const DEFAULT_CHAT_MODEL_ID: ChatModelId = "claude-sonnet-5"
 
-export const CHAT_MODEL_CHEFS = ["Anthropic"] as const;
+export const CHAT_MODEL_CHEFS = ["Anthropic"] as const
 
 export function isChatModelId(value: string): value is ChatModelId {
-  return CHAT_MODELS.some((model) => model.id === value);
+  return CHAT_MODELS.some((model) => model.id === value)
 }
 
 export function getChatModel(id: string) {
-  return CHAT_MODELS.find((model) => model.id === id) ?? CHAT_MODELS[0];
+  return CHAT_MODELS.find((model) => model.id === id) ?? CHAT_MODELS[0]
 }

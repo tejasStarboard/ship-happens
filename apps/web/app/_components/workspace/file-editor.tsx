@@ -1,23 +1,23 @@
-"use client";
+"use client"
 
-import { DownloadIcon, FileIcon, SaveIcon, XIcon } from "lucide-react";
-import { OfficeViewer } from "@/app/_components/workspace/office-viewer";
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@/lib/utils";
+import { DownloadIcon, FileIcon, SaveIcon, XIcon } from "lucide-react"
+import { OfficeViewer } from "@/app/_components/workspace/office-viewer"
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@/lib/utils"
 import {
   getOfficeViewerKind,
   languageFromPath,
   type OfficeViewerKind,
-} from "@/lib/workspace-types";
+} from "@/lib/workspace-types"
 
 export type EditorTab = {
-  readonly path: string;
-  readonly content: string;
-  readonly dirty: boolean;
-  readonly editable: boolean;
-  readonly encoding: "utf-8" | "binary";
-  readonly viewerKind: OfficeViewerKind | null;
-};
+  readonly path: string
+  readonly content: string
+  readonly dirty: boolean
+  readonly editable: boolean
+  readonly encoding: "utf-8" | "binary"
+  readonly viewerKind: OfficeViewerKind | null
+}
 
 export function FileEditorPanel({
   sessionId,
@@ -29,17 +29,18 @@ export function FileEditorPanel({
   onSave,
   onDownload,
 }: {
-  readonly sessionId?: string;
-  readonly tabs: readonly EditorTab[];
-  readonly activePath: string | null;
-  readonly onSelect: (path: string) => void;
-  readonly onClose: (path: string) => void;
-  readonly onChange: (path: string, content: string) => void;
-  readonly onSave: (path: string) => void | Promise<void>;
-  readonly onDownload: (path: string) => void;
+  readonly sessionId?: string
+  readonly tabs: readonly EditorTab[]
+  readonly activePath: string | null
+  readonly onSelect: (path: string) => void
+  readonly onClose: (path: string) => void
+  readonly onChange: (path: string, content: string) => void
+  readonly onSave: (path: string) => void | Promise<void>
+  readonly onDownload: (path: string) => void
 }) {
-  const active = tabs.find((tab) => tab.path === activePath) ?? null;
-  const viewerKind = active?.viewerKind ?? (active ? getOfficeViewerKind(active.path) : null);
+  const active = tabs.find((tab) => tab.path === activePath) ?? null
+  const viewerKind =
+    active?.viewerKind ?? (active ? getOfficeViewerKind(active.path) : null)
 
   if (tabs.length === 0) {
     return (
@@ -47,21 +48,21 @@ export function FileEditorPanel({
         <FileIcon className="size-8 opacity-40" />
         <p className="text-sm">Open a file from the explorer</p>
       </div>
-    );
+    )
   }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-background">
-      <div className="flex h-9 shrink-0 items-end gap-px overflow-x-auto border-border border-b bg-muted/40 px-1">
+      <div className="flex h-9 shrink-0 items-end gap-px overflow-x-auto border-b border-border bg-muted/40 px-1">
         {tabs.map((tab) => {
-          const selected = tab.path === activePath;
+          const selected = tab.path === activePath
           return (
             <div
               className={cn(
-                "group flex max-w-48 shrink-0 items-center gap-1 border-transparent border-b-2 px-2 py-1.5 text-xs",
+                "group flex max-w-48 shrink-0 items-center gap-1 border-b-2 border-transparent px-2 py-1.5 text-xs",
                 selected
                   ? "border-foreground bg-background text-foreground"
-                  : "text-muted-foreground hover:bg-background/60 hover:text-foreground",
+                  : "text-muted-foreground hover:bg-background/60 hover:text-foreground"
               )}
               key={tab.path}
             >
@@ -83,15 +84,17 @@ export function FileEditorPanel({
                 <XIcon className="size-3" />
               </button>
             </div>
-          );
+          )
         })}
       </div>
 
       {active ? (
         <>
-          <div className="flex h-8 shrink-0 items-center gap-2 border-border border-b px-3 text-[11px] text-muted-foreground">
-            <span className="min-w-0 flex-1 truncate font-mono">{active.path}</span>
-            <span className="uppercase tracking-wide">
+          <div className="flex h-8 shrink-0 items-center gap-2 border-b border-border px-3 text-[11px] text-muted-foreground">
+            <span className="min-w-0 flex-1 truncate font-mono">
+              {active.path}
+            </span>
+            <span className="tracking-wide uppercase">
               {viewerKind ?? languageFromPath(active.path)}
             </span>
             {active.editable ? (
@@ -128,9 +131,13 @@ export function FileEditorPanel({
               />
             </div>
           ) : active.encoding === "binary" || !active.editable ? (
-            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-muted-foreground text-sm">
+            <div className="flex flex-1 flex-col items-center justify-center gap-3 p-6 text-center text-sm text-muted-foreground">
               <p>Binary file — open with Download.</p>
-              <Button onClick={() => onDownload(active.path)} type="button" variant="outline">
+              <Button
+                onClick={() => onDownload(active.path)}
+                type="button"
+                variant="outline"
+              >
                 Download {active.path.split("/").pop()}
               </Button>
             </div>
@@ -140,8 +147,8 @@ export function FileEditorPanel({
               onChange={(event) => onChange(active.path, event.target.value)}
               onKeyDown={(event) => {
                 if ((event.metaKey || event.ctrlKey) && event.key === "s") {
-                  event.preventDefault();
-                  void onSave(active.path);
+                  event.preventDefault()
+                  void onSave(active.path)
                 }
               }}
               spellCheck={false}
@@ -151,5 +158,5 @@ export function FileEditorPanel({
         </>
       ) : null}
     </div>
-  );
+  )
 }

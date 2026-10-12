@@ -1,26 +1,26 @@
-"use client";
+"use client"
 
-import { type Icon } from "@tabler/icons-react";
-import { usePathname, useRouter } from "next/navigation";
+import { type Icon } from "@tabler/icons-react"
+import { usePathname, useRouter } from "next/navigation"
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@workspace/ui/components/sidebar";
+} from "@workspace/ui/components/sidebar"
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string;
-    url: string;
-    icon?: Icon;
-  }[];
+    title: string
+    url: string
+    icon?: Icon
+  }[]
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const router = useRouter()
+  const pathname = usePathname()
 
   return (
     <SidebarGroup>
@@ -30,7 +30,7 @@ export function NavMain({
             const isActive =
               item.url === "/"
                 ? pathname === "/"
-                : pathname === item.url || pathname.startsWith(`${item.url}/`);
+                : pathname === item.url || pathname.startsWith(`${item.url}/`)
 
             return (
               <SidebarMenuItem key={item.title}>
@@ -39,7 +39,7 @@ export function NavMain({
                   isActive={isActive}
                   onClick={() => {
                     if (item.url && item.url !== "#") {
-                      router.push(item.url);
+                      router.push(item.url)
                     }
                   }}
                 >
@@ -47,10 +47,10 @@ export function NavMain({
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            );
+            )
           })}
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  );
+  )
 }

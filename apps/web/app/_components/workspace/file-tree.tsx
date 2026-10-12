@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   AtSignIcon,
@@ -13,25 +13,25 @@ import {
   RefreshCwIcon,
   Trash2Icon,
   UploadIcon,
-} from "lucide-react";
-import { useMemo, useRef, useState } from "react";
-import { Button } from "@workspace/ui/components/button";
+} from "lucide-react"
+import { useMemo, useRef, useState } from "react"
+import { Button } from "@workspace/ui/components/button"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@workspace/ui/components/context-menu";
+} from "@workspace/ui/components/context-menu"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu";
-import { cn } from "@/lib/utils";
-import type { WorkspaceEntry } from "@/lib/workspace-types";
+} from "@workspace/ui/components/dropdown-menu"
+import { cn } from "@/lib/utils"
+import type { WorkspaceEntry } from "@/lib/workspace-types"
 
 export function FileTreePanel({
   tree,
@@ -46,26 +46,29 @@ export function FileTreePanel({
   onDelete,
   onReferenceInChat,
 }: {
-  readonly tree: WorkspaceEntry[];
-  readonly activePath: string | null;
-  readonly disabled?: boolean;
-  readonly onOpen: (path: string) => void;
-  readonly onRefresh: () => void;
-  readonly onUpload: (files: FileList, directory: string) => void | Promise<void>;
-  readonly onDownload: (path: string) => void;
-  readonly onDownloadAll: () => void;
-  readonly onRename: (fromPath: string, toPath: string) => void | Promise<void>;
-  readonly onDelete: (path: string) => void | Promise<void>;
-  readonly onReferenceInChat: (path: string) => void;
+  readonly tree: WorkspaceEntry[]
+  readonly activePath: string | null
+  readonly disabled?: boolean
+  readonly onOpen: (path: string) => void
+  readonly onRefresh: () => void
+  readonly onUpload: (
+    files: FileList,
+    directory: string
+  ) => void | Promise<void>
+  readonly onDownload: (path: string) => void
+  readonly onDownloadAll: () => void
+  readonly onRename: (fromPath: string, toPath: string) => void | Promise<void>
+  readonly onDelete: (path: string) => void | Promise<void>
+  readonly onReferenceInChat: (path: string) => void
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [uploadDir, setUploadDir] = useState("");
-  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploadDir, setUploadDir] = useState("")
+  const [renamingPath, setRenamingPath] = useState<string | null>(null)
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-sidebar text-sidebar-foreground">
-      <div className="flex h-9 shrink-0 items-center gap-1 border-border border-b px-2">
-        <span className="flex-1 truncate px-1 font-medium text-[11px] text-muted-foreground uppercase tracking-wide">
+      <div className="flex h-9 shrink-0 items-center gap-1 border-b border-border px-2">
+        <span className="flex-1 truncate px-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
           Explorer
         </span>
         <Button
@@ -73,8 +76,8 @@ export function FileTreePanel({
           className="size-7"
           disabled={disabled}
           onClick={() => {
-            setUploadDir("");
-            inputRef.current?.click();
+            setUploadDir("")
+            inputRef.current?.click()
           }}
           size="icon"
           type="button"
@@ -108,11 +111,11 @@ export function FileTreePanel({
           className="hidden"
           multiple
           onChange={(event) => {
-            const files = event.target.files;
+            const files = event.target.files
             if (files && files.length > 0) {
-              void onUpload(files, uploadDir);
+              void onUpload(files, uploadDir)
             }
-            event.target.value = "";
+            event.target.value = ""
           }}
           ref={inputRef}
           type="file"
@@ -121,11 +124,16 @@ export function FileTreePanel({
 
       <div className="min-h-0 flex-1 overflow-auto px-1 py-1 font-mono text-xs">
         {disabled ? (
-          <p className="px-2 py-3 text-muted-foreground text-xs">Starting session…</p>
+          <p className="px-2 py-3 text-xs text-muted-foreground">
+            Starting session…
+          </p>
         ) : tree.length === 0 ? (
-          <div className="space-y-2 px-2 py-3 text-muted-foreground text-xs">
+          <div className="space-y-2 px-2 py-3 text-xs text-muted-foreground">
             <p>No files yet.</p>
-            <p>Upload here or attach in chat. Synced to the agent on the next message.</p>
+            <p>
+              Upload here or attach in chat. Synced to the agent on the next
+              message.
+            </p>
           </div>
         ) : (
           <TreeNodes
@@ -139,8 +147,8 @@ export function FileTreePanel({
             onRename={onRename}
             onStartRename={setRenamingPath}
             onUploadInto={(directory) => {
-              setUploadDir(directory);
-              inputRef.current?.click();
+              setUploadDir(directory)
+              inputRef.current?.click()
             }}
             renamingPath={renamingPath}
             setRenamingPath={setRenamingPath}
@@ -148,20 +156,20 @@ export function FileTreePanel({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 type TreeCallbacks = {
-  readonly onOpen: (path: string) => void;
-  readonly onDownload: (path: string) => void;
-  readonly onUploadInto: (directory: string) => void;
-  readonly onRename: (fromPath: string, toPath: string) => void | Promise<void>;
-  readonly onDelete: (path: string) => void | Promise<void>;
-  readonly onReferenceInChat: (path: string) => void;
-  readonly onStartRename: (path: string) => void;
-  readonly renamingPath: string | null;
-  readonly setRenamingPath: (path: string | null) => void;
-};
+  readonly onOpen: (path: string) => void
+  readonly onDownload: (path: string) => void
+  readonly onUploadInto: (directory: string) => void
+  readonly onRename: (fromPath: string, toPath: string) => void | Promise<void>
+  readonly onDelete: (path: string) => void | Promise<void>
+  readonly onReferenceInChat: (path: string) => void
+  readonly onStartRename: (path: string) => void
+  readonly renamingPath: string | null
+  readonly setRenamingPath: (path: string | null) => void
+}
 
 function TreeNodes({
   entries,
@@ -169,9 +177,9 @@ function TreeNodes({
   activePath,
   ...callbacks
 }: {
-  readonly entries: WorkspaceEntry[];
-  readonly depth: number;
-  readonly activePath: string | null;
+  readonly entries: WorkspaceEntry[]
+  readonly depth: number
+  readonly activePath: string | null
 } & TreeCallbacks) {
   return (
     <ul className="space-y-px">
@@ -193,10 +201,10 @@ function TreeNodes({
             renaming={callbacks.renamingPath === entry.path}
             {...callbacks}
           />
-        ),
+        )
       )}
     </ul>
-  );
+  )
 }
 
 function DirNode({
@@ -205,15 +213,18 @@ function DirNode({
   activePath,
   ...callbacks
 }: {
-  readonly entry: Extract<WorkspaceEntry, { type: "dir" }>;
-  readonly depth: number;
-  readonly activePath: string | null;
+  readonly entry: Extract<WorkspaceEntry, { type: "dir" }>
+  readonly depth: number
+  readonly activePath: string | null
 } & TreeCallbacks) {
   const containsActive = useMemo(
-    () => (activePath ? activePath === entry.path || activePath.startsWith(`${entry.path}/`) : false),
-    [activePath, entry.path],
-  );
-  const [open, setOpen] = useState(containsActive || depth < 1);
+    () =>
+      activePath
+        ? activePath === entry.path || activePath.startsWith(`${entry.path}/`)
+        : false,
+    [activePath, entry.path]
+  )
+  const [open, setOpen] = useState(containsActive || depth < 1)
 
   return (
     <li>
@@ -240,7 +251,7 @@ function DirNode({
         </button>
         <button
           aria-label={`Upload into ${entry.name}`}
-          className="invisible rounded p-0.5 text-muted-foreground hover:bg-background group-hover:visible"
+          className="invisible rounded p-0.5 text-muted-foreground group-hover:visible hover:bg-background"
           onClick={() => callbacks.onUploadInto(entry.path)}
           type="button"
         >
@@ -248,10 +259,15 @@ function DirNode({
         </button>
       </div>
       {open ? (
-        <TreeNodes activePath={activePath} depth={depth + 1} entries={entry.children} {...callbacks} />
+        <TreeNodes
+          activePath={activePath}
+          depth={depth + 1}
+          entries={entry.children}
+          {...callbacks}
+        />
       ) : null}
     </li>
-  );
+  )
 }
 
 function FileNode({
@@ -267,26 +283,31 @@ function FileNode({
   onStartRename,
   setRenamingPath,
 }: {
-  readonly entry: Extract<WorkspaceEntry, { type: "file" }>;
-  readonly depth: number;
-  readonly active: boolean;
-  readonly renaming: boolean;
+  readonly entry: Extract<WorkspaceEntry, { type: "file" }>
+  readonly depth: number
+  readonly active: boolean
+  readonly renaming: boolean
 } & TreeCallbacks) {
-  const [draftName, setDraftName] = useState(entry.name);
+  const [draftName, setDraftName] = useState(entry.name)
 
   const commitRename = async () => {
-    const nextName = draftName.trim();
-    setRenamingPath(null);
-    if (!nextName || nextName === entry.name || nextName.includes("/") || nextName.includes("\\")) {
-      setDraftName(entry.name);
-      return;
+    const nextName = draftName.trim()
+    setRenamingPath(null)
+    if (
+      !nextName ||
+      nextName === entry.name ||
+      nextName.includes("/") ||
+      nextName.includes("\\")
+    ) {
+      setDraftName(entry.name)
+      return
     }
     const parent = entry.path.includes("/")
       ? entry.path.slice(0, entry.path.lastIndexOf("/"))
-      : "";
-    const toPath = parent ? `${parent}/${nextName}` : nextName;
-    await onRename(entry.path, toPath);
-  };
+      : ""
+    const toPath = parent ? `${parent}/${nextName}` : nextName
+    await onRename(entry.path, toPath)
+  }
 
   const actions = [
     {
@@ -298,8 +319,8 @@ function FileNode({
       label: "Rename",
       icon: <PencilIcon className="size-3.5" />,
       run: () => {
-        setDraftName(entry.name);
-        onStartRename(entry.path);
+        setDraftName(entry.name)
+        onStartRename(entry.path)
       },
     },
     {
@@ -312,7 +333,7 @@ function FileNode({
       icon: <AtSignIcon className="size-3.5" />,
       run: () => onReferenceInChat(entry.path),
     },
-  ] as const;
+  ] as const
 
   return (
     <li>
@@ -322,7 +343,9 @@ function FileNode({
             <div
               className={cn(
                 "group flex items-center gap-0.5 rounded-sm pr-1",
-                active ? "bg-accent text-accent-foreground" : "hover:bg-accent/70",
+                active
+                  ? "bg-accent text-accent-foreground"
+                  : "hover:bg-accent/70"
               )}
               style={{ paddingLeft: 4 + depth * 10 }}
             />
@@ -339,12 +362,12 @@ function FileNode({
                 onChange={(event) => setDraftName(event.target.value)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") {
-                    event.preventDefault();
-                    void commitRename();
+                    event.preventDefault()
+                    void commitRename()
                   }
                   if (event.key === "Escape") {
-                    setDraftName(entry.name);
-                    setRenamingPath(null);
+                    setDraftName(entry.name)
+                    setRenamingPath(null)
                   }
                 }}
                 value={draftName}
@@ -367,7 +390,7 @@ function FileNode({
               render={
                 <button
                   aria-label={`Actions for ${entry.name}`}
-                  className="invisible rounded p-0.5 text-muted-foreground hover:bg-background group-hover:visible data-popup-open:visible"
+                  className="invisible rounded p-0.5 text-muted-foreground group-hover:visible hover:bg-background data-popup-open:visible"
                   type="button"
                 />
               }
@@ -399,7 +422,11 @@ function FileNode({
         </ContextMenuTrigger>
         <ContextMenuContent className="min-w-44">
           {actions.map((action) => (
-            <ContextMenuItem className="text-xs" key={action.label} onClick={action.run}>
+            <ContextMenuItem
+              className="text-xs"
+              key={action.label}
+              onClick={action.run}
+            >
               {action.icon}
               {action.label}
             </ContextMenuItem>
@@ -416,5 +443,5 @@ function FileNode({
         </ContextMenuContent>
       </ContextMenu>
     </li>
-  );
+  )
 }

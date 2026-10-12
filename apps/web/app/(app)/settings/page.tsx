@@ -1,10 +1,10 @@
-import Link from "next/link";
+import Link from "next/link"
 import {
   IconAdjustmentsHorizontal,
   IconChevronRight,
   IconUser,
   IconUsers,
-} from "@tabler/icons-react";
+} from "@tabler/icons-react"
 
 const links = [
   {
@@ -25,7 +25,7 @@ const links = [
     description: "Invite and manage organization members.",
     icon: IconUsers,
   },
-] as const;
+] as const
 
 export default function SettingsIndexPage() {
   return (
@@ -65,5 +65,5 @@ export default function SettingsIndexPage() {
         </div>
       </section>
     </div>
-  );
+  )
 }

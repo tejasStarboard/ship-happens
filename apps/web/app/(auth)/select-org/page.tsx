@@ -1,14 +1,14 @@
-import { redirect } from "next/navigation";
-import { SelectOrgClient } from "@/components/auth/select-org-client";
-import { getSession, listOrganizations } from "@/lib/auth/session";
+import { redirect } from "next/navigation"
+import { SelectOrgClient } from "@/components/auth/select-org-client"
+import { getSession, listOrganizations } from "@/lib/auth/session"
 
 export default async function SelectOrgPage() {
-  const session = await getSession();
+  const session = await getSession()
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in")
   }
 
-  const organizations = (await listOrganizations()) ?? [];
+  const organizations = (await listOrganizations()) ?? []
 
   return (
     <SelectOrgClient
@@ -19,5 +19,5 @@ export default async function SelectOrgPage() {
         logo: org.logo ?? null,
       }))}
     />
-  );
+  )
 }

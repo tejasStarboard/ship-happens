@@ -1,9 +1,9 @@
-import { redirect } from "next/navigation";
-import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell";
-import { getSession } from "@/lib/auth/session";
-import { and, eq } from "drizzle-orm";
-import { db } from "@/lib/db";
-import { rfps } from "@/lib/db/schema";
+import { redirect } from "next/navigation"
+import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
+import { getSession } from "@/lib/auth/session"
+import { and, eq } from "drizzle-orm"
+import { db } from "@/lib/db"
+import { rfps } from "@/lib/db/schema"
 
 /**
  * Legacy / deep-link workspace URLs.
@@ -13,28 +13,28 @@ import { rfps } from "@/lib/db/schema";
 export default async function WorkspacePage({
   params,
 }: {
-  readonly params: Promise<{ readonly workspaceId: string }>;
+  readonly params: Promise<{ readonly workspaceId: string }>
 }) {
-  const session = await getSession();
+  const session = await getSession()
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in")
   }
 
-  const { workspaceId } = await params;
-  const organizationId = session.session.activeOrganizationId;
+  const { workspaceId } = await params
+  const organizationId = session.session.activeOrganizationId
 
   if (organizationId) {
     const rfp = await db.query.rfps.findFirst({
       where: and(
         eq(rfps.id, workspaceId),
-        eq(rfps.organizationId, organizationId),
+        eq(rfps.organizationId, organizationId)
       ),
       columns: { id: true },
-    });
+    })
     if (rfp) {
-      redirect(`/rfp/${encodeURIComponent(rfp.id)}`);
+      redirect(`/rfp/${encodeURIComponent(rfp.id)}`)
     }
   }
 
-  return <WorkspaceShell workspaceId={workspaceId} />;
+  return <WorkspaceShell workspaceId={workspaceId} />
 }

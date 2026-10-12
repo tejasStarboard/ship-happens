@@ -1,19 +1,21 @@
-import { redirect } from "next/navigation";
-import { AcceptInvitationClient } from "@/components/auth/accept-invitation-client";
-import { getInvitation, getSession } from "@/lib/auth/session";
+import { redirect } from "next/navigation"
+import { AcceptInvitationClient } from "@/components/auth/accept-invitation-client"
+import { getInvitation, getSession } from "@/lib/auth/session"
 
 export default async function AcceptInvitationPage({
   params,
 }: {
-  params: Promise<{ invitationId: string }>;
+  params: Promise<{ invitationId: string }>
 }) {
-  const { invitationId } = await params;
-  const session = await getSession();
+  const { invitationId } = await params
+  const session = await getSession()
   if (!session) {
-    redirect(`/sign-in?redirect=${encodeURIComponent(`/accept-invitation/${invitationId}`)}`);
+    redirect(
+      `/sign-in?redirect=${encodeURIComponent(`/accept-invitation/${invitationId}`)}`
+    )
   }
 
-  const result = await getInvitation(invitationId);
+  const result = await getInvitation(invitationId)
 
   return (
     <AcceptInvitationClient
@@ -30,5 +32,5 @@ export default async function AcceptInvitationPage({
       }
       loadError={result.error}
     />
-  );
+  )
 }

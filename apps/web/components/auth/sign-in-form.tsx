@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link";
-import {useRouter} from "next/navigation";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { IconArrowRight, IconEye, IconEyeOff } from "@tabler/icons-react"
 import { z } from "zod"
@@ -68,7 +68,7 @@ export function SignInForm({
         return
       }
 
-      router.push(afterAuthPath )
+      router.push(afterAuthPath)
     },
   })
 
@@ -225,9 +225,7 @@ export function SignInForm({
           variant="link"
           size="sm"
           className="h-auto p-0 font-medium"
-          render={
-            <Link href="/sign-up" />
-          }
+          render={<Link href="/sign-up" />}
           nativeButton={false}
         >
           Sign up

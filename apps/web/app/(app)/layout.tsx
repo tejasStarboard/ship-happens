@@ -1,26 +1,26 @@
-import { redirect } from "next/navigation";
-import type { CSSProperties, ReactNode } from "react";
-import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { getSession, listOrganizations } from "@/lib/auth/session";
+import { redirect } from "next/navigation"
+import type { CSSProperties, ReactNode } from "react"
+import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
+import { SiteHeader } from "@/components/site-header"
+import { getSession, listOrganizations } from "@/lib/auth/session"
 
 export default async function AppLayout({
   children,
 }: {
-  readonly children: ReactNode;
+  readonly children: ReactNode
 }) {
-  const session = await getSession();
+  const session = await getSession()
   if (!session) {
-    redirect("/sign-in");
+    redirect("/sign-in")
   }
   if (!session.session.activeOrganizationId) {
-    redirect("/select-org");
+    redirect("/select-org")
   }
 
-  const orgs = await listOrganizations();
-  const activeOrgId = session.session.activeOrganizationId;
-  const user = session.user;
+  const orgs = await listOrganizations()
+  const activeOrgId = session.session.activeOrganizationId
+  const user = session.user
 
   return (
     <SidebarProvider
@@ -53,5 +53,5 @@ export default async function AppLayout({
         </div>
       </SidebarInset>
     </SidebarProvider>
-  );
+  )
 }

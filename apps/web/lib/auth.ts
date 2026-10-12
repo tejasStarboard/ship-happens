@@ -1,30 +1,30 @@
-import { env } from "@/env";
-import { betterAuth } from "better-auth";
-import { drizzleAdapter } from "@better-auth/drizzle-adapter";
-import { organization } from "better-auth/plugins/organization";
-import { nextCookies } from "better-auth/next-js";
-import { db, redis } from "@/lib/db";
-import * as schema from "@/lib/db/schema";
-import { generateUUID } from "@/lib/utils";
-import { emailClient } from "@/email";
+import { env } from "@/env"
+import { betterAuth } from "better-auth"
+import { drizzleAdapter } from "@better-auth/drizzle-adapter"
+import { organization } from "better-auth/plugins/organization"
+import { nextCookies } from "better-auth/next-js"
+import { db, redis } from "@/lib/db"
+import * as schema from "@/lib/db/schema"
+import { generateUUID } from "@/lib/utils"
+import { emailClient } from "@/email"
 import {
   ForgotPasswordEmail,
   OrganizationInvitationEmail,
   VerifyEmail,
-} from "@/email/templates";
-import { isProduction } from "@/lib/constants";
+} from "@/email/templates"
+import { isProduction } from "@/lib/constants"
 
 const appHost = (() => {
   try {
-    return new URL(env.APP_URL).host;
+    return new URL(env.APP_URL).host
   } catch {
-    return null;
+    return null
   }
-})();
+})()
 
 const googleEnabled = Boolean(
-  env.GOOGLE_CLIENT_ID?.trim() && env.GOOGLE_CLIENT_SECRET?.trim(),
-);
+  env.GOOGLE_CLIENT_ID?.trim() && env.GOOGLE_CLIENT_SECRET?.trim()
+)
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -87,7 +87,7 @@ export const auth = betterAuth({
           verifyUrl: url,
           senderName: env.EMAIL_SENDER_NAME,
         }),
-      });
+      })
     },
     sendOnSignUp: isProduction,
   },
@@ -104,7 +104,7 @@ export const auth = betterAuth({
           resetUrl: url,
           userEmail: user.email,
         }),
-      });
+      })
     },
     requireEmailVerification: isProduction,
   },
@@ -124,28 +124,28 @@ export const auth = betterAuth({
   secondaryStorage: {
     get: async (key) => redis.get(key),
     set: async (key, value, ttl) => {
-      if (ttl) await redis.set(key, value, "EX", ttl);
-      else await redis.set(key, value);
+      if (ttl) await redis.set(key, value, "EX", ttl)
+      else await redis.set(key, value)
     },
     delete: async (key) => {
-      await redis.del(key);
+      await redis.del(key)
     },
     getAndDelete: async (key) => {
-      const value = await redis.get(key);
-      if (value !== null) await redis.del(key);
-      return value;
+      const value = await redis.get(key)
+      if (value !== null) await redis.del(key)
+      return value
     },
     increment: async (key, ttl) => {
-      const count = await redis.incr(key);
-      if (count === 1) await redis.expire(key, ttl);
-      return count;
+      const count = await redis.incr(key)
+      if (count === 1) await redis.expire(key, ttl)
+      return count
     },
   },
   plugins: [
     organization({
       allowUserToCreateOrganization: true,
       async sendInvitationEmail(data) {
-        const inviteLink = `${env.APP_URL}/accept-invitation/${data.id}`;
+        const inviteLink = `${env.APP_URL}/accept-invitation/${data.id}`
 
         await emailClient.emails.send({
           from: `${env.EMAIL_SENDER_NAME} <${env.EMAIL_SENDER_ADDRESS}>`,
@@ -158,11 +158,11 @@ export const auth = betterAuth({
             organizationName: data.organization.name,
             inviteLink,
           }),
-        });
+        })
       },
     }),
     nextCookies(),
   ],
-});
+})
 
-export type Session = typeof auth.$Infer.Session;
+export type Session = typeof auth.$Infer.Session

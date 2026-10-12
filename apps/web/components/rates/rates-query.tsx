@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { IconSearch } from "@tabler/icons-react"
 import { Button } from "@workspace/ui/components/button"

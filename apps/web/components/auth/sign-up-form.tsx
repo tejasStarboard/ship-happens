@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link";
-import {useRouter} from "next/navigation";
+import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { IconArrowRight, IconEye, IconEyeOff } from "@tabler/icons-react"
 import { z } from "zod"
@@ -87,7 +87,7 @@ export function SignUpForm({
         "Account created. Check your email to verify, or sign in if verification is not required."
       )
       form.reset()
-      router.push(afterAuthPath )
+      router.push(afterAuthPath)
     },
   })
 
@@ -304,9 +304,7 @@ export function SignUpForm({
           variant="link"
           size="sm"
           className="h-auto p-0 font-medium"
-          render={
-            <Link href="/sign-in" />
-          }
+          render={<Link href="/sign-in" />}
           nativeButton={false}
         >
           Sign in

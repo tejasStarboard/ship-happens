@@ -1,16 +1,16 @@
 export type WorkspaceEntry =
   | {
-      readonly type: "dir";
-      readonly name: string;
-      readonly path: string;
-      readonly children: WorkspaceEntry[];
+      readonly type: "dir"
+      readonly name: string
+      readonly path: string
+      readonly children: WorkspaceEntry[]
     }
   | {
-      readonly type: "file";
-      readonly name: string;
-      readonly path: string;
-      readonly size: number;
-    };
+      readonly type: "file"
+      readonly name: string
+      readonly path: string
+      readonly size: number
+    }
 
 export const TEXT_EXTENSIONS = new Set([
   ".md",
@@ -61,29 +61,29 @@ export const TEXT_EXTENSIONS = new Set([
   ".tsv",
   ".log",
   ".svg",
-]);
+])
 
 export function fileExtension(relativePath: string): string {
-  const base = relativePath.split("/").pop()?.toLowerCase() ?? "";
-  const dot = base.lastIndexOf(".");
-  return dot >= 0 ? base.slice(dot) : "";
+  const base = relativePath.split("/").pop()?.toLowerCase() ?? ""
+  const dot = base.lastIndexOf(".")
+  return dot >= 0 ? base.slice(dot) : ""
 }
 
 export function isTextPath(relativePath: string): boolean {
-  const base = relativePath.split("/").pop()?.toLowerCase() ?? "";
-  if (base === "dockerfile" || base === "makefile" || base === "license" || base === "readme") {
-    return true;
+  const base = relativePath.split("/").pop()?.toLowerCase() ?? ""
+  if (
+    base === "dockerfile" ||
+    base === "makefile" ||
+    base === "license" ||
+    base === "readme"
+  ) {
+    return true
   }
-  return TEXT_EXTENSIONS.has(fileExtension(relativePath));
+  return TEXT_EXTENSIONS.has(fileExtension(relativePath))
 }
 
 export type OfficeViewerKind =
-  | "pdf"
-  | "docx"
-  | "xlsx"
-  | "pptx"
-  | "image"
-  | "unsupported-office";
+  "pdf" | "docx" | "xlsx" | "pptx" | "image" | "unsupported-office"
 
 const VIEWER_BY_EXT: Record<string, OfficeViewerKind> = {
   ".pdf": "pdf",
@@ -105,88 +105,90 @@ const VIEWER_BY_EXT: Record<string, OfficeViewerKind> = {
   ".odt": "unsupported-office",
   ".ods": "unsupported-office",
   ".odp": "unsupported-office",
-};
+}
 
-export function getOfficeViewerKind(relativePath: string): OfficeViewerKind | null {
-  return VIEWER_BY_EXT[fileExtension(relativePath)] ?? null;
+export function getOfficeViewerKind(
+  relativePath: string
+): OfficeViewerKind | null {
+  return VIEWER_BY_EXT[fileExtension(relativePath)] ?? null
 }
 
 export function isOfficeViewerPath(relativePath: string): boolean {
-  return getOfficeViewerKind(relativePath) !== null;
+  return getOfficeViewerKind(relativePath) !== null
 }
 
 export function mimeTypeForPath(relativePath: string): string {
   switch (fileExtension(relativePath)) {
     case ".pdf":
-      return "application/pdf";
+      return "application/pdf"
     case ".docx":
     case ".docm":
-      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     case ".xlsx":
     case ".xlsm":
-      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     case ".xls":
-      return "application/vnd.ms-excel";
+      return "application/vnd.ms-excel"
     case ".pptx":
     case ".pptm":
-      return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+      return "application/vnd.openxmlformats-officedocument.presentationml.presentation"
     case ".png":
-      return "image/png";
+      return "image/png"
     case ".jpg":
     case ".jpeg":
-      return "image/jpeg";
+      return "image/jpeg"
     case ".gif":
-      return "image/gif";
+      return "image/gif"
     case ".webp":
-      return "image/webp";
+      return "image/webp"
     case ".svg":
-      return "image/svg+xml";
+      return "image/svg+xml"
     case ".bmp":
-      return "image/bmp";
+      return "image/bmp"
     default:
-      return "application/octet-stream";
+      return "application/octet-stream"
   }
 }
 
 export function languageFromPath(filePath: string): string {
-  const base = filePath.split("/").pop()?.toLowerCase() ?? "";
-  const ext = base.includes(".") ? `.${base.split(".").pop()}` : "";
+  const base = filePath.split("/").pop()?.toLowerCase() ?? ""
+  const ext = base.includes(".") ? `.${base.split(".").pop()}` : ""
   switch (ext) {
     case ".ts":
     case ".tsx":
-      return "typescript";
+      return "typescript"
     case ".js":
     case ".jsx":
     case ".mjs":
     case ".cjs":
-      return "javascript";
+      return "javascript"
     case ".py":
-      return "python";
+      return "python"
     case ".md":
     case ".markdown":
-      return "markdown";
+      return "markdown"
     case ".json":
     case ".jsonc":
-      return "json";
+      return "json"
     case ".css":
-      return "css";
+      return "css"
     case ".html":
     case ".htm":
-      return "html";
+      return "html"
     case ".yml":
     case ".yaml":
-      return "yaml";
+      return "yaml"
     case ".sh":
     case ".bash":
     case ".zsh":
-      return "bash";
+      return "bash"
     case ".sql":
-      return "sql";
+      return "sql"
     case ".rs":
-      return "rust";
+      return "rust"
     case ".go":
-      return "go";
+      return "go"
     default:
-      return "text";
+      return "text"
   }
 }

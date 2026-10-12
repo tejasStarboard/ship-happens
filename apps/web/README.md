@@ -30,11 +30,11 @@ Unset OpenRouter Anthropic overrides when using Anthropic directly (`dev` script
 
 ## Key routes
 
-| Path | Purpose |
-| --- | --- |
-| `/rfp`, `/rfp/[id]` | Product RFP UI; Agent tab embeds eve workspace |
-| `/w/[workspaceId]` | Standalone workspace IDE (workspaceId = rfp id) |
-| `/templates`, `/rates`, `/settings/*` | Product surfaces (mock data parity) |
+| Path                                  | Purpose                                         |
+| ------------------------------------- | ----------------------------------------------- |
+| `/rfp`, `/rfp/[id]`                   | Product RFP UI; Agent tab embeds eve workspace  |
+| `/w/[workspaceId]`                    | Standalone workspace IDE (workspaceId = rfp id) |
+| `/templates`, `/rates`, `/settings/*` | Product surfaces (mock data parity)             |
 
 ## E2E
 

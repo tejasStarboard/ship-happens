@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect } from "react"
 
 /** Marks the document when client React has hydrated (for e2e). */

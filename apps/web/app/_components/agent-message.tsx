@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import type {
   ConversationInput,
@@ -7,8 +7,8 @@ import type {
   EveMessage,
   EveMessageInputRequest,
   EveMessagePart,
-} from "eve/react";
-import { useState } from "react";
+} from "eve/react"
+import { useState } from "react"
 import {
   ArrowRightIcon,
   CheckCircleIcon,
@@ -18,7 +18,7 @@ import {
   ImageIcon,
   KeyRoundIcon,
   XCircleIcon,
-} from "lucide-react";
+} from "lucide-react"
 import {
   Confirmation,
   ConfirmationAction,
@@ -27,8 +27,12 @@ import {
   ConfirmationTitle,
   ConfirmationAccepted,
   ConfirmationRejected,
-} from "@workspace/ui/ai-elements/confirmation";
-import { Message, MessageContent, MessageResponse } from "@workspace/ui/ai-elements/message";
+} from "@workspace/ui/ai-elements/confirmation"
+import {
+  Message,
+  MessageContent,
+  MessageResponse,
+} from "@workspace/ui/ai-elements/message"
 import {
   Question,
   QuestionInput,
@@ -38,9 +42,18 @@ import {
   type QuestionResponse,
   QuestionSubmit,
   type QuestionValue,
-} from "@workspace/ui/ai-elements/question";
-import { Reasoning, ReasoningContent, ReasoningTrigger } from "@workspace/ui/ai-elements/reasoning";
-import { Task, TaskContent, TaskItem, TaskTrigger } from "@workspace/ui/ai-elements/task";
+} from "@workspace/ui/ai-elements/question"
+import {
+  Reasoning,
+  ReasoningContent,
+  ReasoningTrigger,
+} from "@workspace/ui/ai-elements/reasoning"
+import {
+  Task,
+  TaskContent,
+  TaskItem,
+  TaskTrigger,
+} from "@workspace/ui/ai-elements/task"
 import {
   BashToolContent,
   Tool,
@@ -48,17 +61,17 @@ import {
   ToolHeader,
   ToolInput,
   ToolOutput,
-} from "@workspace/ui/ai-elements/tool";
-import { Button } from "@workspace/ui/components/button";
-import { cn } from "@/lib/utils";
+} from "@workspace/ui/ai-elements/tool"
+import { Button } from "@workspace/ui/components/button"
+import { cn } from "@/lib/utils"
 
 export type AgentInputResponse = {
-  readonly optionId?: string;
-  readonly requestId: string;
-  readonly text?: string;
-};
+  readonly optionId?: string
+  readonly requestId: string
+  readonly text?: string
+}
 
-type EveFilePart = Extract<EveMessagePart, { type: "file" }>;
+type EveFilePart = Extract<EveMessagePart, { type: "file" }>
 
 export function AgentMessage({
   canRespond,
@@ -67,19 +80,21 @@ export function AgentMessage({
   onInputResponses,
   questionsFor,
 }: {
-  readonly canRespond: (requestId: string) => boolean;
-  readonly isStreaming: boolean;
-  readonly message: EveMessage;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
-  readonly questionsFor: (callId: string) => readonly ConversationInput[];
+  readonly canRespond: (requestId: string) => boolean
+  readonly isStreaming: boolean
+  readonly message: EveMessage
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[]
+  ) => void | Promise<void>
+  readonly questionsFor: (callId: string) => readonly ConversationInput[]
 }) {
   const lastTextIndex = message.parts.reduce(
     (last, part, index) => (part.type === "text" ? index : last),
-    -1,
-  );
+    -1
+  )
   const hasAssistantText =
     message.role === "assistant" &&
-    message.parts.some((part) => part.type === "text" && part.text.length > 0);
+    message.parts.some((part) => part.type === "text" && part.text.length > 0)
 
   return (
     <Message
@@ -95,13 +110,17 @@ export function AgentMessage({
               onInputResponses={onInputResponses}
               part={part}
               questionsFor={questionsFor}
-              showCaret={isStreaming && message.role === "assistant" && index === lastTextIndex}
+              showCaret={
+                isStreaming &&
+                message.role === "assistant" &&
+                index === lastTextIndex
+              }
             />
-          ),
+          )
         )}
       </MessageContent>
     </Message>
-  );
+  )
 }
 
 function AgentMessagePart({
@@ -111,34 +130,36 @@ function AgentMessagePart({
   questionsFor,
   showCaret,
 }: {
-  readonly canRespond: (requestId: string) => boolean;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
-  readonly part: EveMessagePart;
-  readonly questionsFor: (callId: string) => readonly ConversationInput[];
-  readonly showCaret: boolean;
+  readonly canRespond: (requestId: string) => boolean
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[]
+  ) => void | Promise<void>
+  readonly part: EveMessagePart
+  readonly questionsFor: (callId: string) => readonly ConversationInput[]
+  readonly showCaret: boolean
 }) {
   switch (part.type) {
     case "step-start":
-      return null;
+      return null
     case "text":
       return (
         <MessageResponse caret="block" isAnimating={showCaret}>
           {part.text}
         </MessageResponse>
-      );
+      )
     case "reasoning":
       return (
         <Reasoning defaultOpen isStreaming={part.state === "streaming"}>
           <ReasoningTrigger />
           <ReasoningContent>{part.text}</ReasoningContent>
         </Reasoning>
-      );
+      )
     case "file":
-      return <AttachmentPart part={part} />;
+      return <AttachmentPart part={part} />
     case "authorization":
-      return <AuthorizationPrompt part={part} />;
+      return <AuthorizationPrompt part={part} />
     case "dynamic-tool": {
-      const questions = questionsFor(part.toolCallId);
+      const questions = questionsFor(part.toolCallId)
       if (questions.length > 0) {
         return (
           <div className="space-y-4">
@@ -152,7 +173,7 @@ function AgentMessagePart({
               />
             ))}
           </div>
-        );
+        )
       }
 
       return (
@@ -186,7 +207,7 @@ function AgentMessagePart({
             onInputResponses={onInputResponses}
           />
         </>
-      );
+      )
     }
   }
 }
@@ -197,27 +218,29 @@ function QuestionRequest({
   inputResponse,
   onInputResponses,
 }: {
-  readonly canRespond: boolean;
-  readonly inputRequest: EveMessageInputRequest;
-  readonly inputResponse?: AgentInputResponse;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
+  readonly canRespond: boolean
+  readonly inputRequest: EveMessageInputRequest
+  readonly inputResponse?: AgentInputResponse
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[]
+  ) => void | Promise<void>
 }) {
-  const hasOptions = (inputRequest.options?.length ?? 0) > 0;
-  const acceptsFreeform = inputRequest.allowFreeform === true || !hasOptions;
+  const hasOptions = (inputRequest.options?.length ?? 0) > 0
+  const acceptsFreeform = inputRequest.allowFreeform === true || !hasOptions
   const [questionValue, setQuestionValue] = useState<QuestionValue>({
     selectedValues: inputResponse?.optionId ? [inputResponse.optionId] : [],
     text: inputResponse?.text ?? "",
-  });
+  })
 
   const submitOption = (optionId: string) => {
-    setQuestionValue((value) => ({ ...value, selectedValues: [optionId] }));
+    setQuestionValue((value) => ({ ...value, selectedValues: [optionId] }))
     return onInputResponses([
       {
         optionId,
         requestId: inputRequest.requestId,
       },
-    ]);
-  };
+    ])
+  }
 
   const submitResponse = ({ selectedValues, text }: QuestionResponse) =>
     onInputResponses([
@@ -226,7 +249,7 @@ function QuestionRequest({
         requestId: inputRequest.requestId,
         text,
       },
-    ]);
+    ])
 
   return (
     <Question
@@ -237,7 +260,10 @@ function QuestionRequest({
     >
       <QuestionPrompt>{inputRequest.prompt}</QuestionPrompt>
       {hasOptions ? (
-        <QuestionOptions className="flex-col items-stretch" aria-label={inputRequest.prompt}>
+        <QuestionOptions
+          className="flex-col items-stretch"
+          aria-label={inputRequest.prompt}
+        >
           {inputRequest.options?.map((option, index) => (
             <QuestionOption
               className="justify-start px-3 py-2 text-left"
@@ -246,9 +272,11 @@ function QuestionRequest({
               value={option.id}
             >
               <span className="min-w-0 flex-1">
-                <span className="block text-foreground text-sm leading-tight">{option.label}</span>
+                <span className="block text-sm leading-tight text-foreground">
+                  {option.label}
+                </span>
                 {option.description ? (
-                  <span className="block text-sm text-muted-foreground leading-tight">
+                  <span className="block text-sm leading-tight text-muted-foreground">
                     {option.description}
                   </span>
                 ) : null}
@@ -274,7 +302,8 @@ function QuestionRequest({
             className={inputResponse === undefined ? "pr-12 pb-12" : undefined}
             placeholder="Type your answer…"
           />
-          {inputResponse === undefined && questionValue.text.trim().length > 0 ? (
+          {inputResponse === undefined &&
+          questionValue.text.trim().length > 0 ? (
             <QuestionSubmit
               aria-label="Answer"
               className="absolute right-2 bottom-2"
@@ -286,18 +315,24 @@ function QuestionRequest({
         </div>
       ) : null}
     </Question>
-  );
+  )
 }
 
 function AttachmentPart({ part }: { readonly part: EveFilePart }) {
-  const label = part.filename ?? "Attachment";
-  const detail = [part.mediaType, formatBytes(part.size)].filter(Boolean).join(" - ");
-  const isImage = part.mediaType.startsWith("image/") && part.url !== undefined;
-  const Icon = isImage ? ImageIcon : FileIcon;
+  const label = part.filename ?? "Attachment"
+  const detail = [part.mediaType, formatBytes(part.size)]
+    .filter(Boolean)
+    .join(" - ")
+  const isImage = part.mediaType.startsWith("image/") && part.url !== undefined
+  const Icon = isImage ? ImageIcon : FileIcon
   const body = (
     <span className="flex max-w-sm items-center gap-3 rounded-md border bg-background/60 p-2 text-sm">
       {isImage ? (
-        <img alt={label} className="size-12 shrink-0 rounded-sm object-cover" src={part.url} />
+        <img
+          alt={label}
+          className="size-12 shrink-0 rounded-sm object-cover"
+          src={part.url}
+        />
       ) : (
         <span className="flex size-10 shrink-0 items-center justify-center rounded-sm bg-muted text-muted-foreground">
           <Icon className="size-4" />
@@ -305,11 +340,15 @@ function AttachmentPart({ part }: { readonly part: EveFilePart }) {
       )}
       <span className="min-w-0 flex-1">
         <span className="block truncate font-medium">{label}</span>
-        {detail ? <span className="block truncate text-muted-foreground">{detail}</span> : null}
+        {detail ? (
+          <span className="block truncate text-muted-foreground">{detail}</span>
+        ) : null}
       </span>
-      {part.url ? <ExternalLinkIcon className="size-4 shrink-0 text-muted-foreground" /> : null}
+      {part.url ? (
+        <ExternalLinkIcon className="size-4 shrink-0 text-muted-foreground" />
+      ) : null}
     </span>
-  );
+  )
 
   return part.url ? (
     <a href={part.url} rel="noreferrer" target="_blank">
@@ -317,15 +356,25 @@ function AttachmentPart({ part }: { readonly part: EveFilePart }) {
     </a>
   ) : (
     body
-  );
+  )
 }
 
-function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) {
-  const isAuthorized = part.state === "completed" && part.outcome === "authorized";
-  const isCompleted = part.state === "completed";
-  const Icon = isAuthorized ? CheckCircleIcon : isCompleted ? XCircleIcon : KeyRoundIcon;
-  const instructions = part.authorization?.instructions;
-  const shouldShowInstructions = instructions !== undefined && instructions !== part.description;
+function AuthorizationPrompt({
+  part,
+}: {
+  readonly part: EveAuthorizationPart
+}) {
+  const isAuthorized =
+    part.state === "completed" && part.outcome === "authorized"
+  const isCompleted = part.state === "completed"
+  const Icon = isAuthorized
+    ? CheckCircleIcon
+    : isCompleted
+      ? XCircleIcon
+      : KeyRoundIcon
+  const instructions = part.authorization?.instructions
+  const shouldShowInstructions =
+    instructions !== undefined && instructions !== part.description
 
   return (
     <div
@@ -335,7 +384,7 @@ function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) 
           ? "border-emerald-500/30 bg-emerald-500/5"
           : isCompleted
             ? "border-destructive/30 bg-destructive/5"
-            : "border-blue-500/30 bg-blue-500/5",
+            : "border-blue-500/30 bg-blue-500/5"
       )}
     >
       <div className="flex items-start gap-3">
@@ -346,16 +395,18 @@ function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) 
               ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
               : isCompleted
                 ? "bg-destructive/10 text-destructive"
-                : "bg-blue-500/10 text-blue-700 dark:text-blue-300",
+                : "bg-blue-500/10 text-blue-700 dark:text-blue-300"
           )}
         >
           <Icon className="size-4" />
         </span>
         <div className="min-w-0 flex-1 space-y-2">
-          <p className="font-medium text-sm">{authorizationTitle(part)}</p>
-          <p className="text-muted-foreground text-sm">{authorizationDescription(part)}</p>
+          <p className="text-sm font-medium">{authorizationTitle(part)}</p>
+          <p className="text-sm text-muted-foreground">
+            {authorizationDescription(part)}
+          </p>
           {shouldShowInstructions ? (
-            <p className="text-muted-foreground text-sm">{instructions}</p>
+            <p className="text-sm text-muted-foreground">{instructions}</p>
           ) : null}
           {part.state === "required" && part.authorization?.userCode ? (
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -369,7 +420,11 @@ function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) 
             <Button
               nativeButton={false}
               render={
-                <a href={part.authorization.url} rel="noreferrer" target="_blank" />
+                <a
+                  href={part.authorization.url}
+                  rel="noreferrer"
+                  target="_blank"
+                />
               }
               size="sm"
             >
@@ -380,54 +435,56 @@ function AuthorizationPrompt({ part }: { readonly part: EveAuthorizationPart }) 
         </div>
       </div>
     </div>
-  );
+  )
 }
 
 function authorizationTitle(part: EveAuthorizationPart): string {
   if (part.state === "required") {
-    return `Connect ${part.displayName}`;
+    return `Connect ${part.displayName}`
   }
   if (part.outcome === "authorized") {
-    return `${part.displayName} connected`;
+    return `${part.displayName} connected`
   }
-  return `${part.displayName} authorization ${formatAuthorizationOutcome(part.outcome)}`;
+  return `${part.displayName} authorization ${formatAuthorizationOutcome(part.outcome)}`
 }
 
 function authorizationDescription(part: EveAuthorizationPart): string {
   if (part.state === "required") {
-    return part.description;
+    return part.description
   }
   if (part.outcome === "authorized") {
-    return `${part.displayName} connected.`;
+    return `${part.displayName} connected.`
   }
-  const tail = part.reason !== undefined ? ` (${part.reason})` : "";
-  return `${part.displayName} authorization ${formatAuthorizationOutcome(part.outcome)}${tail}.`;
+  const tail = part.reason !== undefined ? ` (${part.reason})` : ""
+  return `${part.displayName} authorization ${formatAuthorizationOutcome(part.outcome)}${tail}.`
 }
 
-function formatAuthorizationOutcome(outcome: NonNullable<EveAuthorizationPart["outcome"]>): string {
+function formatAuthorizationOutcome(
+  outcome: NonNullable<EveAuthorizationPart["outcome"]>
+): string {
   switch (outcome) {
     case "authorized":
-      return "authorized";
+      return "authorized"
     case "declined":
-      return "declined";
+      return "declined"
     case "failed":
-      return "failed";
+      return "failed"
     case "timed-out":
-      return "timed out";
+      return "timed out"
   }
 }
 
 function formatBytes(size: number | undefined): string | undefined {
   if (size === undefined) {
-    return undefined;
+    return undefined
   }
   if (size < 1024) {
-    return `${size} B`;
+    return `${size} B`
   }
   if (size < 1024 * 1024) {
-    return `${(size / 1024).toFixed(1)} KB`;
+    return `${(size / 1024).toFixed(1)} KB`
   }
-  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`
 }
 
 function InputRequestActions({
@@ -435,34 +492,48 @@ function InputRequestActions({
   onInputResponses,
   part,
 }: {
-  readonly canRespond: (requestId: string) => boolean;
-  readonly onInputResponses: (responses: readonly AgentInputResponse[]) => void | Promise<void>;
-  readonly part: EveDynamicToolPart;
+  readonly canRespond: (requestId: string) => boolean
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[]
+  ) => void | Promise<void>
+  readonly part: EveDynamicToolPart
 }) {
-  const inputRequest = part.toolMetadata?.eve?.inputRequest;
+  const inputRequest = part.toolMetadata?.eve?.inputRequest
   if (!inputRequest) {
-    return null;
+    return null
   }
 
-  const inputResponse = part.toolMetadata?.eve?.inputResponse;
+  const inputResponse = part.toolMetadata?.eve?.inputResponse
   const selectedOption = inputRequest.options?.find(
-    (option) => option.id === inputResponse?.optionId,
-  );
-  const approveOption = inputRequest.options?.find((option) => option.style !== "danger");
-  const denyOption = inputRequest.options?.find((option) => option.style === "danger");
+    (option) => option.id === inputResponse?.optionId
+  )
+  const approveOption = inputRequest.options?.find(
+    (option) => option.style !== "danger"
+  )
+  const denyOption = inputRequest.options?.find(
+    (option) => option.style === "danger"
+  )
   const isConfirmationDisplay =
     inputRequest.display === "confirmation" ||
     part.state === "approval-requested" ||
     part.state === "approval-responded" ||
-    part.state === "output-denied";
+    part.state === "output-denied"
 
   if (isConfirmationDisplay && part.approval) {
     const approval =
       part.approval.approved === undefined
         ? { id: part.approval.id }
         : part.approval.approved
-          ? { id: part.approval.id, approved: true as const, reason: part.approval.reason }
-          : { id: part.approval.id, approved: false as const, reason: part.approval.reason };
+          ? {
+              id: part.approval.id,
+              approved: true as const,
+              reason: part.approval.reason,
+            }
+          : {
+              id: part.approval.id,
+              approved: false as const,
+              reason: part.approval.reason,
+            }
 
     return (
       <Confirmation approval={approval} state={part.state}>
@@ -478,7 +549,7 @@ function InputRequestActions({
                       optionId: denyOption.id,
                       requestId: inputRequest.requestId,
                     },
-                  ]);
+                  ])
                 }}
                 variant="outline"
               >
@@ -494,7 +565,7 @@ function InputRequestActions({
                       optionId: approveOption.id,
                       requestId: inputRequest.requestId,
                     },
-                  ]);
+                  ])
                 }}
               >
                 {approveOption.label}
@@ -519,7 +590,7 @@ function InputRequestActions({
           </ConfirmationTitle>
         </ConfirmationRejected>
       </Confirmation>
-    );
+    )
   }
 
   const settledApproval =
@@ -527,10 +598,13 @@ function InputRequestActions({
       ? undefined
       : part.approval.approved
         ? "Approved"
-        : "Denied";
+        : "Denied"
 
   return (
-    <Task defaultOpen className="rounded-md border border-yellow-500/30 bg-yellow-500/5 p-3">
+    <Task
+      defaultOpen
+      className="rounded-md border border-yellow-500/30 bg-yellow-500/5 p-3"
+    >
       <TaskTrigger title={inputRequest.prompt} />
       <TaskContent>
         {inputResponse || settledApproval ? (
@@ -553,7 +627,7 @@ function InputRequestActions({
                       optionId: option.id,
                       requestId: inputRequest.requestId,
                     },
-                  ]);
+                  ])
                 }}
                 size="sm"
                 type="button"
@@ -566,7 +640,7 @@ function InputRequestActions({
         )}
       </TaskContent>
     </Task>
-  );
+  )
 }
 
 function partKey(part: EveMessagePart, index: number): string {
@@ -574,13 +648,13 @@ function partKey(part: EveMessagePart, index: number): string {
     case "authorization":
       return part.attemptId === undefined
         ? `authorization:${part.turnId}:${part.stepIndex}:${part.name}`
-        : `authorization:${part.attemptId}`;
+        : `authorization:${part.attemptId}`
     case "dynamic-tool":
-      return part.toolCallId;
+      return part.toolCallId
     case "reasoning":
     case "text":
-      return `${part.type}:${part.id ?? index}`;
+      return `${part.type}:${part.id ?? index}`
     default:
-      return `${part.type}:${index}`;
+      return `${part.type}:${index}`
   }
 }

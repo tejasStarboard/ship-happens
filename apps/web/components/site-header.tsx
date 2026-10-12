@@ -1,7 +1,7 @@
-"use client";
+"use client"
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from "next/link"
+import { usePathname } from "next/navigation"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -9,34 +9,34 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb";
-import { Separator } from "@workspace/ui/components/separator";
-import { SidebarTrigger } from "@workspace/ui/components/sidebar";
-import { Fragment } from "react";
+} from "@workspace/ui/components/breadcrumb"
+import { Separator } from "@workspace/ui/components/separator"
+import { SidebarTrigger } from "@workspace/ui/components/sidebar"
+import { Fragment } from "react"
 
 function crumbsFromPath(pathname: string) {
-  const parts = pathname.split("/").filter(Boolean);
+  const parts = pathname.split("/").filter(Boolean)
   if (parts.length === 0) {
-    return [{ label: "Home", href: "/rfp" as string | null }];
+    return [{ label: "Home", href: "/rfp" as string | null }]
   }
-  const crumbs: { label: string; href: string | null }[] = [];
-  let acc = "";
+  const crumbs: { label: string; href: string | null }[] = []
+  let acc = ""
   for (let i = 0; i < parts.length; i += 1) {
-    acc += `/${parts[i]}`;
+    acc += `/${parts[i]}`
     const label = parts[i]
       .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase());
+      .replace(/\b\w/g, (c) => c.toUpperCase())
     crumbs.push({
       label,
       href: i === parts.length - 1 ? null : acc,
-    });
+    })
   }
-  return crumbs;
+  return crumbs
 }
 
 export function SiteHeader() {
-  const pathname = usePathname();
-  const crumbs = crumbsFromPath(pathname);
+  const pathname = usePathname()
+  const crumbs = crumbsFromPath(pathname)
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
@@ -46,7 +46,7 @@ export function SiteHeader() {
         <Breadcrumb className="min-w-0 flex-1">
           <BreadcrumbList>
             {crumbs.map((crumb, index) => {
-              const isLast = index === crumbs.length - 1;
+              const isLast = index === crumbs.length - 1
               return (
                 <Fragment key={`${crumb.label}-${index}`}>
                   {index > 0 ? <BreadcrumbSeparator /> : null}
@@ -65,11 +65,11 @@ export function SiteHeader() {
                     )}
                   </BreadcrumbItem>
                 </Fragment>
-              );
+              )
             })}
           </BreadcrumbList>
         </Breadcrumb>
       </div>
     </header>
-  );
+  )
 }
