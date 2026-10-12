@@ -5,6 +5,7 @@ import {
   IconCurrencyDollar,
   IconFileSpreadsheet,
   IconHelp,
+  IconLayersSubtract,
   IconSettings,
   IconTemplate,
 } from "@tabler/icons-react"
@@ -22,7 +23,7 @@ import {
 
 const navMain = [
   {
-    title: "RFPs",
+    title: "Fills",
     url: "/rfp",
     icon: IconFileSpreadsheet,
   },
@@ -32,7 +33,12 @@ const navMain = [
     icon: IconTemplate,
   },
   {
-    title: "Rates",
+    title: "Overlays",
+    url: "/overlays",
+    icon: IconLayersSubtract,
+  },
+  {
+    title: "Starboard rates",
     url: "/rates",
     icon: IconCurrencyDollar,
   },
@@ -61,7 +67,7 @@ export function AppSidebar({ orgs, user, ...props }: AppSidebarProps) {
             },
             {
               title: "Get Help",
-              url: "#",
+              url: "/help",
               icon: IconHelp,
             },
           ]}

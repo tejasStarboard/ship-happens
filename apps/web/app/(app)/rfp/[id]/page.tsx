@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 import { RfpDetail } from "@/components/rfp/rfp-detail"
 import { requireOrgSession } from "@/lib/server/session"
-import { getOrgRfp } from "@/lib/server/rfps"
+import { getOrgRfpDetail } from "@/lib/server/rfps"
 import { ensureRfpWorkspace } from "@/lib/workspace-registry"
 
 export default async function RfpDetailPage({
@@ -11,7 +11,7 @@ export default async function RfpDetailPage({
 }) {
   const { organizationId, session } = await requireOrgSession()
   const { id } = await params
-  const rfp = await getOrgRfp(id)
+  const rfp = await getOrgRfpDetail(id)
   if (!rfp) notFound()
 
   await ensureRfpWorkspace({

@@ -28,9 +28,12 @@ export function RatesQuery() {
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Rates</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Starboard rates
+        </h1>
         <p className="text-sm text-muted-foreground">
-          Query Starboard contract rates (mock results for now).
+          Explore Starboard contract and spot rates (mock results for now). Same
+          lookup path fills will use later — not a second rate database.
         </p>
       </div>
 

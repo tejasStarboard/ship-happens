@@ -3,8 +3,8 @@ export const PREFERENCES_STORAGE_KEY = "preferences:v1"
 export const HOME_VIEW_OPTIONS = [
   {
     value: "dashboard",
-    label: "RFPs",
-    description: "Your RFP fill workspace",
+    label: "Fills",
+    description: "Your bid sheet fill workspace",
     path: "/rfp",
   },
 ] as const

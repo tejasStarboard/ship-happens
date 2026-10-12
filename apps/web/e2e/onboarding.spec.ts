@@ -10,13 +10,13 @@ import {
 } from "./helpers"
 
 test.describe("auth onboarding", () => {
-  test("sign up, create org, land on RFPs", async ({ page }) => {
+  test("sign up, create org, land on Fills", async ({ page }) => {
     const credentials = uniqueCredentials("signup")
     await signUp(page, credentials)
     await createOrganization(page, credentials)
     await expect(page).toHaveURL(/\/rfp/)
-    await expect(page.getByRole("heading", { name: "RFPs" })).toBeVisible()
-    await expect(page.getByText("Nordstrom FCL Q2")).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
+    await expect(page.getByText(/No fills yet/)).toBeVisible()
   })
 
   test("sign in existing user, pick org, then log out", async ({ page }) => {
@@ -34,7 +34,7 @@ test.describe("auth onboarding", () => {
       await selectOrganization(page, credentials.orgName)
     }
     await expect(page).toHaveURL(/\/rfp/)
-    await expect(page.getByRole("heading", { name: "RFPs" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
 
     await signOut(page)
     await page.goto("/rfp")

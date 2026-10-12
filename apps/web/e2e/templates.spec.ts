@@ -2,25 +2,18 @@ import { test, expect } from "./fixtures"
 import { waitForAppReady } from "./helpers"
 
 test.describe("Templates surface", () => {
-  test("list opens detail with metadata and download", async ({ page }) => {
+  test("list shows empty state and opens Upload dialog", async ({ page }) => {
     await page.goto("/templates")
     await waitForAppReady(page)
     await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Upload" })).toBeVisible()
+    await expect(page.getByText(/No templates/i)).toBeVisible()
 
-    await page
-      .getByRole("cell", { name: "Nordstrom bid sheet", exact: true })
-      .click()
-    // Demo templates are seeded as `{mockId}__{organizationId}`
-    await expect(page).toHaveURL(/\/templates\/tpl_nordstrom_v3__/)
+    await page.getByRole("button", { name: "Upload" }).click()
     await expect(
-      page.getByRole("heading", { name: "Nordstrom bid sheet" })
+      page.getByRole("heading", { name: "Upload template" })
     ).toBeVisible()
-
-    await expect(page.getByText("Metadata")).toBeVisible()
-    // Button+anchor composition exposes these as buttons
-    await expect(page.getByRole("button", { name: "Download" })).toBeVisible()
-    await expect(
-      page.getByRole("button", { name: "Open in Office" })
-    ).toBeVisible()
+    await expect(page.getByLabel("Name")).toBeVisible()
+    await expect(page.getByLabel("Workbook")).toBeVisible()
   })
 })

@@ -468,7 +468,7 @@ export function WorkspaceShell({
             className="text-sm font-medium tracking-tight hover:underline"
             href="/rfp"
           >
-            RFPs
+            Fills
           </Link>
           <span className="text-sm text-muted-foreground">/</span>
           <span className="truncate font-mono text-[11px] text-muted-foreground">

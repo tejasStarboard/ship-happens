@@ -14,20 +14,37 @@ import { Separator } from "@workspace/ui/components/separator"
 import { SidebarTrigger } from "@workspace/ui/components/sidebar"
 import { Fragment } from "react"
 
+const SEGMENT_LABELS: Record<string, string> = {
+  rfp: "Fills",
+  templates: "Templates",
+  overlays: "Overlays",
+  rates: "Starboard rates",
+  help: "Help",
+  settings: "Settings",
+  profile: "Profile",
+  preferences: "Preferences",
+  members: "Members",
+}
+
+function labelForSegment(segment: string, index: number, parts: string[]) {
+  if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment]
+  // Keep raw ids readable on nested fill/template routes.
+  if (parts[0] === "rfp" && index === 1) return "Fill"
+  if (parts[0] === "templates" && index === 1) return "Template"
+  return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 function crumbsFromPath(pathname: string) {
   const parts = pathname.split("/").filter(Boolean)
   if (parts.length === 0) {
-    return [{ label: "Home", href: "/rfp" as string | null }]
+    return [{ label: "Fills", href: "/rfp" as string | null }]
   }
   const crumbs: { label: string; href: string | null }[] = []
   let acc = ""
   for (let i = 0; i < parts.length; i += 1) {
     acc += `/${parts[i]}`
-    const label = parts[i]
-      .replace(/-/g, " ")
-      .replace(/\b\w/g, (c) => c.toUpperCase())
     crumbs.push({
-      label,
+      label: labelForSegment(parts[i]!, i, parts),
       href: i === parts.length - 1 ? null : acc,
     })
   }

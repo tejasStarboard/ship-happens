@@ -21,7 +21,7 @@ type MatchLike = {
  */
 export function buildBreadcrumbs(matches: MatchLike[]): AppBreadcrumb[] {
   const leaf = matches[matches.length - 1]
-  if (!leaf) return [{ label: "RFPs", to: "/rfp" }]
+  if (!leaf) return [{ label: "Fills", to: "/rfp" }]
 
   const routeId = leaf.routeId
   const params = leaf.params as Record<string, string>
@@ -46,13 +46,21 @@ export function buildBreadcrumbs(matches: MatchLike[]): AppBreadcrumb[] {
   if (routeId.includes("/rfp/$id")) {
     const rfp = loaderData?.rfp as { name?: string } | undefined
     return [
-      { label: "RFPs", to: "/rfp" },
-      { label: rfp?.name ?? params.id ?? "RFP" },
+      { label: "Fills", to: "/rfp" },
+      { label: rfp?.name ?? params.id ?? "Fill" },
     ]
   }
 
   if (routeId.includes("/rfp")) {
-    return [{ label: "RFPs" }]
+    return [{ label: "Fills" }]
+  }
+
+  if (routeId.includes("/overlays")) {
+    return [{ label: "Overlays" }]
+  }
+
+  if (routeId.includes("/help")) {
+    return [{ label: "Help" }]
   }
 
   if (routeId.includes("/templates/$templateId")) {
@@ -68,8 +76,8 @@ export function buildBreadcrumbs(matches: MatchLike[]): AppBreadcrumb[] {
   }
 
   if (routeId.includes("/rates")) {
-    return [{ label: "Rates" }]
+    return [{ label: "Starboard rates" }]
   }
 
-  return [{ label: "RFPs", to: "/rfp" }]
+  return [{ label: "Fills", to: "/rfp" }]
 }

@@ -17,12 +17,34 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
-import { RFP_STATUS_LABEL } from "@/lib/mock/rfps"
-import type { RfpListItem } from "@/lib/server/rfps"
+import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
+import { RFP_STATUS_LABEL, type RfpStatus } from "@/lib/mock/rfps"
+import type { RfpDetailView } from "@/lib/server/rfps"
 
-export function RfpDetail({ rfp }: { rfp: RfpListItem }) {
-  // Lazy-mount Agent workspace so switching away unmounts the eve shell.
-  const [tab, setTab] = useState("chat")
+type FillTab = "overview" | "map" | "review" | "chat"
+
+function primaryAction(status: RfpStatus): {
+  label: string
+  tab: FillTab
+} {
+  switch (status) {
+    case "needs_review":
+      return { label: "Continue review", tab: "review" }
+    case "queued":
+    case "running":
+      return { label: "View overview", tab: "overview" }
+    case "done":
+      return { label: "View overview", tab: "overview" }
+    case "failed":
+      return { label: "View overview", tab: "overview" }
+    default:
+      return { label: "View overview", tab: "overview" }
+  }
+}
+
+export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
+  const [tab, setTab] = useState<FillTab>("overview")
+  const action = primaryAction(rfp.status)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
@@ -39,7 +61,14 @@ export function RfpDetail({ rfp }: { rfp: RfpListItem }) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" disabled>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setTab(action.tab)}
+          >
+            {action.label}
+          </Button>
+          <Button variant="outline" size="sm" disabled={!rfp.filledFileUrl}>
             Download filled
           </Button>
           <Button size="sm" disabled>
@@ -50,65 +79,43 @@ export function RfpDetail({ rfp }: { rfp: RfpListItem }) {
 
       <Tabs
         value={tab}
-        onValueChange={setTab}
+        onValueChange={(value) => setTab(value as FillTab)}
         className="flex min-h-0 flex-1 flex-col gap-0"
       >
         <TabsList className="w-fit shrink-0">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="map">Map</TabsTrigger>
+          <TabsTrigger value="review">Review</TabsTrigger>
           <TabsTrigger value="chat">Agent</TabsTrigger>
-          <TabsTrigger value="logs">Logs</TabsTrigger>
-          <TabsTrigger value="progress">Progress</TabsTrigger>
-          <TabsTrigger value="report">Fill report</TabsTrigger>
         </TabsList>
 
-        <TabsContent
-          value="chat"
-          className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border data-hidden:hidden"
-        >
-          {tab === "chat" ? (
-            <WorkspaceShell embedded workspaceId={rfp.id} />
-          ) : null}
+        <TabsContent value="overview" className="mt-4 overflow-auto">
+          <FillOverviewDashboard rfp={rfp} />
         </TabsContent>
 
-        <TabsContent value="logs" className="mt-4 overflow-auto">
+        <TabsContent value="map" className="mt-4 overflow-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Run logs</CardTitle>
+              <CardTitle>Map</CardTitle>
               <CardDescription>
-                Job step output for ops debugging.
+                Confirm BCO columns and lanes against Starboard concepts before
+                rates run.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <pre className="overflow-auto rounded-lg bg-muted p-3 font-mono text-xs text-muted-foreground">
-                {`[step] parse-workbook ok
-[step] fetch-rates pending
-[sandbox] awaiting agent run`}
-              </pre>
+            <CardContent className="text-sm text-muted-foreground">
+              Schema mapping UI ships after the Starboard client and capability
+              catalog. Low-confidence matches will require human confirm here.
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="progress" className="mt-4 overflow-auto">
+        <TabsContent value="review" className="mt-4 overflow-auto">
           <Card>
             <CardHeader>
-              <CardTitle>Progress</CardTitle>
-              <CardDescription>High-level job stages.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-2 text-sm">
-              <p>✓ Upload received</p>
-              <p>✓ Sheet parsed</p>
-              <p>○ Rates resolved</p>
-              <p>○ Cells written</p>
-              <p>○ Report ready</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="report" className="mt-4 overflow-auto">
-          <Card>
-            <CardHeader>
-              <CardTitle>Fill report</CardTitle>
+              <CardTitle>Review</CardTitle>
               <CardDescription>
-                Summary of filled / skipped / needs-human cells after a run.
+                Cell-level fill outcomes, buy-rate source, overlays, and
+                approvals before export.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-3 sm:grid-cols-3">
@@ -126,6 +133,15 @@ export function RfpDetail({ rfp }: { rfp: RfpListItem }) {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent
+          value="chat"
+          className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border data-hidden:hidden"
+        >
+          {tab === "chat" ? (
+            <WorkspaceShell embedded workspaceId={rfp.id} />
+          ) : null}
         </TabsContent>
       </Tabs>
     </div>

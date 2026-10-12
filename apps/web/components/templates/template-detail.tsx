@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
+import { UseTemplateFillButton } from "@/components/templates/use-template-fill-button"
 import { formatBytes, type MockTemplate } from "@/lib/mock/templates"
 import { formatDateTime } from "@/lib/shared/string"
 
@@ -22,6 +23,10 @@ export function TemplateDetail({ template }: { template: MockTemplate }) {
           <p className="text-sm text-muted-foreground">{template.fileName}</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <UseTemplateFillButton
+            templateId={template.id}
+            templateName={template.name}
+          />
           <Button
             variant="outline"
             size="sm"
@@ -53,9 +58,7 @@ export function TemplateDetail({ template }: { template: MockTemplate }) {
       <Card>
         <CardHeader>
           <CardTitle>Metadata</CardTitle>
-          <CardDescription>
-            Document fields — replace with Blob / DB records later.
-          </CardDescription>
+          <CardDescription>Stored template metadata.</CardDescription>
         </CardHeader>
         <CardContent>
           <dl className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">

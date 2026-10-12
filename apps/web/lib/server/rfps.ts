@@ -1,7 +1,8 @@
 import { and, desc, eq } from "drizzle-orm"
 import { db } from "@/lib/db"
-import { rfps, templates } from "@/lib/db/schema"
-import { MOCK_RFPS, type RfpStatus } from "@/lib/mock/rfps"
+import { rfps, rfpSourceFiles, templates } from "@/lib/db/schema"
+import { type RfpStatus } from "@/lib/mock/rfps"
+import { listRfpLogs, listRfpProgressSteps } from "@/lib/server/fill-pipeline"
 import { requireOrgSession } from "@/lib/server/session"
 
 export type RfpListItem = {
@@ -12,6 +13,43 @@ export type RfpListItem = {
   templateName: string
   updatedAt: string
   owner: string
+}
+
+export type RfpProgressStepView = {
+  id: string
+  key: string
+  label: string
+  status: string
+  detail: string | null
+  sortOrder: number
+  startedAt: string | null
+  completedAt: string | null
+}
+
+export type RfpLogView = {
+  id: string
+  level: string
+  message: string
+  stepKey: string | null
+  source: string | null
+  createdAt: string
+}
+
+export type RfpSourceFileView = {
+  id: string
+  fileName: string
+  mimeType: string
+  sizeBytes: number
+  fileUrl: string
+  sheetNames: string[]
+  createdAt: string
+}
+
+export type RfpDetailView = RfpListItem & {
+  progressSteps: RfpProgressStepView[]
+  logs: RfpLogView[]
+  sourceFiles: RfpSourceFileView[]
+  filledFileUrl: string | null
 }
 
 function asRfpStatus(value: string): RfpStatus {
@@ -29,45 +67,8 @@ function asRfpStatus(value: string): RfpStatus {
   }
 }
 
-function demoRfpId(organizationId: string, mockId: string) {
-  // Global PK — scope demo ids per org so tenants don't collide.
-  return `${mockId}__${organizationId}`
-}
-
-/** Seed demo RFPs into Postgres once per org so the UI matches prior mock data. */
-async function seedDemoRfpsIfEmpty(
-  organizationId: string,
-  ownerUserId: string
-): Promise<void> {
-  const existing = await db
-    .select({ id: rfps.id })
-    .from(rfps)
-    .where(eq(rfps.organizationId, organizationId))
-    .limit(1)
-  if (existing.length > 0) return
-
-  await db.insert(rfps).values(
-    MOCK_RFPS.map((rfp) => ({
-      id: demoRfpId(organizationId, rfp.id),
-      organizationId,
-      name: rfp.name,
-      customer: rfp.customer,
-      status: rfp.status,
-      ownerUserId,
-      metadata: {
-        templateName: rfp.templateName,
-        demoSeed: true,
-        mockId: rfp.id,
-      },
-      updatedAt: new Date(rfp.updatedAt),
-      createdAt: new Date(rfp.updatedAt),
-    }))
-  )
-}
-
 export async function listOrgRfps(): Promise<RfpListItem[]> {
   const { organizationId, session } = await requireOrgSession()
-  await seedDemoRfpsIfEmpty(organizationId, session.user.id)
 
   const rows = await db
     .select({
@@ -100,8 +101,23 @@ export async function listOrgRfps(): Promise<RfpListItem[]> {
 }
 
 export async function getOrgRfp(id: string): Promise<RfpListItem | null> {
+  const detail = await getOrgRfpDetail(id)
+  if (!detail) return null
+  return {
+    id: detail.id,
+    name: detail.name,
+    customer: detail.customer,
+    status: detail.status,
+    templateName: detail.templateName,
+    updatedAt: detail.updatedAt,
+    owner: detail.owner,
+  }
+}
+
+export async function getOrgRfpDetail(
+  id: string
+): Promise<RfpDetailView | null> {
   const { organizationId, session } = await requireOrgSession()
-  await seedDemoRfpsIfEmpty(organizationId, session.user.id)
 
   const row = await db
     .select({
@@ -113,6 +129,7 @@ export async function getOrgRfp(id: string): Promise<RfpListItem | null> {
       updatedAt: rfps.updatedAt,
       templateName: templates.name,
       ownerName: rfps.ownerUserId,
+      filledFileUrl: rfps.filledFileUrl,
     })
     .from(rfps)
     .leftJoin(templates, eq(rfps.templateId, templates.id))
@@ -123,6 +140,16 @@ export async function getOrgRfp(id: string): Promise<RfpListItem | null> {
   if (!row) return null
 
   const meta = (row.metadata ?? {}) as { templateName?: string }
+  const [progressSteps, logs, sourceFileRows] = await Promise.all([
+    listRfpProgressSteps(row.id),
+    listRfpLogs(row.id),
+    db
+      .select()
+      .from(rfpSourceFiles)
+      .where(eq(rfpSourceFiles.rfpId, row.id))
+      .orderBy(desc(rfpSourceFiles.createdAt)),
+  ])
+
   return {
     id: row.id,
     name: row.name,
@@ -131,5 +158,33 @@ export async function getOrgRfp(id: string): Promise<RfpListItem | null> {
     templateName: row.templateName ?? meta.templateName ?? "—",
     updatedAt: row.updatedAt.toISOString(),
     owner: session.user.name ?? row.ownerName,
+    filledFileUrl: row.filledFileUrl,
+    progressSteps: progressSteps.map((step) => ({
+      id: step.id,
+      key: step.key,
+      label: step.label,
+      status: step.status,
+      detail: step.detail,
+      sortOrder: step.sortOrder,
+      startedAt: step.startedAt?.toISOString() ?? null,
+      completedAt: step.completedAt?.toISOString() ?? null,
+    })),
+    logs: logs.map((log) => ({
+      id: log.id,
+      level: log.level,
+      message: log.message,
+      stepKey: log.stepKey,
+      source: log.source,
+      createdAt: log.createdAt.toISOString(),
+    })),
+    sourceFiles: sourceFileRows.map((file) => ({
+      id: file.id,
+      fileName: file.fileName,
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      fileUrl: file.fileUrl,
+      sheetNames: (file.sheetNames as string[] | null) ?? [],
+      createdAt: file.createdAt.toISOString(),
+    })),
   }
 }
