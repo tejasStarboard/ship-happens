@@ -1,15 +1,18 @@
 # Ship Happens
 
-Customer-facing RFP sheet filler. Current scaffold: **auth + org + dashboard + settings**.
+Customer-facing RFP sheet filler with an eve agent workspace for filling spreadsheets.
+
+## Primary app
+
+**`apps/web`** — Next.js + eve + Better Auth (orgs) + Postgres/Drizzle + Redis.
 
 ## Stack
 
-- TanStack Start (Vite) + React (fullstack for now)
+- Next.js App Router + eve (agent sandbox / chat)
 - Better Auth (email/password, optional Google, organizations)
-- Drizzle + Postgres (+ `STARBOARD_DB_URL` for rate adapter)
+- Drizzle + Postgres (+ `SANDBOX_STARBOARD_DB_URL` for rate adapter)
 - Redis (session secondary storage)
 - Vercel Blob + AI Gateway
-- **Inngest** (async jobs) + **E2B** (Python sandbox for Excel fillers)
 - `@workspace/ui` (shadcn)
 
 ## Setup
@@ -17,8 +20,8 @@ Customer-facing RFP sheet filler. Current scaffold: **auth + org + dashboard + s
 ```bash
 # 1. Env
 cp .env.example .env
-cp .env apps/web/.env   # Vite loads from apps/web
-# Fill E2B_API_KEY, AI_GATEWAY_API_KEY; Inngest keys optional locally
+cp .env apps/web/.env.local
+# Fill AI Gateway / Anthropic as needed
 
 # 2. Infra
 docker compose up -d
@@ -27,42 +30,26 @@ docker compose up -d
 pnpm install
 pnpm db:push
 
-# 4. Dev (two terminals)
-pnpm --filter web dev          # → http://localhost:3000
-pnpm inngest:dev               # → http://localhost:8288  (syncs /api/inngest)
+# 4. Dev (Node 24+ for eve)
+cd apps/web && nvm use   # if using .nvmrc
+pnpm --filter web dev    # → http://localhost:3000
 ```
 
-Sign up → create/select org → dashboard. Google OAuth is optional (leave blank in `.env`).
+Sign up → create/select org → RFPs. Open an RFP → **Agent** tab for the eve workspace (id = RFP id). Standalone workspace URL: `/w/{rfpId}`.
 
 ## Scripts
 
 | Command | What |
 | --- | --- |
-| `pnpm --filter web dev` | App on :3000 |
-| `pnpm inngest:dev` | Inngest Dev Server → `/api/inngest` |
-| `pnpm db:push` | Push Drizzle schema |
+| `pnpm --filter web dev` | Primary app on :3000 |
+| `pnpm db:push` | Push Drizzle schema (from `apps/web/lib/db/schema`) |
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm typecheck` | Typecheck via turbo |
-| `pnpm test:e2e` | Playwright e2e (headless) |
-| `pnpm test:e2e:ui` | Playwright UI mode |
-
-## E2E tests
-
-Playwright lives in `apps/web/e2e`. Requires Postgres + Redis (same as local Docker).
-
-```bash
-docker compose up -d
-pnpm db:push
-pnpm test:e2e          # headless
-pnpm test:e2e:ui       # interactive UI
-```
-
-Specs cover auth (sign-up / sign-in / org / logout), app navigation, settings, and mock RFP / rates / templates surfaces. CI runs the same suite against Postgres and Redis service containers.
+| `pnpm test:e2e` | Playwright against `apps/web` |
 
 ## Layout
 
 ```
-apps/web          # TanStack Start app
+apps/web          # Primary Next.js + eve app
 packages/ui       # Shared UI kit
-project-one-dev/  # Reference only (Linear clone) — ignore for product work
 ```

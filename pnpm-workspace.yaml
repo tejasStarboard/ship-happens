@@ -7,3 +7,11 @@ allowBuilds:
   lightningcss: true
   unrs-resolver: true
   msw: false
+  better-sqlite3: true
+
+ignoredOptionalDependencies:
+  - "@mongodb-js/zstd"
+  - "node-liblzma"
+
+onlyBuiltDependencies:
+  - better-sqlite3

@@ -1,7 +1,7 @@
 import { test, expect } from "./fixtures"
 import { waitForAppReady } from "./helpers"
 
-test.describe("Templates mock surface", () => {
+test.describe("Templates surface", () => {
   test("list opens detail with metadata and download", async ({ page }) => {
     await page.goto("/templates")
     await waitForAppReady(page)
@@ -10,7 +10,8 @@ test.describe("Templates mock surface", () => {
     await page
       .getByRole("cell", { name: "Nordstrom bid sheet", exact: true })
       .click()
-    await expect(page).toHaveURL(/\/templates\/tpl_nordstrom_v3/)
+    // Demo templates are seeded as `{mockId}__{organizationId}`
+    await expect(page).toHaveURL(/\/templates\/tpl_nordstrom_v3__/)
     await expect(
       page.getByRole("heading", { name: "Nordstrom bid sheet" })
     ).toBeVisible()
