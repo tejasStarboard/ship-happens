@@ -111,7 +111,7 @@ From the package that owns the edits (usually `apps/web`):
 pnpm exec prettier --write <changed.ts/tsx...>
 pnpm exec prettier --check <changed.ts/tsx...>
 
-# Lint changed paths only
+# Lint changed paths only (when the package has eslint)
 pnpm exec eslint <changed.ts/tsx...>
 ```
 
