@@ -103,7 +103,7 @@ export async function createStarboardClient(): Promise<StarboardClient> {
 
   try {
     return await createClient(options)
-  } catch (err) {
+  } catch (err: unknown) {
     if (err instanceof AuthError) {
       console.error("[starboard] auth/handshake failed", {
         status: err.statusCode,
