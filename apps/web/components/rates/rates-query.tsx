@@ -41,7 +41,7 @@ export function RatesQuery() {
         <CardHeader>
           <CardTitle>Query</CardTitle>
           <CardDescription>
-            Filters will hit `SANDBOX_STARBOARD_DB_URL` / rate adapter later.
+            Filters will call `@starboard/sb-client` (rates resolve) later.
           </CardDescription>
         </CardHeader>
         <CardContent>

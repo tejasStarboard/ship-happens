@@ -20,7 +20,8 @@
     "test:e2e:ui": "playwright test --ui",
     "build:eve": "eve build",
     "dev:eve": "eve dev",
-    "start:eve": "eve start"
+    "start:eve": "eve start",
+    "sb-client": "sb-client"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.74",
@@ -29,6 +30,7 @@
     "@shikijs/core": "3.23.0",
     "@shikijs/engine-javascript": "3.23.0",
     "@shikijs/engine-oniguruma": "3.23.0",
+    "@starboard/sb-client": "workspace:*",
     "@streamdown/cjk": "1.0.3",
     "@streamdown/code": "1.1.1",
     "@streamdown/math": "1.0.2",

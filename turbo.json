@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", ".vercel/output/**", ".output/**"],
+      "outputs": [".next/**", ".vercel/output/**", ".output/**", "dist/**"],
       "env": [
         "POSTGRES_URL",
         "POSTGRES_URL_UNPOOLED",
@@ -26,7 +26,11 @@
         "BLOB_READ_WRITE_TOKEN",
         "BLOB_WEBHOOK_PUBLIC_KEY",
         "AI_GATEWAY_API_KEY",
-        "SANDBOX_STARBOARD_DB_URL",
+        "STARBOARD_APP_DOMAIN",
+        "STARBOARD_HANDSHAKE_KEY",
+        "SB_CLIENT_CLIENT_ID",
+        "SB_CLIENT_CLIENT_SECRET",
+        "SB_CLIENT_COMPANY_ID",
         "VERCEL",
         "VERCEL_URL",
         "VERCEL_PROJECT_PRODUCTION_URL"
@@ -42,7 +46,7 @@
       "dependsOn": ["^format:check"]
     },
     "typecheck": {
-      "dependsOn": ["^typecheck"]
+      "dependsOn": ["^build", "^typecheck"]
     },
     "dev": {
       "cache": false,
