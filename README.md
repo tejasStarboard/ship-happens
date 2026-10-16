@@ -10,7 +10,8 @@ Customer-facing RFP sheet filler with an eve agent workspace for filling spreads
 
 - Next.js App Router + eve (agent sandbox / chat)
 - Better Auth (email/password, optional Google, organizations)
-- Drizzle + Postgres (+ `SANDBOX_STARBOARD_DB_URL` for rate adapter)
+- Drizzle + Postgres
+- `@starboard/sb-client` (`packages/sb-client` — library + CLI for Starboard Public API)
 - Redis (session secondary storage)
 - Vercel Blob + AI Gateway
 - `@workspace/ui` (shadcn)
@@ -46,10 +47,29 @@ Sign up → create/select org → RFPs. Open an RFP → **Agent** tab for the ev
 | `pnpm db:studio` | Drizzle Studio |
 | `pnpm typecheck` | Typecheck via turbo |
 | `pnpm test:e2e` | Playwright against `apps/web` |
+| `pnpm --filter web sb-client -- auth test` | Starboard CLI |
+| `pnpm --filter @starboard/sb-client build` | Build CLI/library (`tsup` → `dist/`) |
+
+## Starboard client
+
+Workspace package `@starboard/sb-client` (`packages/sb-client`).
+
+```bash
+pnpm --filter @starboard/sb-client build
+pnpm --filter web sb-client -- auth test
+pnpm --filter web sb-client -- rates resolve --body '...'
+```
+
+Local eve agent uses **microsandbox**: prepare installs Node, open injects `sb-client` onto PATH, and Starboard env is preloaded. Load skill `sb-client` in the agent for the CLI workflow.
+
+Server code: `import { createStarboardClient } from "@/lib/starboard/client"`.
+
+Env (see `.env.example`): `STARBOARD_APP_DOMAIN`, `STARBOARD_HANDSHAKE_KEY`, `SB_CLIENT_CLIENT_ID` + `SB_CLIENT_CLIENT_SECRET` (or `SB_CLIENT_COMPANY_ID` for local-only).
 
 ## Layout
 
 ```
-apps/web          # Primary Next.js + eve app
-packages/ui       # Shared UI kit
+apps/web              # Primary Next.js + eve app
+packages/ui           # Shared UI kit
+packages/sb-client    # Starboard Public API library + CLI
 ```
