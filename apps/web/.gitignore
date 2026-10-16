@@ -12,5 +12,6 @@ data/*.db
 data/*.db-*
 data/workspaces/
 .ship-happens/
+lib/starboard/vendor/
 !.env.example
 

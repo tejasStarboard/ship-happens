@@ -63,6 +63,16 @@ function formatEnvFile(vars: Record<string, string>): string {
 export async function resolveSbClientCliPath(): Promise<string> {
   const candidates: string[] = []
 
+  // Prefer the vendored copy under apps/web (included via outputFileTracingIncludes).
+  // Workspace node_modules/dist/cli.js is not traced into Vercel functions.
+  try {
+    candidates.push(
+      fileURLToPath(new URL("./vendor/sb-client.cli.js", import.meta.url))
+    )
+  } catch {
+    // ignore
+  }
+
   try {
     const resolved = fileURLToPath(import.meta.resolve("@starboard/sb-client"))
     candidates.push(join(dirname(resolved), "cli.js"))
@@ -71,6 +81,7 @@ export async function resolveSbClientCliPath(): Promise<string> {
   }
 
   candidates.push(
+    join(process.cwd(), "lib/starboard/vendor/sb-client.cli.js"),
     join(process.cwd(), "node_modules/@starboard/sb-client/dist/cli.js"),
     join(process.cwd(), "../../packages/sb-client/dist/cli.js"),
     join(process.cwd(), "../packages/sb-client/dist/cli.js"),
@@ -87,7 +98,7 @@ export async function resolveSbClientCliPath(): Promise<string> {
   }
 
   throw new Error(
-    "Built @starboard/sb-client CLI not found. Run: pnpm --filter @starboard/sb-client build"
+    "Built @starboard/sb-client CLI not found. Run: pnpm --filter web build:sb-client-cli"
   )
 }
 
