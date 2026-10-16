@@ -47,8 +47,11 @@ export default defineConfig({
   ],
   webServer: {
     // Local: reuse `pnpm --filter web dev` if already on :3000 (much faster).
-    // CI: production server avoids Next compile-on-demand stalls.
-    command: isCI ? "pnpm build && pnpm start" : "pnpm dev",
+    // CI: build workspace deps (e.g. @starboard/sb-client → dist/) then
+    // production server — avoids Next compile-on-demand stalls.
+    command: isCI
+      ? "pnpm --filter @starboard/sb-client build && pnpm build && pnpm start"
+      : "pnpm dev",
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: isCI ? 300_000 : 120_000,
