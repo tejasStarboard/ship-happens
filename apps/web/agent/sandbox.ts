@@ -34,6 +34,11 @@ export default defineSandbox(async () => {
         }
   )
 
-  await injectSbClientCli(sandbox)
+  try {
+    await injectSbClientCli(sandbox)
+  } catch (error) {
+    // Don't brick bash/xlsx if CLI vendoring failed — Starboard CLI just won't be on PATH.
+    console.error("[sandbox] sb-client inject failed:", error)
+  }
   return sandbox
 })

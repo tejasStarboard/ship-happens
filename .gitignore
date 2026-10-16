@@ -32,6 +32,7 @@ apps/web/e2e/.auth/
 # Next.js / eve (web)
 apps/web/.next/
 apps/web/.eve/
+apps/web/lib/starboard/vendor/
 apps/web/data/*.db
 apps/web/data/*.db-*
 apps/web/data/workspaces/
