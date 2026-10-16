@@ -8,7 +8,8 @@
     "#evals/*": "./evals/*"
   },
   "scripts": {
-    "build": "next build",
+    "build:sb-client-cli": "node ./scripts/vendor-sb-client-cli.mjs",
+    "build": "pnpm run build:sb-client-cli && next build",
     "deploy": "eve deploy",
     "dev": "next dev --port 3000",
     "eval": "eve eval",
