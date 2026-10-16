@@ -37,7 +37,16 @@ export const env = createEnv({
     AI_GATEWAY_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
 
-    SANDBOX_STARBOARD_DB_URL: z.url().optional(),
+    /** Starboard webapp base URL for `@starboard/sb-client` (no trailing slash). */
+    STARBOARD_APP_DOMAIN: z.url().optional(),
+    /** Handshake key for Starboard BFF (`x-starboard-handshake-key`). Never log. */
+    STARBOARD_HANDSHAKE_KEY: z.string().min(1).optional(),
+    /** Public API client id (Starboard admin → company → Public API keys). */
+    SB_CLIENT_CLIENT_ID: z.string().min(1).optional(),
+    /** Public API client secret. Never log. */
+    SB_CLIENT_CLIENT_SECRET: z.string().min(1).optional(),
+    /** Dev-only: skip public_api_clients verify and scope directly to this company. */
+    SB_CLIENT_COMPANY_ID: z.string().min(1).optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.url(),
@@ -65,7 +74,11 @@ export const env = createEnv({
     AI_GATEWAY_API_KEY: process.env.AI_GATEWAY_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
 
-    SANDBOX_STARBOARD_DB_URL: process.env.SANDBOX_STARBOARD_DB_URL,
+    STARBOARD_APP_DOMAIN: process.env.STARBOARD_APP_DOMAIN,
+    STARBOARD_HANDSHAKE_KEY: process.env.STARBOARD_HANDSHAKE_KEY,
+    SB_CLIENT_CLIENT_ID: process.env.SB_CLIENT_CLIENT_ID,
+    SB_CLIENT_CLIENT_SECRET: process.env.SB_CLIENT_CLIENT_SECRET,
+    SB_CLIENT_COMPANY_ID: process.env.SB_CLIENT_COMPANY_ID,
 
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL,
   },

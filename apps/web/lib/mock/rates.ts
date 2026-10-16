@@ -8,7 +8,7 @@ export type MockRateRow = {
   validUntil: string
 }
 
-/** Placeholder rows for the rates query UI — replace with Starboard DB later. */
+/** Placeholder rows for the rates query UI — replace with sb-client rates later. */
 export const MOCK_RATE_RESULTS: MockRateRow[] = [
   {
     id: "rate_1",
