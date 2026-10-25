@@ -18,4 +18,8 @@ export default withEve({
   outputFileTracingIncludes: {
     "/*": ["./lib/starboard/vendor/sb-client.cli.js"],
   },
+  experimental: {
+    // Marks this install as upgraded via `next upgrade --agent=security`.
+    agentUpgrade: "security",
+  },
 })
