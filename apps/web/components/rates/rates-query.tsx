@@ -134,7 +134,7 @@ function formatDate(value: string | null): string {
 
 function RatesTableHeader() {
   return (
-    <TableHeader className="bg-muted">
+    <TableHeader>
       <TableRow>
         <TableHead className="w-8" />
         <TableHead>Origin</TableHead>
@@ -175,7 +175,7 @@ function RatesLoadingState({ laneHint }: { laneHint?: RateSearchLaneSummary }) {
             : "Searching Starboard…"}
         </p>
       </div>
-      <div className="overflow-hidden rounded-lg border">
+      <div className="overflow-hidden rounded-[6px] border border-border bg-card">
         <Table>
           <RatesTableHeader />
           <TableBody>
@@ -229,7 +229,7 @@ function SurchargeRows({ surcharges }: { surcharges: RateResultSurcharge[] }) {
   return (
     <div className="overflow-hidden rounded-md border">
       <Table>
-        <TableHeader className="bg-muted/60">
+        <TableHeader>
           <TableRow>
             <TableHead>Surcharge</TableHead>
             <TableHead>Leg</TableHead>
@@ -695,20 +695,32 @@ export function RatesQuery() {
     state.status === "ok" || state.status === "empty" ? state.pagination : null
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Starboard rates
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Explore Starboard contract and spot rates via the live client. Same
-          lookup path fills will use later — not a second rate database.
-        </p>
+    <div className="flex flex-1 flex-col gap-6 px-4 py-4 md:py-6 lg:px-6">
+      <div className="relative overflow-hidden rounded-2xl border border-border bg-card">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-30"
+          style={{
+            backgroundImage: "url(/marketing/port-night.jpg)",
+            backgroundSize: "cover",
+            backgroundPosition: "center 40%",
+            maskImage: "linear-gradient(90deg, black, transparent 70%)",
+          }}
+          aria-hidden
+        />
+        <div className="relative px-5 py-5 sm:px-6">
+          <h1 className="font-heading text-[26px] leading-tight font-semibold tracking-tight">
+            Starboard rates
+          </h1>
+          <p className="mt-1 max-w-xl text-sm text-muted-foreground">
+            Live contract and spot lookup — the same path fills use when they
+            write cells.
+          </p>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Query</CardTitle>
+      <Card className="rounded-xl shadow-none">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base font-semibold">Query</CardTitle>
           <CardDescription>
             Ocean FCL search aligned with Starboard Vendor Rate Query: multi
             equipment, validity window, optional vias and max transit. Spot runs
@@ -842,7 +854,7 @@ export function RatesQuery() {
 
       {state.status === "error" ? (
         <div
-          className="rounded-lg border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm"
+          className="rounded-[6px] border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm"
           role="alert"
         >
           <p className="font-medium text-destructive">Rate search failed</p>
@@ -863,7 +875,7 @@ export function RatesQuery() {
 
       {state.status === "ok" ? (
         <div className="flex flex-col gap-3">
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-hidden rounded-[6px] border border-border bg-card">
             <Table>
               <RatesTableHeader />
               <TableBody>

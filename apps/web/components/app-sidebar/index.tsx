@@ -23,7 +23,7 @@ import {
 
 const navMain = [
   {
-    title: "Fills",
+    title: "Fill desk",
     url: "/rfp",
     icon: IconFileSpreadsheet,
   },
@@ -51,8 +51,12 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ orgs, user, ...props }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border"
+      {...props}
+    >
+      <SidebarHeader className="border-b border-sidebar-border">
         <OrgSwitcher orgs={orgs} />
       </SidebarHeader>
       <SidebarContent>
@@ -73,7 +77,7 @@ export function AppSidebar({ orgs, user, ...props }: AppSidebarProps) {
           ]}
         />
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border">
         <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>

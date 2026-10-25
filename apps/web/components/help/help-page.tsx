@@ -1,31 +1,19 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@workspace/ui/components/card"
+import { PageChrome } from "@/components/shared/page-chrome"
 
 export function HelpPage() {
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Help</h1>
-        <p className="text-sm text-muted-foreground">
-          How Ship Happens fits with Starboard, and where to get support.
+    <PageChrome
+      title="Help"
+      description="How Ship Happens fits with Starboard, and where to get support."
+    >
+      <div className="rounded-[6px] border border-border bg-card p-4">
+        <h2 className="text-base font-semibold">Product overview</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Ship Happens fills BCO bid sheets using Starboard rates and your
+          projected overlays — it does not replace Starboard’s rate library,
+          CRM, or FCLv6 vendor ingest.
         </p>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Product overview</CardTitle>
-          <CardDescription>
-            Ship Happens fills BCO bid sheets using Starboard rates and your
-            projected overlays — it does not replace Starboard’s rate library,
-            CRM, or FCLv6 vendor ingest.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
+        <div className="mt-4 flex flex-col gap-2 text-sm text-muted-foreground">
           <p>
             Typical flow: start a fill from Fills → confirm the Map → review
             cells → download a cell-compliant workbook.
@@ -34,8 +22,8 @@ export function HelpPage() {
             For product questions, ping the Auto RFP sheet filler project on
             Linear or your Starboard contact.
           </p>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </div>
+    </PageChrome>
   )
 }
