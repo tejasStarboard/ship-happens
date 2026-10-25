@@ -19,7 +19,10 @@ export default withEve({
   // serverless/workflow bundle — dynamic fs reads are not auto-traced.
   outputFileTracingRoot: path.join(appDir, "../.."),
   outputFileTracingIncludes: {
-    "/*": ["./lib/starboard/vendor/sb-client.cli.js"],
+    "/*": [
+      "./lib/starboard/vendor/sb-client.cli.js",
+      "./lib/sh-client/vendor/sh-client.cli.js",
+    ],
   },
   experimental: {
     // Marks this install as upgraded via `next upgrade --agent=security`.

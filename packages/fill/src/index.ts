@@ -40,6 +40,18 @@ export {
   type TemplateUploadInput,
 } from "./intake/intake.service"
 
+export { ReviewItemRepository } from "./review/review-item.repository"
+export { ReviewItemService } from "./review/review-item.service"
+export {
+  RESOLVABLE_REVIEW_STATUSES,
+  REVIEW_ITEM_STATUSES,
+  type CreateReviewItemInput,
+  type ResolvableReviewStatus,
+  type ReviewItemStatus,
+  type ReviewItemView,
+  type UpdateReviewItemInput,
+} from "./review/review-item.types"
+
 export {
   ALLOWED_SPREADSHEET_MIME_TYPES,
   extensionForMime,

@@ -1,6 +1,7 @@
 import { env } from "@/env"
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from "@better-auth/drizzle-adapter"
+import { apiKey } from "@better-auth/api-key"
 import { organization } from "better-auth/plugins/organization"
 import { nextCookies } from "better-auth/next-js"
 import { db, redis } from "@/lib/db"
@@ -167,6 +168,25 @@ export const auth = betterAuth({
             inviteLink,
           }),
         })
+      },
+    }),
+    /**
+     * Agent / sandbox credentials for `@ship-happens/sh-client`.
+     * Keys are user-owned; fill + org scope live in metadata.
+     */
+    apiKey({
+      configId: "sh-agent",
+      defaultPrefix: "sh_",
+      enableMetadata: true,
+      rateLimit: {
+        enabled: true,
+        timeWindow: 1000 * 60 * 60,
+        maxRequests: 2000,
+      },
+      permissions: {
+        defaultPermissions: {
+          fill: ["read", "reviews"],
+        },
       },
     }),
     nextCookies(),
