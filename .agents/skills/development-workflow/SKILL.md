@@ -2,11 +2,11 @@
 name: development-workflow
 description: >-
   Default Ship Happens development workflow: local clone setup (Docker ports,
-  env), plan and implement Linear tickets (SB-XXXX), branch off origin/dev, open
-  PRs to dev, run CI, then promote to production via cherry-pick PRs onto main.
-  Use for any feature, bug fix, setup, implementation, commit/PR copy,
-  branching, merge, deploy, or promote-to-prod work in this repo unless the user
-  names a different skill.
+  env), plan and implement Linear tickets (SB-XXXX), branch off origin/dev, run
+  the GitHub CI mirror locally until green, then open PRs to dev, then promote
+  to production via cherry-pick PRs onto main. Use for any feature, bug fix,
+  setup, implementation, commit/PR copy, branching, merge, deploy, or
+  promote-to-prod work in this repo unless the user names a different skill.
 ---
 
 # Ship Happens development workflow
@@ -59,7 +59,7 @@ on `dev` / `main`.
 - [ ] 5. Implement
 - [ ] 6. Run GitHub CI mirror (format · lint · typecheck · build) — must pass
 - [ ] 7. Deliver live QA + commit title + PR title + PR description
-- [ ] 8. Open PR → dev (only if user asks)
+- [ ] 8. Open PR → dev (only if user asks; only after step 6 is green)
 - [ ] 9. After merge to dev + green CI: promote to main when asked
 ```
 
@@ -141,11 +141,15 @@ locations, Public API auth, or any Ship Happens code that calls Starboard:
 
 ---
 
-## 6. Run GitHub CI mirror (required before handoff)
+## 6. Run GitHub CI mirror (required before handoff **and** before any PR)
 
 After implementation, **run the same commands as the required CI job**
-`format · lint · typecheck · build` in `.github/workflows/ci.yml`. Do **not**
-hand off commit/PR copy until these pass locally.
+`format · lint · typecheck · build` in `.github/workflows/ci.yml`.
+
+**Hard gate:** Do **not** hand off commit/PR copy, and do **not** open or
+update a PR, until these pass locally on the branch you will push. If the user
+asks to open a PR and the mirror has not been run (or last failed), run §6
+first; fix failures; re-run until green; only then create/push the PR.
 
 Ports and env defaults: **root README** (Docker ports + Agent quick setup).  
 Compose must be up. Prefer existing `.env` / `.env.local`. Only stub missing
@@ -200,16 +204,18 @@ correct **in CI only**.
 
 **Rules**
 
-- Fix all failures before presenting QA / commit / PR copy.
+- Fix all failures before presenting QA / commit / PR copy **or** opening a PR.
 - Prefer full-repo turbo scripts above (what CI runs), not “changed files only.”
 - If new required env vars were added, update `.github/workflows/ci.yml` stub `env` too **and** `.env.example` / root README.
 - Local Redis/Postgres must use compose ports (`63799` / `54325`); see README.
+- Opening a PR without a successful local mirror is a workflow violation — treat
+  remote CI as confirmation, not the first time the suite runs.
 
 ---
 
 ## 7. Handoff artifacts (always at end of implementation)
 
-Produce all four — do not open the PR unless asked:
+Produce all four — do not open the PR unless asked, and only after §6 is green:
 
 1. **Commit title**
 2. **PR title** (same shape as commit; may be slightly more descriptive)
@@ -232,9 +238,10 @@ Use `feat` or `fix` (or `chore` only when neither fits). No brackets around the 
 - <1–3 bullets: what landed and why>
 
 ## Test plan
+- [x] Local CI mirror: format · lint · typecheck · build
 - [ ] <live QA step against local instance>
 - [ ] <edge case / regression>
-- [ ] CI: format · lint · typecheck · build green
+- [ ] Remote CI green on this PR
 ```
 
 ### Live QA
@@ -245,6 +252,13 @@ Numbered steps: setup if needed, happy path, important edges, anything that will
 
 ## 8. PR into `dev`
 
+**Prerequisite:** §6 local CI mirror is green on this branch. If not, stop —
+run/fix §6 before `git push` / `gh pr create`. Do not open a PR “to see if
+CI passes.”
+
+In the PR body’s Test plan, note that the local mirror already passed (so
+reviewers know remote CI should be confirmatory).
+
 ```bash
 git push -u origin SB-XXXX
 gh pr create --base dev --head SB-XXXX \
@@ -254,12 +268,14 @@ gh pr create --base dev --head SB-XXXX \
 - …
 
 ## Test plan
+- [x] Local CI mirror: format · lint · typecheck · build
 - [ ] …
 EOF
 )"
 ```
 
-Wait for CI. Merge only after required checks pass (and user asks / approves merge).
+Wait for remote CI. Merge only after required checks pass (and user asks /
+approves merge).
 
 After merge, `dev` deploys to **ship-happens-dev**.
 
@@ -318,8 +334,10 @@ List every ticket id included in the cherry-pick, space-separated.
 | Start ticket | `git checkout --no-track -b SB-XXXX origin/dev` |
 | Upstream | Ticket branch → `origin/SB-XXXX` only (never `origin/dev`) |
 | Land on staging/dev app | PR → `dev` → title `feat\|fix(SB-XXXX): …` |
+| Before any PR | §6 local mirror green (`format:check` · `lint` · `typecheck` · `build`) |
 | Land on prod | Cherry-pick onto branch from `main` → PR → `main` → title `DEPLOYMENT dev -> main: SB-…` |
 | Commit/PR without ask | Never |
+| PR without local CI green | Never |
 
 ## Related
 
