@@ -56,12 +56,13 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const templateRepo = new TemplateRepository(database)
   const pipeline = new FillPipelineManager(database)
   const reviewRepo = new ReviewItemRepository(database)
+  const reviews = new ReviewItemService(reviewRepo, rfpRepo)
 
   return {
     db: database,
     blob,
     createStarboardClient: starboardFactory,
-    rfps: new RfpService(rfpRepo, pipeline),
+    rfps: new RfpService(rfpRepo, pipeline, reviews),
     templates: new TemplateService(templateRepo),
     intake: new IntakeService(
       database,
@@ -71,7 +72,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       workspace
     ),
     pipeline,
-    reviews: new ReviewItemService(reviewRepo, rfpRepo),
+    reviews,
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,

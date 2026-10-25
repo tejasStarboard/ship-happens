@@ -5,6 +5,7 @@ export {
   type RfpDetailView,
   type RfpListItem,
   type RfpLogView,
+  type RfpPendingReviewView,
   type RfpProgressStepView,
   type RfpSourceFileView,
   type RfpStatus,

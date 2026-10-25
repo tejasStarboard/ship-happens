@@ -49,11 +49,25 @@ export type RfpSourceFileView = {
   createdAt: string
 }
 
+/** Pending HITL review card for Overview “Waiting on you” (ISO dates). */
+export type RfpPendingReviewView = {
+  id: string
+  stepKey: string | null
+  title: string
+  proposal: Record<string, unknown>
+  confidence: string | null
+  source: string | null
+  sourceMetadata: Record<string, unknown> | null
+  createdAt: string
+  updatedAt: string
+}
+
 export type RfpDetailView = RfpListItem & {
   progressSteps: RfpProgressStepView[]
   logs: RfpLogView[]
   sourceFiles: RfpSourceFileView[]
   filledFileUrl: string | null
+  pendingReviews: RfpPendingReviewView[]
 }
 
 export function asRfpStatus(value: string): RfpStatus {
