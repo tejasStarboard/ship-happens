@@ -124,20 +124,20 @@ test.describe("Rates live search surface", () => {
     await page.getByLabel("Carrier (spot, optional)").fill("cma")
     await page.getByRole("button", { name: "Search rates" }).click()
 
-    await expect(page.getByText("OOCL")).toBeVisible()
-    await expect(page.getByText("CMA CGM")).toBeVisible()
-    await expect(page.getByText("Contract")).toBeVisible()
-    await expect(page.getByText("Spot")).toBeVisible()
+    await expect(page.getByRole("cell", { name: "OOCL" })).toBeVisible()
+    await expect(page.getByRole("cell", { name: "CMA CGM" })).toBeVisible()
+    await expect(page.getByRole("cell", { name: "Contract" })).toBeVisible()
+    await expect(page.getByRole("cell", { name: "Spot" })).toBeVisible()
     await expect(
       page.getByRole("columnheader", { name: "Channel" })
     ).toBeVisible()
-    await expect(page.getByText("2026-10-31")).toBeVisible()
+    await expect(page.getByRole("cell", { name: "2026-10-31" })).toBeVisible()
 
     await page
       .getByRole("button", { name: "Show surcharges and rate details" })
       .first()
       .click()
-    await expect(page.getByText("BAF")).toBeVisible()
+    await expect(page.getByRole("cell", { name: "BAF" })).toBeVisible()
     await expect(page.getByText("Surcharges (2)")).toBeVisible()
   })
 
@@ -182,10 +182,12 @@ test.describe("Rates live search surface", () => {
     await page.goto("/rates")
     await waitForAppReady(page)
     await page.getByRole("button", { name: "Search rates" }).click()
-    await expect(page.getByRole("alert")).toContainText("Rate search failed")
-    await expect(page.getByRole("alert")).toContainText(
-      "Starboard is not configured"
-    )
-    await expect(page.getByRole("alert")).toContainText("Kind: config")
+    // Prefer hasText so we don't match Next.js `#__next-route-announcer__`.
+    const errorAlert = page
+      .getByRole("alert")
+      .filter({ hasText: "Rate search failed" })
+    await expect(errorAlert).toBeVisible()
+    await expect(errorAlert).toContainText("Starboard is not configured")
+    await expect(errorAlert).toContainText("Kind: config")
   })
 })
