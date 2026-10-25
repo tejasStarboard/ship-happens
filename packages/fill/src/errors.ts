@@ -11,13 +11,26 @@ export class DomainError extends Error {
   }
 }
 
+/**
+ * Duck-type DomainError so detection works across package entry points
+ * (`@ship-happens/fill` vs `/browser`) where `instanceof` can fail.
+ */
 export function isDomainError(error: unknown): error is DomainError {
-  return error instanceof DomainError
+  if (error instanceof DomainError) return true
+  if (!error || typeof error !== "object") return false
+  const candidate = error as { name?: unknown; code?: unknown }
+  return (
+    candidate.name === "DomainError" &&
+    typeof candidate.code === "string" &&
+    (
+      ["UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND", "VALIDATION"] as const
+    ).includes(candidate.code as DomainErrorCode)
+  )
 }
 
 /** Map domain / auth errors to an HTTP status. Defaults to 500 for unknowns. */
 export function domainErrorStatus(error: unknown): number {
-  if (error instanceof DomainError) {
+  if (isDomainError(error)) {
     switch (error.code) {
       case "UNAUTHORIZED":
         return 401

@@ -1,11 +1,11 @@
 ---
 name: sh-client
 description: >-
-  Use the Ship Happens sh-client CLI in the sandbox to inspect a fill
-  (status/progress/logs) and manage HITL review items (create/list/update/resolve).
-  Load when the user asks to check fill status, submit something for review,
-  list waits, or resolve after a human decision. Prefer this over inventing
-  review state in chat.
+  Ship Happens fill CLI for this workspace: inspect fill status/progress/logs;
+  submit-for-review (create/update pending HITL items); read user decisions
+  (list/get approved|edited|rejected); mark resolved after ack. Load when the
+  user asks to check fill status, open a wait, list decisions, or resolve after
+  Confirm/Edit/Reject. Prefer this over inventing review state in chat.
 ---
 
 # Ship Happens fill CLI (`sh-client`)
@@ -28,7 +28,7 @@ sh-client auth test
 # → {"ok":true,"organizationId":"...","fillId":"fill_..."}
 ```
 
-## Inspect (read)
+## 1. Inspect fill
 
 ```bash
 sh-client status
@@ -37,38 +37,62 @@ sh-client logs --limit 50
 # optional: --fill <id>  (defaults to SH_FILL_ID)
 ```
 
-## Reviews (agent writes create/list/update; resolve only after human decision)
+## 2. Submit for review (open a HITL wait)
+
+Agent **creates** pending review items — this is allowed and expected.
 
 ```bash
-# Open a HITL wait (agent proposal) — this IS allowed and expected
 sh-client reviews create --body '{"title":"Map column X","stepKey":"map","proposal":{"col":"A"},"confidence":0.4,"source":"mapper"}'
 
-sh-client reviews list
-sh-client reviews list --status pending
-sh-client reviews get --id rev_…
-
-# Update proposal while still pending
+# Refine proposal while still pending
 sh-client reviews update --id rev_… --body '{"proposal":{"col":"B"}}'
 
-# ONLY after Overview Confirm/Edit/Reject → status approved|edited|rejected
+sh-client reviews list --status pending
+sh-client reviews get --id rev_…
+```
+
+## 3. Read user decisions
+
+After the human Confirm / Edit / Reject path on Overview, status becomes
+`approved`, `edited`, or `rejected`. **Read those before resolving** — do not
+guess from chat.
+
+```bash
+sh-client reviews list
+sh-client reviews list --status approved
+sh-client reviews list --status edited
+sh-client reviews list --status rejected
+sh-client reviews get --id rev_…
+```
+
+Use `get` / filtered `list` to confirm `status`, `decisionNote`, and any edited
+`proposal` before acknowledging.
+
+## 4. Mark resolved after ack
+
+Only after status is `approved` | `edited` | `rejected`:
+
+```bash
 sh-client reviews resolve --id rev_… --body '{"resolution":{"applied":true}}'
 ```
+
+`reviews resolve` on `pending` **must fail** — that is correct. Do not invent a
+decision from chat; wait for the UI decision path (or another explicit decision
+write). Never set `resolved` based on free-text agreement in the conversation.
 
 ## Lifecycle (do not invent)
 
 1. Agent **`reviews create`** → `pending` (“Waiting on you”)
 2. Human on Overview → `approved` / `edited` / `rejected`
-3. Agent **`reviews resolve`** → `resolved`
-
-`reviews resolve` on `pending` **must fail** — that is correct. Do not invent a
-decision from chat; wait for the UI decision path.
+3. Agent **reads** decision via `list` / `get`
+4. Agent **`reviews resolve`** → `resolved`
 
 ## vs `fill-pipeline` skill
 
 | Concern                                            | Tool                                                          |
 | -------------------------------------------------- | ------------------------------------------------------------- |
 | Progress step / run status / append log **writes** | Host `fill-pipeline` / `agent-pipeline` (FillPipelineManager) |
-| Inspect status/progress/logs + review CRUD         | **`sh-client`** in sandbox                                    |
+| Inspect + review create/list/update/resolve        | **`sh-client`** in sandbox                                    |
 
 Do **not** refuse `reviews create` as an “ad-hoc write” — it is the supported
 HITL submit path for the sandbox agent.

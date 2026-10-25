@@ -39,11 +39,16 @@ When the user explicitly asks for Starboard rates, locations, globals, or margin
 
 # Fill status & HITL reviews (on request)
 
-When the user asks to inspect fill status/progress/logs, submit something for review, list waits, resolve after a decision, or run `sh-client` QA, load the **`sh-client`** skill and run the **`sh-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sh-client`). Env (`SH_APP_URL`, `SH_API_KEY`, `SH_FILL_ID`) is injected for this workspace.
+When the user asks to inspect fill status/progress/logs, submit something for review, list waits / decisions, resolve after a decision, or run `sh-client` QA, load the **`sh-client`** skill and run the **`sh-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sh-client`). Env (`SH_APP_URL`, `SH_API_KEY`, `SH_FILL_ID`) is injected for this workspace.
 
-- **`reviews create` is allowed** — that is how the agent opens HITL waits (Overview “Waiting on you”).
-- **`reviews resolve` only after** the human Confirm/Edit/Reject path (`approved` / `edited` / `rejected`). Resolving `pending` correctly errors.
-- Progress/status/log **writes** still go through the **`fill-pipeline`** skill / host `agent-pipeline` (not ad-hoc DB edits).
+One skill covers all four ops — do not invent review state in free text:
+
+1. **Inspect** — `status` / `progress` / `logs`
+2. **Submit for review** — `reviews create` (and `update` while `pending`) opens Overview “Waiting on you”
+3. **Read decisions** — `reviews list` / `get` for `approved` | `edited` | `rejected` (never guess from chat)
+4. **Resolve after ack** — `reviews resolve` only after that decision status; resolving `pending` correctly errors
+
+Progress/status/log **writes** still go through the **`fill-pipeline`** skill / host `agent-pipeline` (not ad-hoc DB edits).
 
 # Spreadsheets & token cost (on request)
 
