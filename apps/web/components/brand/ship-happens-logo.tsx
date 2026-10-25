@@ -78,7 +78,14 @@ export function ShipHappensMark({
         fill="white"
         fillOpacity="0.35"
       />
-      <rect x="16.75" y="16.75" width="6.5" height="6.5" rx="2" fill="#2dd4bf" />
+      <rect
+        x="16.75"
+        y="16.75"
+        width="6.5"
+        height="6.5"
+        rx="2"
+        fill="#2dd4bf"
+      />
 
       <path
         d="M8 28.5C9 26.8 10.6 25.8 12.6 25.8H28.2C30.2 25.8 31.7 27.1 32.1 29L32.6 31.1C32.75 31.7 32.3 32.2 31.7 32.2H9C8.2 32.2 7.7 31.4 8 30.7L8 28.5Z"
@@ -138,13 +145,7 @@ export function ShipHappensLogo({
   markClassName?: string
 }) {
   return (
-    <span
-      className={cn(
-        "inline-flex items-center",
-        SIZE[size].gap,
-        className
-      )}
-    >
+    <span className={cn("inline-flex items-center", SIZE[size].gap, className)}>
       <ShipHappensMark className={cn(SIZE[size].mark, markClassName)} />
       <ShipHappensWordmark size={size} />
     </span>

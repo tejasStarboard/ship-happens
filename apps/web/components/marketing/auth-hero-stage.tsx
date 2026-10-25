@@ -15,10 +15,30 @@ import {
 import { cn } from "@workspace/ui/lib/utils"
 
 const LANES = [
-  { lane: "CNSHA → USLAX", carrier: "OOCL", rate: "$2,450", tone: "ok" as const },
-  { lane: "CNNGB → USLGB", carrier: "MSC", rate: "$2,310", tone: "ok" as const },
-  { lane: "HKHKG → USOAK", carrier: "COSCO", rate: "Review", tone: "warn" as const },
-  { lane: "KRPUS → USSEA", carrier: "ONE", rate: "$2,180", tone: "ok" as const },
+  {
+    lane: "CNSHA → USLAX",
+    carrier: "OOCL",
+    rate: "$2,450",
+    tone: "ok" as const,
+  },
+  {
+    lane: "CNNGB → USLGB",
+    carrier: "MSC",
+    rate: "$2,310",
+    tone: "ok" as const,
+  },
+  {
+    lane: "HKHKG → USOAK",
+    carrier: "COSCO",
+    rate: "Review",
+    tone: "warn" as const,
+  },
+  {
+    lane: "KRPUS → USSEA",
+    carrier: "ONE",
+    rate: "$2,180",
+    tone: "ok" as const,
+  },
 ]
 
 const PIPELINE = [
@@ -109,7 +129,10 @@ export function AuthHeroStage({ className }: { className?: string }) {
                 const Icon = step.icon
                 const active = "active" in step && step.active
                 return (
-                  <li key={step.label} className="flex min-w-0 flex-1 items-center">
+                  <li
+                    key={step.label}
+                    className="flex min-w-0 flex-1 items-center"
+                  >
                     <div className="flex min-w-0 flex-col items-center gap-1 px-0.5">
                       <span
                         className={cn(
@@ -132,7 +155,9 @@ export function AuthHeroStage({ className }: { className?: string }) {
                       <span
                         className={cn(
                           "text-[10px] font-medium tracking-tight",
-                          step.done || active ? "text-white/85" : "text-white/40"
+                          step.done || active
+                            ? "text-white/85"
+                            : "text-white/40"
                         )}
                       >
                         {step.label}
@@ -209,7 +234,9 @@ export function AuthHeroStage({ className }: { className?: string }) {
                     >
                       {row.lane}
                     </div>
-                    <div className="bg-[#0a1320] px-2.5 py-2">{row.carrier}</div>
+                    <div className="bg-[#0a1320] px-2.5 py-2">
+                      {row.carrier}
+                    </div>
                     <div
                       className={cn(
                         "bg-[#0a1320] px-2.5 py-2",
@@ -262,7 +289,9 @@ export function AuthHeroStage({ className }: { className?: string }) {
                           {hit.buy}
                         </span>
                       </div>
-                      <p className="mt-0.5 text-[10px] text-white/40">{hit.src}</p>
+                      <p className="mt-0.5 text-[10px] text-white/40">
+                        {hit.src}
+                      </p>
                     </motion.li>
                   ))}
                 </ul>
@@ -280,8 +309,8 @@ export function AuthHeroStage({ className }: { className?: string }) {
                 </div>
                 <div className="space-y-2 p-3">
                   <p className="text-[11px] leading-snug text-white/70">
-                    HKHKG → USOAK · COSCO — no contract match; confirm overlay or
-                    skip.
+                    HKHKG → USOAK · COSCO — no contract match; confirm overlay
+                    or skip.
                   </p>
                   <div className="flex gap-1.5">
                     <span className="rounded-md bg-teal-400/20 px-2 py-1 text-[10px] font-medium text-teal-100">

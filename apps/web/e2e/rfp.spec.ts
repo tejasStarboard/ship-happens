@@ -5,7 +5,7 @@ test.describe("Fills surface", () => {
   test("list shows empty state and opens New fill dialog", async ({ page }) => {
     await page.goto("/rfp")
     await waitForAppReady(page)
-    await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
     await expect(page.getByRole("button", { name: "New fill" })).toBeVisible()
     await expect(page.getByText(/No fills yet/)).toBeVisible()
 

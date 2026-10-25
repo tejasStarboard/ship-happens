@@ -51,7 +51,11 @@ type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {
 
 export function AppSidebar({ orgs, user, ...props }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border" {...props}>
+    <Sidebar
+      collapsible="icon"
+      className="border-r border-sidebar-border"
+      {...props}
+    >
       <SidebarHeader className="border-b border-sidebar-border">
         <OrgSwitcher orgs={orgs} />
       </SidebarHeader>

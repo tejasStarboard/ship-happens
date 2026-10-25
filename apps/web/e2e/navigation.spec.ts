@@ -5,7 +5,7 @@ test.describe("authenticated navigation", () => {
   test("root redirects to Fills list", async ({ page }) => {
     await page.goto("/")
     await expect(page).toHaveURL(/\/rfp/)
-    await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
     await expect(page.getByText(/No fills yet/)).toBeVisible()
     await expect(
       page.getByRole("columnheader", { name: "Status" })
@@ -15,7 +15,7 @@ test.describe("authenticated navigation", () => {
   test("sidebar navigates between main sections", async ({ page }) => {
     await page.goto("/rfp")
     await waitForAppReady(page)
-    await expect(page.getByRole("heading", { name: "Fills" })).toBeVisible()
+    await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
 
     await page.getByRole("button", { name: "Templates" }).click()
     await expect(page).toHaveURL(/\/templates/)

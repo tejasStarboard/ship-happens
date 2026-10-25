@@ -17,10 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
-import {
-  DataTableShell,
-  PageChrome,
-} from "@/components/shared/page-chrome"
+import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
 import { formatBytes } from "@/lib/shared/format-bytes"
 import type { TemplateListItem } from "@/lib/domain/templates/template.types"

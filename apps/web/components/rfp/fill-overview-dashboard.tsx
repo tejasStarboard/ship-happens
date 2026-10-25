@@ -54,7 +54,9 @@ export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
   const progressPct =
     counts.total === 0
       ? 0
-      : Math.round(((counts.done + (counts.running > 0 ? 0.35 : 0)) / counts.total) * 100)
+      : Math.round(
+          ((counts.done + (counts.running > 0 ? 0.35 : 0)) / counts.total) * 100
+        )
 
   const statTiles = [
     { label: "Done", value: counts.done, tone: "positive" as const },
@@ -88,7 +90,9 @@ export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-sm font-medium tracking-tight">Pipeline progress</p>
+          <p className="text-sm font-medium tracking-tight">
+            Pipeline progress
+          </p>
           <span className="tabular text-xs text-muted-foreground">
             {counts.total === 0 ? "No steps yet" : `${progressPct}%`}
           </span>

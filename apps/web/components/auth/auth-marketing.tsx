@@ -112,7 +112,9 @@ export function AuthMarketingPage({
               <ShipHappensMark className="size-9" title={APP_NAME} />
               <div className="flex min-w-0 flex-col gap-0.5">
                 <ShipHappensWordmark className="leading-none" size="md" />
-                <p className="text-xs text-muted-foreground">{APP_DESCRIPTION}</p>
+                <p className="text-xs text-muted-foreground">
+                  {APP_DESCRIPTION}
+                </p>
               </div>
             </header>
 
