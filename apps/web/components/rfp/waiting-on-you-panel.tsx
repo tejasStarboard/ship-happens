@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "motion/react"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -9,6 +9,7 @@ import {
   EmptyHeader,
   EmptyTitle,
 } from "@workspace/ui/components/empty"
+import { Label } from "@workspace/ui/components/label"
 import {
   Sheet,
   SheetContent,
@@ -17,12 +18,17 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@workspace/ui/components/sheet"
+import { Textarea } from "@workspace/ui/components/textarea"
+import { useServerMutation } from "@/hooks/use-server-mutation"
 import type {
   RfpPendingReviewView,
   RfpProgressStepView,
   RfpStatus,
 } from "@/lib/domain/rfp/rfp.types"
+import { decideReviewItem } from "@/lib/server/actions/reviews"
 import { formatDateTime } from "@/lib/shared/string"
+
+type SheetMode = "actions" | "edit" | "reject"
 
 function asString(value: unknown): string | null {
   return typeof value === "string" && value.trim() ? value.trim() : null
@@ -59,6 +65,40 @@ function proposalCopy(proposal: Record<string, unknown>): {
   }
 }
 
+function editPrefill(proposal: Record<string, unknown>): string {
+  const value = asString(proposal.value) ?? asString(proposal.summary)
+  if (value) return value
+  try {
+    const compact = JSON.stringify(proposal, null, 2)
+    return compact === "{}" ? "" : compact
+  } catch {
+    return ""
+  }
+}
+
+function contextBits(
+  proposal: Record<string, unknown>,
+  sourceMetadata: Record<string, unknown> | null
+): string[] {
+  const meta = sourceMetadata ?? {}
+  const sheet =
+    asString(proposal.sheet) ??
+    asString(meta.sheet) ??
+    asString(proposal.sheetName) ??
+    asString(meta.sheetName)
+  const lane = asString(proposal.lane) ?? asString(meta.lane)
+  const column =
+    asString(proposal.column) ??
+    asString(proposal.col) ??
+    asString(meta.column) ??
+    asString(meta.col)
+  const bits: string[] = []
+  if (sheet) bits.push(`Sheet ${sheet}`)
+  if (lane) bits.push(`Lane ${lane}`)
+  if (column) bits.push(`Column ${column}`)
+  return bits
+}
+
 function stepLabel(
   stepKey: string | null,
   steps: RfpProgressStepView[]
@@ -77,20 +117,53 @@ function isAgentWorking(
 }
 
 function ReviewDetailSheet({
+  fillId,
   item,
   step,
   open,
   onOpenChange,
   onAskAgent,
 }: {
+  fillId: string
   item: RfpPendingReviewView | null
   step: string
   open: boolean
   onOpenChange: (open: boolean) => void
   onAskAgent: (reviewId: string) => void
 }) {
+  const { mutate, pending } = useServerMutation()
+  const [mode, setMode] = useState<SheetMode>("actions")
+  const [editValue, setEditValue] = useState("")
+  const [rejectReason, setRejectReason] = useState("")
+
+  useEffect(() => {
+    if (!item || !open) {
+      setMode("actions")
+      setEditValue("")
+      setRejectReason("")
+      return
+    }
+    setMode("actions")
+    setEditValue(editPrefill(item.proposal))
+    setRejectReason("")
+  }, [item, open])
+
   if (!item) return null
+
   const { summary, rationale } = proposalCopy(item.proposal)
+  const context = contextBits(item.proposal, item.sourceMetadata)
+  const rejectReady = rejectReason.trim().length > 0
+  const editReady = editValue.trim().length > 0
+
+  async function runDecide(
+    input: Parameters<typeof decideReviewItem>[2],
+    successMessage: string
+  ) {
+    await mutate(() => decideReviewItem(fillId, item!.id, input), {
+      successMessage,
+    })
+    onOpenChange(false)
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -104,6 +177,14 @@ function ReviewDetailSheet({
           </SheetDescription>
         </SheetHeader>
         <div className="flex flex-1 flex-col gap-4 overflow-auto px-4">
+          {context.length > 0 ? (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground">
+                Context
+              </p>
+              <p className="mt-1 text-sm">{context.join(" · ")}</p>
+            </div>
+          ) : null}
           <div>
             <p className="text-xs font-medium text-muted-foreground">
               Proposal
@@ -119,30 +200,138 @@ function ReviewDetailSheet({
           <pre className="tabular max-h-48 overflow-auto rounded-[6px] border border-border bg-background p-3 text-xs text-muted-foreground">
             {JSON.stringify(item.proposal, null, 2)}
           </pre>
+
+          {mode === "edit" ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor={`review-edit-${item.id}`}>Edited value</Label>
+              <Textarea
+                id={`review-edit-${item.id}`}
+                value={editValue}
+                onChange={(event) => setEditValue(event.target.value)}
+                rows={4}
+                disabled={pending}
+              />
+            </div>
+          ) : null}
+
+          {mode === "reject" ? (
+            <div className="flex flex-col gap-2">
+              <Label htmlFor={`review-reject-${item.id}`}>
+                Rejection reason
+              </Label>
+              <Textarea
+                id={`review-reject-${item.id}`}
+                value={rejectReason}
+                onChange={(event) => setRejectReason(event.target.value)}
+                rows={3}
+                placeholder="Short reason required"
+                disabled={pending}
+              />
+            </div>
+          ) : null}
+
           <p className="text-xs text-muted-foreground">
             Opened {formatDateTime(item.createdAt)}
           </p>
         </div>
         <SheetFooter>
-          <p className="text-xs text-muted-foreground">
-            Confirm / Edit / Reject decisions ship in a follow-up. You can still
-            discuss this item with the agent.
-          </p>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" disabled title="Coming in SB-6659">
-              Confirm
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                onAskAgent(item.id)
-                onOpenChange(false)
-              }}
-            >
-              Ask in Agent
-            </Button>
-          </div>
+          {mode === "actions" ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                disabled={pending}
+                onClick={() =>
+                  void runDecide({ decision: "approved" }, "Confirmed")
+                }
+              >
+                Confirm
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setMode("edit")}
+              >
+                Edit
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={pending}
+                onClick={() => setMode("reject")}
+              >
+                Reject
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => {
+                  onAskAgent(item.id)
+                  onOpenChange(false)
+                }}
+              >
+                Ask in Agent
+              </Button>
+            </div>
+          ) : null}
+
+          {mode === "edit" ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                disabled={pending || !editReady}
+                onClick={() =>
+                  void runDecide(
+                    {
+                      decision: "edited",
+                      resolution: { value: editValue.trim() },
+                    },
+                    "Saved edit"
+                  )
+                }
+              >
+                Save edit
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => setMode("actions")}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : null}
+
+          {mode === "reject" ? (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={pending || !rejectReady}
+                onClick={() =>
+                  void runDecide(
+                    {
+                      decision: "rejected",
+                      decisionNote: rejectReason.trim(),
+                    },
+                    "Rejected"
+                  )
+                }
+              >
+                Reject
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={pending}
+                onClick={() => setMode("actions")}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : null}
         </SheetFooter>
       </SheetContent>
     </Sheet>
@@ -150,11 +339,13 @@ function ReviewDetailSheet({
 }
 
 export function WaitingOnYouPanel({
+  fillId,
   pendingReviews,
   progressSteps,
   status,
   onAskAgent,
 }: {
+  fillId: string
   pendingReviews: RfpPendingReviewView[]
   progressSteps: RfpProgressStepView[]
   status: RfpStatus
@@ -263,11 +454,12 @@ export function WaitingOnYouPanel({
       )}
 
       <ReviewDetailSheet
+        fillId={fillId}
         item={active}
         step={stepLabel(active?.stepKey ?? null, progressSteps)}
         open={activeId != null}
-        onOpenChange={(open) => {
-          if (!open) setActiveId(null)
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setActiveId(null)
         }}
         onAskAgent={onAskAgent}
       />

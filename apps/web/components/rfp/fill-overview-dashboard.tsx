@@ -75,6 +75,7 @@ export function FillOverviewDashboard({
   return (
     <div className="flex flex-col gap-4">
       <WaitingOnYouPanel
+        fillId={rfp.id}
         pendingReviews={rfp.pendingReviews ?? []}
         progressSteps={rfp.progressSteps}
         status={rfp.status}
