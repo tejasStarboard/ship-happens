@@ -12,7 +12,7 @@ import {
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { formatBytes } from "@/lib/shared/format-bytes"
-import type { RfpDetailView } from "@/lib/server/rfps"
+import type { RfpDetailView } from "@/lib/domain/rfp/rfp.types"
 import { formatDateTime } from "@/lib/shared/string"
 
 function stepCounts(steps: RfpDetailView["progressSteps"]) {

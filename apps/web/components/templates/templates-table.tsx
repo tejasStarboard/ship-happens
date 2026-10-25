@@ -11,7 +11,7 @@ import {
 } from "@workspace/ui/components/table"
 import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
 import { formatBytes } from "@/lib/shared/format-bytes"
-import type { TemplateListItem } from "@/lib/server/templates"
+import type { TemplateListItem } from "@/lib/domain/templates/template.types"
 import { formatDateTime } from "@/lib/shared/string"
 
 export function TemplatesTable({

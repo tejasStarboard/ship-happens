@@ -65,6 +65,7 @@ Source of truth: `rfp_chats` (multiple rows per RFP). Session bind stores `{ eve
 3. Wire through `createAppContext`
 4. Thin action/route adapter
 5. Unit test for authorize / pure helpers
+6. **Client Components** must not import `@/lib/server/*`, `@/lib/di`, `@workspace/db`, or `@ship-happens/fill` (root). Use `@/lib/domain/*/…types` or `@ship-happens/fill/browser` for types/labels — even `import type` from a server module pulls `pg` into the client graph.
 
 ## Schema note (unused tables)
 
