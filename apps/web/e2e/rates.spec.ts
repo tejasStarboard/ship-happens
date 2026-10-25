@@ -137,7 +137,10 @@ test.describe("Rates live search surface", () => {
       .getByRole("button", { name: "Show surcharges and rate details" })
       .first()
       .click()
-    await expect(page.getByRole("cell", { name: "BAF" })).toBeVisible()
+    // exact: true — expanded colspan cell also includes "BAF" in its name.
+    await expect(
+      page.getByRole("cell", { name: "BAF", exact: true })
+    ).toBeVisible()
     await expect(page.getByText("Surcharges (2)")).toBeVisible()
   })
 
