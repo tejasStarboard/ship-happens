@@ -14,7 +14,7 @@
     "dev": "next dev --port 3000",
     "eval": "eve eval",
     "start": "next start --port 3000",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "next typegen && tsc --noEmit -p tsconfig.json",
     "format": "prettier --write \"**/*.{ts,tsx,md}\" --ignore-path ../../.prettierignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path ../../.prettierignore",
     "test:e2e": "playwright test",
