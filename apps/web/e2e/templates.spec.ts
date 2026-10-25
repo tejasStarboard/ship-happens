@@ -6,10 +6,10 @@ test.describe("Templates surface", () => {
     await page.goto("/templates")
     await waitForAppReady(page)
     await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "Upload" })).toBeVisible()
+    await expect(page.getByRole("button", { name: "Upload" }).first()).toBeVisible()
     await expect(page.getByText(/No templates/i)).toBeVisible()
 
-    await page.getByRole("button", { name: "Upload" }).click()
+    await page.getByRole("button", { name: "Upload" }).first().click()
     await expect(
       page.getByRole("heading", { name: "Upload template" })
     ).toBeVisible()

@@ -16,7 +16,7 @@ test.describe("auth onboarding", () => {
     await createOrganization(page, credentials)
     await expect(page).toHaveURL(/\/rfp/)
     await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
-    await expect(page.getByText(/No fills yet/)).toBeVisible()
+    await expect(page.getByText(/Your fill desk is empty/)).toBeVisible()
   })
 
   test("sign in existing user, pick org, then log out", async ({ page }) => {
