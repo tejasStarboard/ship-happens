@@ -14,22 +14,32 @@ import {
   createStarboardClient,
 } from "@/lib/starboard/client"
 import type {
+  OceanEquipmentType,
   RateResultChannel,
   RateResultRow,
   RateResultSurcharge,
   RateSearchErrorKind,
   RateSearchPagination,
 } from "@/lib/starboard/rate-result"
-import { RATES_SEARCH_PAGE_SIZE } from "@/lib/starboard/rate-result"
+import {
+  OCEAN_EQUIPMENT_TYPES,
+  RATES_SEARCH_PAGE_SIZE,
+  todayYmd,
+} from "@/lib/starboard/rate-result"
 
 export type {
+  OceanEquipmentType,
   RateResultChannel,
   RateResultRow,
   RateResultSurcharge,
   RateSearchErrorKind,
   RateSearchPagination,
 } from "@/lib/starboard/rate-result"
-export { RATES_SEARCH_PAGE_SIZE } from "@/lib/starboard/rate-result"
+export {
+  OCEAN_EQUIPMENT_TYPES,
+  RATES_SEARCH_PAGE_SIZE,
+  todayYmd,
+} from "@/lib/starboard/rate-result"
 
 /** Default smoke lane from SB-6652 (CNSHA → USLAX 40HC). */
 export const DEFAULT_SMOKE_ORIGIN = "CNSHA"
@@ -37,6 +47,8 @@ export const DEFAULT_SMOKE_DESTINATION = "USLAX"
 export const DEFAULT_SMOKE_EQUIPMENT = "40HC" as const
 /** Spot search requires a carrier slug; CMA is the documented CLI example. */
 export const DEFAULT_SMOKE_SPOT_CARRIER = "cma"
+
+const OCEAN_EQUIPMENT_SET = new Set<string>(OCEAN_EQUIPMENT_TYPES)
 
 export type RateSearchChannelOk = {
   status: "ok"
@@ -61,11 +73,21 @@ export type RateSearchChannelResult =
   RateSearchChannelOk | RateSearchChannelEmpty | RateSearchChannelError
 
 export type RateSearchLane = {
+  /** Primary origin for display / smoke defaults (first of originLocodes). */
   origin: string
   destination: string
+  originLocodes: string[]
+  destinationLocodes: string[]
+  originVia: string[]
+  destinationVia: string[]
+  equipmentTypes: OceanEquipmentType[]
+  /** Joined equipmentTypes for display / legacy empty-state copy. */
   equipment: string
   spotCarrier: string
   serviceType: ContractSearchInput["service_type"]
+  validFrom: string
+  validTo: string
+  transitTimeMax: number | null
 }
 
 export type RateSearchSuccess = {
@@ -96,9 +118,17 @@ export type RateSearchResult = RateSearchSuccess | RateSearchFailure
 export type SearchRatesReadOnlyInput = {
   origin?: string
   destination?: string
+  /** Comma-separated or array; preferred over legacy `equipment`. */
+  equipmentTypes?: string[] | string
+  /** Legacy single equipment — used when equipmentTypes omitted. */
   equipment?: string
   spotCarrier?: string
   serviceType?: ContractSearchInput["service_type"]
+  validFrom?: string
+  validTo?: string
+  originVia?: string[] | string
+  destinationVia?: string[] | string
+  transitTimeMax?: number | null
   /**
    * When set, contract search uses Starboard Qv2 pagination
    * (`page` / `page_size` / `cache_key`). Spot is only requested on page 1
@@ -109,15 +139,87 @@ export type SearchRatesReadOnlyInput = {
   cacheKey?: string | null
 }
 
+/** Split comma/whitespace-separated locode lists; drop empties; uppercase. */
+export function parseLocodeList(
+  value: string | string[] | null | undefined
+): string[] {
+  if (value == null) return []
+  const parts = Array.isArray(value) ? value : value.split(/[,\s]+/)
+  const out: string[] = []
+  for (const part of parts) {
+    const code = part.trim().toUpperCase()
+    if (code) out.push(code)
+  }
+  return out
+}
+
+export function parseEquipmentTypes(
+  value: string | string[] | null | undefined,
+  fallbackEquipment?: string | null
+): OceanEquipmentType[] {
+  const raw = Array.isArray(value)
+    ? value
+    : value != null && value !== ""
+      ? value.split(/[,\s]+/)
+      : fallbackEquipment
+        ? [fallbackEquipment]
+        : []
+  const selected: OceanEquipmentType[] = []
+  for (const item of raw) {
+    const eq = item.trim().toUpperCase()
+    if (
+      OCEAN_EQUIPMENT_SET.has(eq) &&
+      !selected.includes(eq as OceanEquipmentType)
+    ) {
+      selected.push(eq as OceanEquipmentType)
+    }
+  }
+  return selected.length > 0 ? selected : [DEFAULT_SMOKE_EQUIPMENT]
+}
+
+function isYmd(value: string | null | undefined): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value)
+}
+
 export function buildSmokeLane(
   input: SearchRatesReadOnlyInput = {}
 ): RateSearchLane {
+  const originLocodes = parseLocodeList(input.origin)
+  const destinationLocodes = parseLocodeList(input.destination)
+  const origins =
+    originLocodes.length > 0 ? originLocodes : [DEFAULT_SMOKE_ORIGIN]
+  const destinations =
+    destinationLocodes.length > 0
+      ? destinationLocodes
+      : [DEFAULT_SMOKE_DESTINATION]
+  const equipmentTypes = parseEquipmentTypes(
+    input.equipmentTypes,
+    input.equipment
+  )
+  const today = todayYmd()
+  const validFrom = isYmd(input.validFrom) ? input.validFrom : today
+  const validTo = isYmd(input.validTo) ? input.validTo : today
+  const transit =
+    typeof input.transitTimeMax === "number" &&
+    Number.isFinite(input.transitTimeMax) &&
+    input.transitTimeMax > 0
+      ? Math.floor(input.transitTimeMax)
+      : null
+
   return {
-    origin: input.origin ?? DEFAULT_SMOKE_ORIGIN,
-    destination: input.destination ?? DEFAULT_SMOKE_DESTINATION,
-    equipment: input.equipment ?? DEFAULT_SMOKE_EQUIPMENT,
-    spotCarrier: input.spotCarrier ?? DEFAULT_SMOKE_SPOT_CARRIER,
+    origin: origins[0]!,
+    destination: destinations[0]!,
+    originLocodes: origins,
+    destinationLocodes: destinations,
+    originVia: parseLocodeList(input.originVia),
+    destinationVia: parseLocodeList(input.destinationVia),
+    equipmentTypes,
+    equipment: equipmentTypes.join(", "),
+    spotCarrier: input.spotCarrier?.trim() || DEFAULT_SMOKE_SPOT_CARRIER,
     serviceType: input.serviceType ?? "ocean_fcl",
+    validFrom,
+    validTo,
+    transitTimeMax: transit,
   }
 }
 
@@ -131,12 +233,23 @@ export function buildContractSearchInput(
 ): ContractSearchInput {
   const body: ContractSearchInput = {
     service_type: lane.serviceType,
-    origin_locodes: [lane.origin],
-    destination_locodes: [lane.destination],
+    origin_locodes: lane.originLocodes,
+    destination_locodes: lane.destinationLocodes,
     cargo: {
       cargo_type: "container",
-      container_types: [lane.equipment as "40HC"],
+      container_types: lane.equipmentTypes,
     },
+    effective_from: lane.validFrom,
+    expires_on: lane.validTo,
+  }
+  if (lane.originVia.length > 0) {
+    body.origin_via_locodes = lane.originVia
+  }
+  if (lane.destinationVia.length > 0) {
+    body.destination_via_locodes = lane.destinationVia
+  }
+  if (lane.transitTimeMax != null) {
+    body.transit_time_max = lane.transitTimeMax
   }
   if (!pagination) return body
   body.page = pagination.page
@@ -150,9 +263,10 @@ export function buildContractSearchInput(
 export function buildSpotSearchInput(lane: RateSearchLane): SpotSearchInput {
   return {
     carrier: lane.spotCarrier,
-    origin_locodes: [lane.origin],
-    destination_locodes: [lane.destination],
-    container_types: [lane.equipment],
+    origin_locodes: lane.originLocodes,
+    destination_locodes: lane.destinationLocodes,
+    container_types: lane.equipmentTypes,
+    departure_date: lane.validFrom,
   }
 }
 
@@ -439,7 +553,7 @@ function mapHitToRow(
     route: stringField(hit, ["route"]),
     carrier: stringField(hit, ["carrier_name", "carrier"]) ?? "—",
     vendorName: stringField(hit, ["vendor_company_name"]),
-    containerType: containerFromHit ?? lane.equipment,
+    containerType: containerFromHit ?? lane.equipmentTypes[0] ?? lane.equipment,
     channel,
     baseAmount: rateObj ? finiteNumber(rateObj.amount) : null,
     amount: finiteNumber(hit.total_amount),
