@@ -7,7 +7,7 @@ Production layering for `apps/web` (Next.js + eve + Better Auth + Drizzle) plus 
 | Package | Role |
 | --- | --- |
 | [`@workspace/db`](../packages/db) | Drizzle schema + `createDb()` — tsup → `dist/` |
-| [`@ship-happens/fill`](../packages/fill) | Intake + fill pipeline — tsup → `dist/`; inject blob/workspace ports |
+| [`@ship-happens/fill`](../packages/fill) | Intake + fill pipeline — tsup → `dist/`; inject blob/workspace ports. Client UI: `@ship-happens/fill/browser` only |
 | `@starboard/sb-client` | Starboard Public API + CLI |
 | `@workspace/ui` | Design system primitives only |
 
