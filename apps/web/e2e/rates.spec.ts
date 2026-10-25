@@ -9,9 +9,15 @@ const okSearchBody = {
   lane: {
     origin: "CNSHA",
     destination: "USLAX",
+    equipmentTypes: ["40HC"],
     equipment: "40HC",
     spotCarrier: "cma",
     serviceType: "ocean_fcl" as const,
+    validFrom: "2026-10-25",
+    validTo: "2026-10-25",
+    originVia: [] as string[],
+    destinationVia: [] as string[],
+    transitTimeMax: null as number | null,
   },
   rows: [
     {
@@ -101,7 +107,9 @@ const okSearchBody = {
 
 test.describe("Rates live search surface", () => {
   test("idle hint then search shows mapped live rows", async ({ page }) => {
+    let lastSearchUrl = ""
     await page.route("**/api/starboard/rates/search**", async (route) => {
+      lastSearchUrl = route.request().url()
       await route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -118,9 +126,13 @@ test.describe("Rates live search surface", () => {
       page.getByText("Run a search to load live Starboard rates.")
     ).toBeVisible()
 
-    await page.getByLabel("Origin").fill("CNSHA")
-    await page.getByLabel("Destination").fill("USLAX")
-    await page.getByLabel("Container").fill("40HC")
+    await page.getByLabel("Origin", { exact: true }).fill("CNSHA")
+    await page.getByLabel("Destination", { exact: true }).fill("USLAX")
+    await page.getByLabel("Valid From").fill("2026-10-01")
+    await page.getByLabel("Valid Until").fill("2026-10-31")
+    await page.getByLabel("Equipment Type").click()
+    await page.getByRole("checkbox", { name: "20GP" }).click()
+    await page.keyboard.press("Escape")
     await page.getByLabel("Carrier (spot, optional)").fill("cma")
     await page.getByRole("button", { name: "Search rates" }).click()
 
@@ -132,6 +144,13 @@ test.describe("Rates live search surface", () => {
       page.getByRole("columnheader", { name: "Channel" })
     ).toBeVisible()
     await expect(page.getByRole("cell", { name: "2026-10-31" })).toBeVisible()
+
+    const url = new URL(lastSearchUrl)
+    expect(url.searchParams.getAll("equipment")).toEqual(
+      expect.arrayContaining(["40HC", "20GP"])
+    )
+    expect(url.searchParams.get("valid_from")).toBe("2026-10-01")
+    expect(url.searchParams.get("valid_to")).toBe("2026-10-31")
 
     await page
       .getByRole("button", { name: "Show surcharges and rate details" })
@@ -164,7 +183,7 @@ test.describe("Rates live search surface", () => {
     await waitForAppReady(page)
     await page.getByRole("button", { name: "Search rates" }).click()
     await expect(
-      page.getByText("No contract or spot rates for CNSHA → USLAX (40HC).")
+      page.getByText(/No contract or spot rates for CNSHA → USLAX \(40HC\)/)
     ).toBeVisible()
   })
 

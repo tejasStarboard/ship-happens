@@ -4,9 +4,12 @@ import { jsonDomainError } from "@/lib/domain/http"
 import {
   RATES_SEARCH_PAGE_SIZE,
   mapRateSearchResultToRows,
+  parseEquipmentTypes,
   searchRatesReadOnly,
-  type RateSearchChannelResult,
-  type RateSearchResult,
+} from "@/lib/domain/rates"
+import type {
+  RateSearchChannelResult,
+  RateSearchResult,
 } from "@/lib/starboard/rate-search"
 
 function summarizeChannel(channel: RateSearchChannelResult) {
@@ -47,6 +50,13 @@ function parsePositiveInt(
   return max != null ? Math.min(n, max) : n
 }
 
+function collectEquipmentParams(url: URL): string[] {
+  const repeated = url.searchParams.getAll("equipment")
+  if (repeated.length > 1) return repeated
+  const single = url.searchParams.get("equipment")
+  return single ? [single] : []
+}
+
 /**
  * Auth’d Rates page search: contract + spot via searchRatesReadOnly.
  * Contract uses Starboard Qv2 pagination (`page` / `page_size` / `cache_key`).
@@ -68,12 +78,27 @@ export async function GET(request: Request) {
     RATES_SEARCH_PAGE_SIZE,
     200
   )
+  const transitRaw = url.searchParams.get("transit_time_max")
+  const transitParsed =
+    transitRaw != null && transitRaw !== ""
+      ? Number.parseInt(transitRaw, 10)
+      : null
 
   const result = await searchRatesReadOnly({
     origin: url.searchParams.get("origin") ?? undefined,
     destination: url.searchParams.get("destination") ?? undefined,
-    equipment: url.searchParams.get("equipment") ?? undefined,
+    equipmentTypes: parseEquipmentTypes(collectEquipmentParams(url)),
     spotCarrier: url.searchParams.get("carrier") ?? undefined,
+    validFrom: url.searchParams.get("valid_from") ?? undefined,
+    validTo: url.searchParams.get("valid_to") ?? undefined,
+    originVia: url.searchParams.get("origin_via") ?? undefined,
+    destinationVia: url.searchParams.get("destination_via") ?? undefined,
+    transitTimeMax:
+      transitParsed != null &&
+      Number.isFinite(transitParsed) &&
+      transitParsed > 0
+        ? transitParsed
+        : null,
     page,
     pageSize,
     cacheKey: url.searchParams.get("cache_key"),
