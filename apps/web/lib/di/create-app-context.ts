@@ -2,6 +2,8 @@ import { db } from "@/lib/db"
 import {
   FillPipelineManager,
   IntakeService,
+  ReviewItemRepository,
+  ReviewItemService,
   RfpRepository,
   type AppDb,
   type BlobStore,
@@ -53,6 +55,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const rfpRepo = new RfpRepository(database)
   const templateRepo = new TemplateRepository(database)
   const pipeline = new FillPipelineManager(database)
+  const reviewRepo = new ReviewItemRepository(database)
 
   return {
     db: database,
@@ -68,10 +71,12 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       workspace
     ),
     pipeline,
+    reviews: new ReviewItemService(reviewRepo, rfpRepo),
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,
       templates: templateRepo,
+      reviews: reviewRepo,
     },
   }
 }

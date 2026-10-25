@@ -119,3 +119,37 @@ export async function listMembers() {
     ...(organizationId ? { query: { organizationId } } : {}),
   })
 }
+
+const ORG_ADMIN_ROLES = new Set(["owner", "admin"])
+
+function normalizeRoles(role: unknown): string[] {
+  if (Array.isArray(role)) {
+    return role.map(String)
+  }
+  if (typeof role === "string") {
+    return role
+      .split(",")
+      .map((part) => part.trim())
+      .filter(Boolean)
+  }
+  return []
+}
+
+/** Active-org session restricted to organization owner or admin. */
+export async function requireOrgAdminSession(): Promise<OrgSessionContext> {
+  const ctx = await requireOrgSession()
+  const member = await auth.api.getActiveMember({ headers: ctx.headers })
+  const roles = normalizeRoles(member?.role)
+  if (!roles.some((role) => ORG_ADMIN_ROLES.has(role))) {
+    throw new DomainError("Organization admin required", "FORBIDDEN")
+  }
+  return ctx
+}
+
+export async function getOptionalOrgAdminSession(): Promise<OrgSessionContext | null> {
+  try {
+    return await requireOrgAdminSession()
+  } catch {
+    return null
+  }
+}
