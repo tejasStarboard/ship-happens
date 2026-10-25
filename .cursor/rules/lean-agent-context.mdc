@@ -1,0 +1,13 @@
+---
+description: Keep Cursor agent context lean to minimize token usage every turn
+alwaysApply: true
+---
+
+# Lean agent context
+
+- Do not create or restore root `AGENTS.md` inside `.agents/skills/*` — Cursor injects those every turn. Put long guides in `reference/` and load on demand.
+- Load at most one skill body per task; open only the specific `rules/` or `reference/` file needed.
+- Prefer Grep and bounded Read (offset/limit) over whole-file or whole-tree dumps.
+- Keep tool stdout small; write large artifacts to disk and summarize.
+- Keep replies short; skip restating the task or dumping skill text.
+- Prefer a fresh chat when switching topics (history is re-sent every turn).

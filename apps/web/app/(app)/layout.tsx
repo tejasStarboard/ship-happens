@@ -24,15 +24,17 @@ export default async function AppLayout({
 
   return (
     <SidebarProvider
+      defaultOpen
       style={
         {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
+          "--sidebar-width": "15.5rem",
+          "--sidebar-width-icon": "3.5rem",
+          "--header-height": "3rem",
         } as CSSProperties
       }
     >
       <AppSidebar
-        variant="inset"
+        collapsible="icon"
         orgs={(orgs ?? []).map((org) => ({
           id: org.id,
           title: org.name,

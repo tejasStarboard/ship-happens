@@ -3,14 +3,14 @@
 import type { UserContent, UIMessage } from "ai"
 import { useEveAgent } from "eve/react"
 import {
-  AlertCircleIcon,
-  BrainIcon,
-  CheckIcon,
-  GlobeIcon,
-  MessageSquareIcon,
-  PlusIcon,
-  SquareIcon,
-} from "lucide-react"
+  IconAlertCircle as AlertCircleIcon,
+  IconBrain as BrainIcon,
+  IconCheck as CheckIcon,
+  IconWorld as GlobeIcon,
+  IconMessage as MessageSquareIcon,
+  IconPlus as PlusIcon,
+  IconSquare as SquareIcon,
+} from "@tabler/icons-react"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
   Attachment,
