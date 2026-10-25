@@ -1,6 +1,6 @@
 "use client"
 
-import { Badge } from "@workspace/ui/components/badge"
+import { motion, useReducedMotion } from "motion/react"
 import { Button } from "@workspace/ui/components/button"
 import {
   Card,
@@ -35,7 +35,7 @@ function LogLines({ logs }: { logs: RfpDetailView["logs"] }) {
   }
 
   return (
-    <pre className="max-h-72 overflow-auto rounded-lg bg-muted p-3 font-mono text-xs text-muted-foreground">
+    <pre className="tabular max-h-72 overflow-auto rounded-[6px] border border-border bg-background p-3 text-xs text-muted-foreground">
       {logs
         .map((log) => {
           const time = new Date(log.createdAt).toISOString()
@@ -50,32 +50,60 @@ function LogLines({ logs }: { logs: RfpDetailView["logs"] }) {
 export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
   const source = rfp.sourceFiles[0] ?? null
   const counts = stepCounts(rfp.progressSteps)
+  const reduce = useReducedMotion()
+  const progressPct =
+    counts.total === 0
+      ? 0
+      : Math.round(((counts.done + (counts.running > 0 ? 0.35 : 0)) / counts.total) * 100)
+
+  const statTiles = [
+    { label: "Done", value: counts.done, tone: "positive" as const },
+    { label: "Running", value: counts.running, tone: "warning" as const },
+    { label: "Failed", value: counts.failed, tone: "negative" as const },
+    { label: "Pending", value: counts.pending, tone: "neutral" as const },
+  ]
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-sm text-muted-foreground">
-          Run snapshot for this fill
-        </p>
-        <div className="flex flex-wrap gap-1.5">
-          {counts.total > 0 ? (
-            <>
-              <Badge variant="secondary">{counts.done} done</Badge>
-              {counts.running > 0 ? (
-                <Badge variant="secondary">{counts.running} running</Badge>
-              ) : null}
-              {counts.failed > 0 ? (
-                <Badge variant="destructive">{counts.failed} failed</Badge>
-              ) : null}
-              {counts.pending > 0 ? (
-                <Badge variant="outline">{counts.pending} pending</Badge>
-              ) : null}
-            </>
-          ) : (
-            <Badge variant="outline">No steps yet</Badge>
-          )}
-          <Badge variant="outline">{rfp.logs.length} log lines</Badge>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {statTiles.map((tile, i) => (
+          <motion.div
+            key={tile.label}
+            className="overflow-hidden rounded-xl border border-border bg-card p-3.5"
+            initial={reduce ? false : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: i * 0.05,
+              duration: 0.35,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <p className="text-xs text-muted-foreground">{tile.label}</p>
+            <p className="tabular mt-1 text-2xl font-semibold tracking-tight">
+              {counts.total === 0 ? "—" : tile.value}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="rounded-xl border border-border bg-card p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-medium tracking-tight">Pipeline progress</p>
+          <span className="tabular text-xs text-muted-foreground">
+            {counts.total === 0 ? "No steps yet" : `${progressPct}%`}
+          </span>
         </div>
+        <div className="h-2 overflow-hidden rounded-full bg-muted">
+          <motion.div
+            className="h-full rounded-full bg-primary"
+            initial={reduce ? false : { width: 0 }}
+            animate={{ width: `${progressPct}%` }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          />
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">
+          {rfp.logs.length} log lines · owner {rfp.owner || "—"}
+        </p>
       </div>
 
       {source ? (
@@ -90,7 +118,7 @@ export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
             <OfficeSpreadsheetViewer
               fileUrl={source.fileUrl}
               title={source.fileName}
-              className="relative min-h-[min(50vh,480px)] overflow-hidden rounded-xl border bg-muted/20"
+              className="relative min-h-[min(50vh,480px)] overflow-hidden rounded-[6px] border border-border bg-background"
             />
           </CardContent>
         </Card>

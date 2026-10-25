@@ -1,6 +1,6 @@
 "use client"
 
-import { PlusIcon, XIcon } from "lucide-react"
+import { IconPlus as PlusIcon, IconX as XIcon } from "@tabler/icons-react"
 import {
   AgentChat,
   type WorkspaceChatContext,

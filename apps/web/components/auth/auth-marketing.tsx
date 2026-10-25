@@ -1,63 +1,21 @@
 "use client"
 
 import type { ReactNode } from "react"
-import {
-  IconFileSpreadsheet,
-  IconTemplate,
-  IconCurrencyDollar,
-  IconRobot,
-  IconSandbox,
-  IconUsersGroup,
-} from "@tabler/icons-react"
+import Image from "next/image"
+import { motion, useReducedMotion } from "motion/react"
 import { cn } from "@workspace/ui/lib/utils"
 import {
-  ShipHappensLogo,
   ShipHappensMark,
   ShipHappensWordmark,
 } from "@/components/brand/ship-happens-logo"
+import { AuthHeroStage } from "@/components/marketing/auth-hero-stage"
 import { APP_DESCRIPTION, APP_NAME } from "@/lib/seo"
 
-const FEATURES = [
-  {
-    icon: IconFileSpreadsheet,
-    title: "RFP fill jobs",
-    description:
-      "Upload a customer bid sheet, run the fill, review cell outcomes, and download the completed workbook.",
-  },
-  {
-    icon: IconTemplate,
-    title: "Bid-sheet templates",
-    description:
-      "Save customer Excel templates once and reuse them across lanes, seasons, and RFP cycles.",
-  },
-  {
-    icon: IconCurrencyDollar,
-    title: "Starboard contract rates",
-    description:
-      "Pull origin, destination, carrier, and container rates so every cell reflects your live contracts.",
-  },
-  {
-    icon: IconRobot,
-    title: "AI fill agent",
-    description:
-      "Chat-guided filling maps sheet requirements to rates and customer rules, with a clear fill report.",
-  },
-  {
-    icon: IconSandbox,
-    title: "Isolated Excel sandbox",
-    description:
-      "Each fill runs in a secure Python sandbox so complex workbooks stay accurate and side-effect free.",
-  },
-  {
-    icon: IconUsersGroup,
-    title: "Org workspaces",
-    description:
-      "Invite your pricing team, switch organizations, and keep RFP work scoped to the right workspace.",
-  },
+const HIGHLIGHTS = [
+  "Upload the BCO sheet",
+  "Match Starboard rates",
+  "Review exceptions · download",
 ] as const
-
-const fadeUp =
-  "animate-in fade-in slide-in-from-bottom-3 fill-mode-both duration-700 ease-out motion-reduce:animate-none"
 
 export function AuthMarketingPage({
   children,
@@ -66,201 +24,128 @@ export function AuthMarketingPage({
   children: ReactNode
   className?: string
 }) {
+  const reduce = useReducedMotion()
+
   return (
     <div
       className={cn(
-        "bg-brand-glass relative min-h-svh overflow-x-hidden text-foreground",
+        "auth-marketing relative min-h-svh overflow-x-hidden text-foreground",
         className
       )}
     >
-      <div
-        aria-hidden
-        className="bg-brand-glass-grid pointer-events-none absolute inset-0"
-      />
-
-      <div className="relative mx-auto flex min-h-svh w-full max-w-6xl flex-col px-4 py-6 sm:px-6 lg:px-8 lg:py-10">
-        <header className="mb-8 flex items-center gap-2.5 lg:mb-10">
-          <ShipHappensMark className="size-9" title={APP_NAME} />
-          <div className="flex min-w-0 flex-col justify-center gap-0.5">
-            <ShipHappensWordmark className="leading-none" size="md" />
-            <p className="text-xs leading-snug text-muted-foreground">
-              {APP_DESCRIPTION}
-            </p>
-          </div>
-        </header>
-
-        <div className="grid flex-1 items-start gap-10 lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,24rem)] lg:gap-14 xl:gap-16">
-          <div className="order-2 flex min-w-0 flex-col gap-14 lg:order-1 lg:gap-20">
-            <section className="flex flex-col gap-8">
-              <div className={cn(fadeUp, "hidden flex-col gap-5 lg:flex")}>
-                <ShipHappensLogo size="xl" className="leading-[1.05]" />
-                <h1 className="max-w-xl text-2xl font-medium tracking-tight text-balance text-foreground/90">
-                  Turn messy RFP bid sheets into filled workbooks—fast.
-                </h1>
-                <p className="max-w-lg text-base leading-relaxed text-pretty text-muted-foreground">
-                  Upload the customer template, match Starboard contract rates,
-                  and let the fill agent complete the sheet while your team
-                  reviews exceptions.
-                </p>
-              </div>
-
-              <BidSheetPreview className={cn(fadeUp, "delay-100")} />
-            </section>
-
-            <section
-              aria-labelledby="auth-features-heading"
-              className={cn(
-                fadeUp,
-                "flex flex-col gap-8 pb-6 delay-200 lg:pb-10"
-              )}
-            >
-              <div className="flex flex-col gap-2">
-                <h2
-                  id="auth-features-heading"
-                  className="font-heading text-2xl font-semibold tracking-tight"
-                >
-                  Everything your pricing desk needs
-                </h2>
-                <p className="max-w-lg text-sm leading-relaxed text-pretty text-muted-foreground">
-                  From template intake to filled download—built for freight
-                  teams running high-volume bid seasons.
-                </p>
-              </div>
-
-              <ul className="grid gap-8 sm:grid-cols-2">
-                {FEATURES.map((feature) => (
-                  <li key={feature.title} className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2.5">
-                      <feature.icon
-                        className="size-5 shrink-0 text-primary"
-                        aria-hidden
-                      />
-                      <h3 className="text-sm font-semibold tracking-tight">
-                        {feature.title}
-                      </h3>
-                    </div>
-                    <p className="text-sm leading-relaxed text-pretty text-muted-foreground">
-                      {feature.description}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            </section>
-          </div>
-
-          <aside className="order-1 w-full lg:sticky lg:top-10 lg:order-2 lg:self-start">
-            <div className={cn(fadeUp, "mb-2 lg:hidden")}>
-              <h1 className="text-lg font-medium tracking-tight text-balance">
-                Turn messy RFP bid sheets into filled workbooks—fast.
-              </h1>
-            </div>
-            <div
-              className={cn(
-                fadeUp,
-                "mx-auto w-full max-w-[25rem] delay-100 lg:mx-0 lg:max-w-none"
-              )}
-            >
-              {children}
-            </div>
-          </aside>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const PREVIEW_ROWS = [
-  {
-    lane: "CNSHA → USLAX",
-    carrier: "OOCL",
-    status: "filled",
-    delay: "delay-0",
-  },
-  {
-    lane: "CNNGB → USLGB",
-    carrier: "MSC",
-    status: "filled",
-    delay: "delay-300",
-  },
-  {
-    lane: "HKHKG → USOAK",
-    carrier: "COSCO",
-    status: "review",
-    delay: "delay-700",
-  },
-  {
-    lane: "KRPUS → USSEA",
-    carrier: "ONE",
-    status: "filled",
-    delay: "delay-1000",
-  },
-] as const
-
-function BidSheetPreview({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "relative overflow-hidden rounded-2xl border border-border/80 bg-card/90 shadow-[0_24px_60px_-28px_color-mix(in_oklch,var(--foreground)_28%,transparent)] backdrop-blur-sm dark:shadow-none",
-        className
-      )}
-      aria-hidden
-    >
-      <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-        <div className="flex items-center gap-2">
-          <IconFileSpreadsheet className="size-4 text-primary" />
-          <span className="text-sm font-medium tracking-tight">
-            Nordstrom_FCL_Bid_Q2.xlsx
-          </span>
-        </div>
-        <span className="text-xs text-muted-foreground">
-          3 / 4 cells filled
-        </span>
-      </div>
-
-      <div className="relative px-4 py-4">
-        <svg
-          className="pointer-events-none absolute inset-x-6 top-2 h-16 w-[calc(100%-3rem)] text-primary/35"
-          viewBox="0 0 320 40"
-          fill="none"
-        >
-          <path
-            d="M0 28 C60 8, 120 8, 160 22 S260 36, 320 14"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeDasharray="6 6"
+      <div className="grid min-h-svh lg:grid-cols-[minmax(0,1fr)_minmax(28rem,36rem)] xl:grid-cols-[minmax(0,1fr)_minmax(30rem,38rem)]">
+        {/* Cinematic story — one column, no stacked absolute layers */}
+        <section className="relative hidden min-h-svh flex-col lg:flex">
+          <Image
+            src="/marketing/port-night.jpg"
+            alt=""
+            fill
+            priority
+            sizes="(max-width: 1280px) 55vw, 60vw"
+            className="object-cover object-[center_40%]"
           />
-        </svg>
+          <div className="auth-hero-stage-veil absolute inset-0" />
 
-        <div className="relative grid grid-cols-[1.4fr_0.7fr_0.7fr] gap-px overflow-hidden rounded-lg bg-border/60 text-xs">
-          <div className="bg-muted/80 px-3 py-2 font-medium text-muted-foreground">
-            Lane
-          </div>
-          <div className="bg-muted/80 px-3 py-2 font-medium text-muted-foreground">
-            Carrier
-          </div>
-          <div className="bg-muted/80 px-3 py-2 font-medium text-muted-foreground">
-            Rate
-          </div>
-          {PREVIEW_ROWS.map((row) => (
-            <div key={row.lane} className="contents">
-              <div className="bg-background px-3 py-2.5">{row.lane}</div>
-              <div className="bg-background px-3 py-2.5">{row.carrier}</div>
-              <div className="bg-background px-3 py-2.5">
-                <span
-                  className={cn(
-                    "inline-flex animate-pulse rounded-md px-1.5 py-0.5 font-medium motion-reduce:animate-none",
-                    row.delay,
-                    row.status === "filled"
-                      ? "bg-primary/15 text-primary"
-                      : "bg-secondary text-secondary-foreground"
-                  )}
+          <div className="relative z-10 flex min-h-svh flex-col px-10 py-9 xl:px-14">
+            <header className="flex shrink-0 items-center gap-2.5">
+              <ShipHappensMark className="size-9" title={APP_NAME} />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <ShipHappensWordmark
+                  className="leading-none"
+                  size="md"
+                  tone="on-dark"
+                />
+                <p className="text-xs text-white/55">{APP_DESCRIPTION}</p>
+              </div>
+            </header>
+
+            <div className="flex flex-1 flex-col justify-center gap-8 py-8 xl:gap-9">
+              <div className="max-w-xl space-y-3.5">
+                <motion.h1
+                  className="font-heading text-[2.1rem] leading-[1.12] font-semibold tracking-tight text-balance text-white xl:text-[2.4rem]"
+                  initial={reduce ? false : { opacity: 0, y: 14 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                 >
-                  {row.status === "filled" ? "$2,450" : "Review"}
-                </span>
+                  The freight fill desk that finishes the sheet.
+                </motion.h1>
+                <motion.p
+                  className="max-w-md text-[15px] leading-relaxed text-white/65"
+                  initial={reduce ? false : { opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    delay: 0.08,
+                    duration: 0.45,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                >
+                  From messy BCO workbooks to filled rates—exceptions flagged,
+                  download ready.
+                </motion.p>
+                <motion.ul
+                  className="flex flex-wrap gap-2 pt-0.5"
+                  initial={reduce ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.16, duration: 0.4 }}
+                >
+                  {HIGHLIGHTS.map((item) => (
+                    <li
+                      key={item}
+                      className="rounded-full border border-white/15 bg-black/25 px-3 py-1 text-xs font-medium text-white/80 backdrop-blur-sm"
+                    >
+                      {item}
+                    </li>
+                  ))}
+                </motion.ul>
+              </div>
+
+              <AuthHeroStage className="w-full" />
+            </div>
+          </div>
+        </section>
+
+        {/* Auth column — wide, centered, no nested chrome card */}
+        <aside className="relative flex min-h-svh flex-col border-l border-border bg-background">
+          <div className="auth-marketing-panel absolute inset-0" aria-hidden />
+          <div className="relative flex flex-1 flex-col justify-center px-6 py-10 sm:px-10 lg:px-12 xl:px-14">
+            <header className="mb-8 flex items-center gap-2.5 lg:hidden">
+              <ShipHappensMark className="size-9" title={APP_NAME} />
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <ShipHappensWordmark className="leading-none" size="md" />
+                <p className="text-xs text-muted-foreground">{APP_DESCRIPTION}</p>
+              </div>
+            </header>
+
+            <div className="mx-auto w-full max-w-[22.5rem]">
+              <div className="mb-6 lg:hidden">
+                <h1 className="font-heading text-2xl font-semibold tracking-tight text-balance">
+                  Finish the bid sheet.
+                </h1>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Upload the template, match contract rates, review exceptions.
+                </p>
+              </div>
+
+              {children}
+
+              <div className="mt-8 overflow-hidden rounded-xl border border-border lg:hidden">
+                <div className="relative h-40">
+                  <Image
+                    src="/marketing/port-night.jpg"
+                    alt=""
+                    fill
+                    className="object-cover"
+                    sizes="100vw"
+                  />
+                  <div className="auth-hero-stage-veil absolute inset-0" />
+                </div>
+                <div className="bg-muted/40 p-4">
+                  <AuthHeroStage />
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        </aside>
       </div>
     </div>
   )

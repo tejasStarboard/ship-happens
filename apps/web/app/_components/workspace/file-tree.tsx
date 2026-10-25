@@ -1,19 +1,19 @@
 "use client"
 
 import {
-  AtSignIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  DownloadIcon,
-  FileIcon,
-  FolderIcon,
-  FolderOpenIcon,
-  MoreHorizontalIcon,
-  PencilIcon,
-  RefreshCwIcon,
-  Trash2Icon,
-  UploadIcon,
-} from "lucide-react"
+  IconAt as AtSignIcon,
+  IconChevronDown as ChevronDownIcon,
+  IconChevronRight as ChevronRightIcon,
+  IconDownload as DownloadIcon,
+  IconFile as FileIcon,
+  IconFolder as FolderIcon,
+  IconFolderOpen as FolderOpenIcon,
+  IconDots as MoreHorizontalIcon,
+  IconPencil as PencilIcon,
+  IconRefresh as RefreshCwIcon,
+  IconTrash as Trash2Icon,
+  IconUpload as UploadIcon,
+} from "@tabler/icons-react"
 import { useMemo, useRef, useState } from "react"
 import { Button } from "@workspace/ui/components/button"
 import {

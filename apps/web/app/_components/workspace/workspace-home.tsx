@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { useCallback, useEffect, useState } from "react"
-import { PlusIcon, RefreshCwIcon, Trash2Icon } from "lucide-react"
+import { IconPlus as PlusIcon, IconRefresh as RefreshCwIcon, IconTrash as Trash2Icon } from "@tabler/icons-react"
 import { UserMenu } from "@/app/_components/user-menu"
 import { Button } from "@workspace/ui/components/button"
 import { Input } from "@workspace/ui/components/input"

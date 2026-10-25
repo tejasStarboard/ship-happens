@@ -2,7 +2,6 @@ import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
 import { Toaster } from "@workspace/ui/components/sonner"
 import { AppReady } from "@/components/app-ready"
-import { ThemeMenu } from "@/components/theme-menu"
 import { ThemeProvider } from "@/components/theme"
 import { TooltipProvider } from "@workspace/ui/components/tooltip"
 import "@workspace/ui/globals.css"
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: "#0B2F3F",
+  themeColor: "#0b1220",
 }
 
 export default function RootLayout({
@@ -39,17 +38,16 @@ export default function RootLayout({
           rel="preconnect"
         />
         <link
-          href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700&display=swap"
+          href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-svh">
+      <body className="min-h-svh font-sans">
         <ThemeProvider>
           <TooltipProvider>
             <AppReady />
             {children}
-            <ThemeMenu />
-            <Toaster closeButton richColors />
+            <Toaster closeButton />
           </TooltipProvider>
         </ThemeProvider>
       </body>

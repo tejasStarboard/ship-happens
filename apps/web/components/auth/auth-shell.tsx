@@ -42,7 +42,7 @@ export function AuthCard({
   return (
     <Card
       className={cn(
-        "w-full max-w-[25rem] gap-0 rounded-2xl py-0 shadow-sm ring-border/60 dark:shadow-none",
+        "w-full max-w-[25rem] gap-0 rounded-2xl border border-border py-0 shadow-none",
         className
       )}
     >
@@ -90,7 +90,7 @@ export function AuthBody({
   className?: string
 }) {
   return (
-    <CardContent className={cn("flex flex-col gap-5 p-6 sm:p-8", className)}>
+    <CardContent className={cn("flex flex-col gap-5 p-7 sm:p-8", className)}>
       {children}
     </CardContent>
   )
