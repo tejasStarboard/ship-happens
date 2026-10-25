@@ -11,6 +11,7 @@ export default withEve({
   // client hydration never runs (e2e waitForAppReady hangs until timeout).
   allowedDevOrigins: ["127.0.0.1", "localhost"],
   serverExternalPackages: ["pg", "ioredis"],
+  // @workspace/db + @ship-happens/fill ship prebuilt dist/ (tsup); ui stays source.
   transpilePackages: ["@workspace/ui"],
   // Include the vendored sb-client CLI (copied in build:sb-client-cli) in every
   // serverless/workflow bundle — dynamic fs reads are not auto-traced.

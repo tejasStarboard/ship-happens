@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
 import {
   createWorkspace,
   findWorkspaceIdByChatOrSession,
@@ -23,8 +23,11 @@ export default async function SessionPage({
   }
 
   const { sessionId } = await params
-  const existing = await findWorkspaceIdByChatOrSession(sessionId)
-  if (existing && (await getWorkspace(existing))) {
+  const existing = await findWorkspaceIdByChatOrSession(
+    sessionId,
+    organizationId
+  )
+  if (existing && (await getWorkspace(existing, organizationId))) {
     redirect(`/w/${encodeURIComponent(existing)}`)
   }
 

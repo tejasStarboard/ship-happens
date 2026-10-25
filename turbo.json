@@ -5,7 +5,13 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", ".vercel/output/**", ".output/**", "dist/**"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        ".vercel/output/**",
+        ".output/**",
+        "dist/**"
+      ],
       "env": [
         "POSTGRES_URL",
         "POSTGRES_URL_UNPOOLED",

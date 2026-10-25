@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@workspace/ui/components/table"
 import { NewFillDialog } from "@/components/rfp/new-fill-dialog"
-import { RFP_STATUS_LABEL, type RfpStatus } from "@/lib/mock/rfps"
+import { RFP_STATUS_LABEL, type RfpStatus } from "@/lib/domain/rfp/rfp.types"
 import type { RfpListItem } from "@/lib/server/rfps"
 import { formatDateTime } from "@/lib/shared/string"
 

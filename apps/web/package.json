@@ -17,6 +17,8 @@
     "typecheck": "next typegen && tsc --noEmit -p tsconfig.json",
     "format": "prettier --write \"**/*.{ts,tsx,md}\" --ignore-path ../../.prettierignore",
     "format:check": "prettier --check \"**/*.{ts,tsx,md}\" --ignore-path ../../.prettierignore",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "build:eve": "eve build",
@@ -32,7 +34,9 @@
     "@shikijs/core": "3.23.0",
     "@shikijs/engine-javascript": "3.23.0",
     "@shikijs/engine-oniguruma": "3.23.0",
+    "@ship-happens/fill": "workspace:*",
     "@starboard/sb-client": "workspace:*",
+    "@workspace/db": "workspace:*",
     "@streamdown/cjk": "1.0.3",
     "@streamdown/code": "1.1.1",
     "@streamdown/math": "1.0.2",
@@ -86,7 +90,8 @@
     "microsandbox": "0.5.5",
     "postcss": "^8.5.29",
     "tsx": "^4.20.0",
-    "typescript": "6.0.3"
+    "typescript": "6.0.3",
+    "vitest": "^3.2.7"
   },
   "engines": {
     "node": ">=24"

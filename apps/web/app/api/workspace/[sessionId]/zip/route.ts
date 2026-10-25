@@ -1,23 +1,24 @@
 import { NextResponse } from "next/server"
 import JSZip from "jszip"
-import { getServerSession } from "@/lib/session"
+import { requireOrgWorkspaceAccess } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import { collectSyncFiles, isValidSessionId } from "@/lib/workspace-fs"
 
 export async function GET(
   _request: Request,
   context: { readonly params: Promise<{ readonly sessionId: string }> }
 ) {
-  const session = await getServerSession()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { sessionId: workspaceId } = await context.params
-  if (!isValidSessionId(workspaceId)) {
-    return NextResponse.json({ error: "Invalid workspace id" }, { status: 400 })
-  }
-
   try {
+    const { sessionId: workspaceId } = await context.params
+    if (!isValidSessionId(workspaceId)) {
+      return NextResponse.json(
+        { error: "Invalid workspace id" },
+        { status: 400 }
+      )
+    }
+
+    await requireOrgWorkspaceAccess(workspaceId)
+
     const files = await collectSyncFiles(workspaceId)
     const zip = new JSZip()
     for (const file of files) {
@@ -35,12 +36,6 @@ export async function GET(
       },
     })
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to zip workspace",
-      },
-      { status: 500 }
-    )
+    return jsonDomainError(error, "Failed to zip workspace")
   }
 }

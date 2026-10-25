@@ -1,0 +1,42 @@
+{
+  "name": "@ship-happens/fill",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Fill intake + pipeline domain (framework-free)",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "format": "prettier --write \"**/*.{ts,md}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,md}\" --ignore-path ../../.prettierignore",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "@workspace/db": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "xlsx": "^0.18.5",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "tsup": "^8.5.0",
+    "typescript": "^6",
+    "vitest": "^3.2.0"
+  }
+}

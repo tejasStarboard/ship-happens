@@ -11,7 +11,7 @@ import {
 } from "@workspace/ui/components/card"
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
-import { formatBytes } from "@/lib/mock/templates"
+import { formatBytes } from "@/lib/shared/format-bytes"
 import type { RfpDetailView } from "@/lib/server/rfps"
 import { formatDateTime } from "@/lib/shared/string"
 

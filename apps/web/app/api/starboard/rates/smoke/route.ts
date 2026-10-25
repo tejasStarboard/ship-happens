@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import {
   runStarboardRateSearchSmoke,
   type RateSearchChannelResult,
@@ -40,8 +41,8 @@ function httpStatusFor(result: RateSearchResult): number {
 export async function GET(request: Request) {
   try {
     await requireOrgSession()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  } catch (error) {
+    return jsonDomainError(error, "Unauthorized")
   }
 
   const url = new URL(request.url)
