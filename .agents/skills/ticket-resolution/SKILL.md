@@ -2,10 +2,11 @@
 name: ticket-resolution
 description: >-
   End-to-end Linear ticket resolution: pull the ticket, investigate, propose a
-  fix direction (with clarifying questions if needed), branch off dev, implement,
-  run CI-like checks, then deliver live QA steps plus commit/PR titles and
-  description. Use when resolving a Linear ticket, working TC-XXX / ENG-XXX
-  issues, or when the user asks to investigate/fix/implement a ticket.
+  fix direction (with clarifying questions if needed), implement, and hand off
+  QA plus commit/PR copy. For Ship Happens branching, PR titles, and
+  dev→main promotion, follow the development-workflow skill (default). Use when
+  resolving a Linear ticket or when the user asks to investigate/fix/implement
+  a ticket.
 ---
 
 # Ticket Resolution Workflow
@@ -14,15 +15,21 @@ Follow these steps in order. Do not skip ahead to implementation before the
 investigation and fix-direction steps, unless the user explicitly says to
 implement immediately.
 
+**Ship Happens repo:** branching, PR naming (`feat|fix(SB-XXXX): …`), and
+promoting `dev` → `main` are defined in
+[development-workflow](../development-workflow/SKILL.md). Prefer that skill for
+git/PR/deploy steps; use this skill for the investigate → plan → implement →
+handoff loop.
+
 ## Progress checklist
 
 ```
 - [ ] 1. Pull Linear ticket
 - [ ] 2. Investigate
 - [ ] 3. Fix direction (+ clarifying questions if needed)
-- [ ] 4. Branch off `dev` as `TC-XXX` (or ticket id)
+- [ ] 4. Branch off `dev` as `SB-XXXX` (see development-workflow)
 - [ ] 5. Implement
-- [ ] 6. CI-like local checks
+- [ ] 6. Run GitHub CI mirror (format · lint · typecheck · build)
 - [ ] 7. Live QA instructions
 - [ ] 8. Commit title, PR title, PR description
 ```
@@ -31,7 +38,7 @@ implement immediately.
 
 ## 1. Pull the Linear ticket
 
-1. Resolve the ticket id from the user (`TC-27`, URL, or title search).
+1. Resolve the ticket id from the user (`SB-6652`, URL, or title search).
 2. Fetch via Linear MCP (`get_issue` / `list_issues`). Read:
    - title, description, status, priority, assignee
    - acceptance criteria / comments that change scope
@@ -71,21 +78,22 @@ re-asking settled points.
 
 ## 4. Branch off `dev`
 
-Before writing code:
+Follow **development-workflow** (`--no-track` so upstream is never `origin/dev`):
 
 ```bash
 git fetch origin
-git checkout dev
-git pull origin dev
-git checkout -b TC-XXX   # or: git checkout TC-XXX if it already exists
+git checkout --no-track -b SB-XXXX origin/dev
+git status -sb   # must NOT show ...origin/dev
+git push -u origin SB-XXXX   # first push only
 ```
 
 Rules:
 
-- Base branch is always `dev`.
-- Branch name = ticket id (e.g. `TC-27`).
-- If already on the correct branch with relevant work, keep it; do not recreate.
+- Base is always `origin/dev`; branch name = Linear id (`SB-6652`).
+- Never track `origin/dev` — protected; direct pushes to `dev` fail.
+- If already on the correct branch with relevant work, reuse it.
 - Never commit or open a PR unless the user asks.
+- Production promotion (`DEPLOYMENT dev -> main: …`) is only in development-workflow.
 
 ---
 
@@ -98,42 +106,12 @@ Rules:
 
 ---
 
-## 6. CI-like local checks
+## 6. Run GitHub CI mirror
 
-Mirror `.github/workflows/ci.yml`. After implementation:
-
-### Format + lint — **changed files only**
-
-From the package that owns the edits (usually `apps/web`):
-
-```bash
-# Format write, then check, on changed paths only
-pnpm exec prettier --write <changed.ts/tsx...>
-pnpm exec prettier --check <changed.ts/tsx...>
-
-# Lint changed paths only (when the package has eslint)
-pnpm exec eslint <changed.ts/tsx...>
-```
-
-Also run typecheck for that package when TS APIs changed:
-
-```bash
-pnpm --filter web typecheck
-# or from apps/web: pnpm typecheck
-```
-
-### Build — **entire app**
-
-```bash
-# From repo root; supply CI-like placeholder env (extend if new required env vars were added)
-pnpm build
-```
-
-Use the same placeholder env pattern as the CI Build job. If this ticket added
-required env vars, include placeholders locally **and** note that CI workflow
-env must be updated.
-
-Fix failures before presenting QA / commit copy.
+Follow **development-workflow §6** exactly (and root **README.md** for local
+Docker ports `54325` / `63799`). From repo root run `pnpm format:check`,
+`pnpm lint`, `pnpm typecheck`, and `pnpm build`. Do not hand off until they
+pass. Never point local builds at CI ports `5432` / `6379`.
 
 ---
 
@@ -155,60 +133,21 @@ Prefer numbered steps over prose.
 
 Produce these at the end (do not commit/push/create PR unless asked).
 
-### Commit title
+### Commit title / PR title / PR description
 
-```
-fix/feat/chore(TC-XXX): <message>
-```
+Use **development-workflow** templates:
 
-- Choose `fix` | `feat` | `chore` from the change type.
-- Use the real ticket id.
-- Message: short, imperative, focuses on why/what shipped.
-- Do **not** wrap the type in brackets (wrong: `[feat](TC-27): …`).
-
-Examples:
-
-```
-feat(TC-27): Redesign auth UI, org logos, and profile settings
-fix(TC-31): Prevent sidebar org mark blue bleed behind logos
-chore(TC-40): Add Blob env placeholders to CI build
-```
-
-### PR title
-
-Same shape as the commit title (can be slightly more descriptive):
-
-```
-feat(TC-27): Auth UI redesign, public org logos, sidebar & profile polish
-```
-
-### PR description template
-
-```markdown
-## Summary
-- <1–3 bullets of what landed and why>
-
-## What changed
-- <concrete user/dev-facing changes; group by area if helpful>
-
-## In scope
-- <ticket work included in this PR>
-
-## Out of scope
-- <related items intentionally not done, or "None">
-
-## Test plan
-- [ ] <live QA step>
-- [ ] <live QA step>
-- [ ] CI: format / lint / typecheck / build green
-```
+- Dev PR: `feat(SB-XXXX): …` or `fix(SB-XXXX): …`
+- Body: `## Summary` + `## Test plan` (checklist)
+- Main promo: `DEPLOYMENT dev -> main: SB-XXXX SB-YYYY …`
 
 ---
 
 ## Hard rules
 
 1. **Pull → investigate → plan** before coding (unless user skips to implement).
-2. **Branch from `dev`**, named like the ticket id.
+2. **Branch from `origin/dev`** as `SB-XXXX` (see development-workflow).
 3. **Format/lint on changed files only**; **build the whole app**.
-4. End with **live QA** + **commit/PR titles** + **PR description** (summary, what changed, in/out of scope, test plan).
+4. End with **live QA** + **commit/PR titles** + **PR description**.
 5. Do not commit, push, or open a PR unless the user asks.
+6. Do not push directly to `dev` or `main`.

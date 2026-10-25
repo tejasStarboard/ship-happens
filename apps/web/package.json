@@ -22,7 +22,8 @@
     "build:eve": "eve build",
     "dev:eve": "eve dev",
     "start:eve": "eve start",
-    "sb-client": "sb-client"
+    "sb-client": "sb-client",
+    "starboard:smoke-rates": "tsx --tsconfig ./tsconfig.json ./scripts/starboard-rate-search-smoke.mts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^4.0.74",
@@ -84,6 +85,7 @@
     "just-bash": "^3.6.0",
     "microsandbox": "0.5.5",
     "postcss": "^8.5.29",
+    "tsx": "^4.20.0",
     "typescript": "6.0.3"
   },
   "engines": {

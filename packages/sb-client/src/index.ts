@@ -21,8 +21,10 @@ export {
   rollupCharges,
   DEFAULT_HEADING_BUCKETS,
 } from "./lib/chargeOntology.js"
+export { asRateList, countRateSearchHits } from "./modules/rates/index.js"
 export type {
   ContractSearchInput,
   SpotSearchInput,
   ResolvedRate,
+  SearchRateHit,
 } from "./modules/rates/index.js"
