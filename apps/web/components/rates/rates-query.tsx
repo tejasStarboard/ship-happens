@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { Checkbox } from "@workspace/ui/components/checkbox"
 import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import {
@@ -18,6 +19,11 @@ import {
   PaginationEllipsis,
   PaginationItem,
 } from "@workspace/ui/components/pagination"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@workspace/ui/components/popover"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import {
   Table,
@@ -35,12 +41,21 @@ import type {
   RateSearchLaneSummary,
   RateSearchPagination,
 } from "@/lib/starboard/rate-result"
-import { RATES_SEARCH_PAGE_SIZE } from "@/lib/starboard/rate-result"
+import {
+  OCEAN_EQUIPMENT_TYPES,
+  RATES_SEARCH_PAGE_SIZE,
+  todayYmd,
+} from "@/lib/starboard/rate-result"
 
 type QueryFields = {
   origin: string
   destination: string
-  equipment: string
+  originVia: string
+  destinationVia: string
+  equipmentTypes: string[]
+  validFrom: string
+  validTo: string
+  transitTimeMax: string
   carrier: string
 }
 
@@ -135,10 +150,20 @@ function RatesTableHeader() {
   )
 }
 
+function laneDisplayLabel(lane: RateSearchLaneSummary): string {
+  const eq =
+    lane.equipmentTypes?.length > 0
+      ? lane.equipmentTypes.join(", ")
+      : lane.equipment
+  const window =
+    lane.validFrom && lane.validTo
+      ? ` · ${lane.validFrom} → ${lane.validTo}`
+      : ""
+  return `${lane.origin} → ${lane.destination} (${eq})${window}`
+}
+
 function RatesLoadingState({ laneHint }: { laneHint?: RateSearchLaneSummary }) {
-  const laneLabel = laneHint
-    ? `${laneHint.origin} → ${laneHint.destination} (${laneHint.equipment})`
-    : null
+  const laneLabel = laneHint ? laneDisplayLabel(laneHint) : null
 
   return (
     <div className="flex flex-col gap-3" aria-busy="true" aria-live="polite">
@@ -449,26 +474,138 @@ function RatesPagination({
   )
 }
 
+function EquipmentMultiSelect({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string[]
+  onChange: (next: string[]) => void
+  disabled?: boolean
+}) {
+  const label =
+    value.length === 0
+      ? "Select equipment"
+      : value.length <= 2
+        ? value.join(", ")
+        : `${value.length} selected`
+
+  function toggle(eq: string, checked: boolean) {
+    if (checked) {
+      onChange(value.includes(eq) ? value : [...value, eq])
+      return
+    }
+    const next = value.filter((item) => item !== eq)
+    onChange(next.length > 0 ? next : ["40HC"])
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger
+        disabled={disabled}
+        aria-label="Equipment Type"
+        className={cn(
+          "inline-flex h-7 w-full items-center justify-between gap-1.5 rounded-lg border border-border bg-background px-2.5 text-[0.8rem] font-normal outline-none select-none hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        )}
+      >
+        <span className="truncate">{label}</span>
+        <IconChevronDown className="size-3.5 opacity-60" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-56 p-2">
+        <ul className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+          {OCEAN_EQUIPMENT_TYPES.map((eq) => {
+            const checked = value.includes(eq)
+            return (
+              <li key={eq}>
+                <label className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={(next) => toggle(eq, !!next)}
+                    disabled={disabled}
+                    aria-label={eq}
+                  />
+                  <span>{eq}</span>
+                </label>
+              </li>
+            )
+          })}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
+function normalizeLane(
+  lane: RateSearchLaneSummary | undefined,
+  fallback: RateSearchLaneSummary
+): RateSearchLaneSummary {
+  if (!lane) return fallback
+  const equipmentTypes =
+    lane.equipmentTypes?.length > 0
+      ? lane.equipmentTypes
+      : lane.equipment
+        ? lane.equipment.split(/,\s*/)
+        : fallback.equipmentTypes
+  return {
+    origin: lane.origin || fallback.origin,
+    destination: lane.destination || fallback.destination,
+    equipmentTypes,
+    equipment: equipmentTypes.join(", "),
+    spotCarrier: lane.spotCarrier || fallback.spotCarrier,
+    serviceType: lane.serviceType || fallback.serviceType,
+    validFrom: lane.validFrom ?? fallback.validFrom,
+    validTo: lane.validTo ?? fallback.validTo,
+    originVia: lane.originVia ?? fallback.originVia,
+    destinationVia: lane.destinationVia ?? fallback.destinationVia,
+    transitTimeMax: lane.transitTimeMax ?? fallback.transitTimeMax,
+  }
+}
+
 export function RatesQuery() {
+  const today = todayYmd()
   const [state, setState] = React.useState<SearchUiState>({ status: "idle" })
+  const [equipmentTypes, setEquipmentTypes] = React.useState<string[]>(["40HC"])
+  const [validFrom, setValidFrom] = React.useState(today)
+  const [validTo, setValidTo] = React.useState(today)
 
   function runSearch(
     query: QueryFields,
     page: number,
     cacheKey: string | null
   ) {
+    const equipment =
+      query.equipmentTypes.length > 0 ? query.equipmentTypes : ["40HC"]
     const laneHint: RateSearchLaneSummary = {
       origin: query.origin || "CNSHA",
       destination: query.destination || "USLAX",
-      equipment: query.equipment || "40HC",
+      equipmentTypes: equipment,
+      equipment: equipment.join(", "),
       spotCarrier: query.carrier || "cma",
       serviceType: "ocean_fcl",
+      validFrom: query.validFrom || today,
+      validTo: query.validTo || today,
+      originVia: query.originVia
+        ? query.originVia.split(/[,\s]+/).filter(Boolean)
+        : [],
+      destinationVia: query.destinationVia
+        ? query.destinationVia.split(/[,\s]+/).filter(Boolean)
+        : [],
+      transitTimeMax: query.transitTimeMax
+        ? Number.parseInt(query.transitTimeMax, 10) || null
+        : null,
     }
 
     const params = new URLSearchParams()
     if (query.origin) params.set("origin", query.origin)
     if (query.destination) params.set("destination", query.destination)
-    if (query.equipment) params.set("equipment", query.equipment)
+    if (query.originVia) params.set("origin_via", query.originVia)
+    if (query.destinationVia)
+      params.set("destination_via", query.destinationVia)
+    for (const eq of equipment) params.append("equipment", eq)
+    if (query.validFrom) params.set("valid_from", query.validFrom)
+    if (query.validTo) params.set("valid_to", query.validTo)
+    if (query.transitTimeMax)
+      params.set("transit_time_max", query.transitTimeMax)
     if (query.carrier) params.set("carrier", query.carrier)
     params.set("page", String(page))
     params.set("page_size", String(RATES_SEARCH_PAGE_SIZE))
@@ -496,7 +633,7 @@ export function RatesQuery() {
           return
         }
 
-        const lane = body.lane ?? laneHint
+        const lane = normalizeLane(body.lane, laneHint)
         const pagination = body.pagination ?? null
 
         if (body.status === "empty" || !body.rows?.length) {
@@ -535,7 +672,12 @@ export function RatesQuery() {
       {
         origin: String(form.get("origin") ?? "").trim(),
         destination: String(form.get("destination") ?? "").trim(),
-        equipment: String(form.get("container") ?? "").trim(),
+        originVia: String(form.get("origin_via") ?? "").trim(),
+        destinationVia: String(form.get("destination_via") ?? "").trim(),
+        equipmentTypes,
+        validFrom,
+        validTo,
+        transitTimeMax: String(form.get("transit_time_max") ?? "").trim(),
         carrier: String(form.get("carrier") ?? "").trim(),
       },
       1,
@@ -580,8 +722,9 @@ export function RatesQuery() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold">Query</CardTitle>
           <CardDescription>
-            Contract rates paginate; spot runs on page 1 (carrier defaults to
-            CMA when empty). Expand a row for surcharges and validity.
+            Ocean FCL search aligned with Starboard Vendor Rate Query: multi
+            equipment, validity window, optional vias and max transit. Spot runs
+            on page 1 (carrier slug defaults to CMA when empty).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -597,6 +740,26 @@ export function RatesQuery() {
                 />
               </Field>
               <Field>
+                <FieldLabel htmlFor="origin_via">Origin via Port</FieldLabel>
+                <Input
+                  id="origin_via"
+                  name="origin_via"
+                  placeholder="Optional UNLOCODE"
+                  disabled={showLoading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="destination_via">
+                  Destination via Port
+                </FieldLabel>
+                <Input
+                  id="destination_via"
+                  name="destination_via"
+                  placeholder="Optional UNLOCODE"
+                  disabled={showLoading}
+                />
+              </Field>
+              <Field>
                 <FieldLabel htmlFor="destination">Destination</FieldLabel>
                 <Input
                   id="destination"
@@ -606,11 +769,49 @@ export function RatesQuery() {
                 />
               </Field>
               <Field>
-                <FieldLabel htmlFor="container">Container</FieldLabel>
+                <FieldLabel>Equipment Type</FieldLabel>
+                <EquipmentMultiSelect
+                  value={equipmentTypes}
+                  onChange={setEquipmentTypes}
+                  disabled={showLoading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="valid_from">Valid From</FieldLabel>
                 <Input
-                  id="container"
-                  name="container"
-                  placeholder="40HC"
+                  id="valid_from"
+                  name="valid_from"
+                  type="date"
+                  required
+                  value={validFrom}
+                  onChange={(e) => setValidFrom(e.target.value)}
+                  disabled={showLoading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="valid_to">Valid Until</FieldLabel>
+                <Input
+                  id="valid_to"
+                  name="valid_to"
+                  type="date"
+                  required
+                  value={validTo}
+                  onChange={(e) => setValidTo(e.target.value)}
+                  min={validFrom || undefined}
+                  disabled={showLoading}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="transit_time_max">
+                  Max Transit Time
+                </FieldLabel>
+                <Input
+                  id="transit_time_max"
+                  name="transit_time_max"
+                  type="number"
+                  min={1}
+                  step={1}
+                  placeholder="days"
                   disabled={showLoading}
                 />
               </Field>
@@ -668,8 +869,7 @@ export function RatesQuery() {
 
       {state.status === "empty" ? (
         <p className="text-sm text-muted-foreground" role="status">
-          No contract or spot rates for {state.lane.origin} →{" "}
-          {state.lane.destination} ({state.lane.equipment}).
+          No contract or spot rates for {laneDisplayLabel(state.lane)}.
         </p>
       ) : null}
 
