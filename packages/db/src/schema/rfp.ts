@@ -56,6 +56,19 @@ export const fillCellOutcomeEnum = pgEnum("fill_cell_outcome", [
   "error",
 ])
 
+/**
+ * HITL review-item lifecycle (system of record — not chat transcripts).
+ * User decisions land in approved/edited/rejected; the agent later marks resolved.
+ * Fill-level wait is derived: pending rows + `rfps.status = needs_review`.
+ */
+export const rfpReviewItemStatusEnum = pgEnum("rfp_review_item_status", [
+  "pending",
+  "approved",
+  "edited",
+  "rejected",
+  "resolved",
+])
+
 export const agentMessageRoleEnum = pgEnum("agent_message_role", [
   "system",
   "user",
@@ -272,6 +285,65 @@ export const rfpFillReportCells = pgTable(
 )
 
 /**
+ * Durable human-in-the-loop review gates for a fill.
+ * Overview “Waiting on you” lists `pending` rows; progress blocking derives
+ * from open pending items (no denormalized wait columns on `rfps`).
+ */
+export const rfpReviewItems = pgTable(
+  "rfp_review_items",
+  {
+    id: text("id").primaryKey(),
+    rfpId: text("rfp_id")
+      .notNull()
+      .references(() => rfps.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    /** Optional progress step key (`ingest` | `map` | `rates` | …). */
+    stepKey: text("step_key"),
+    title: text("title").notNull(),
+    status: rfpReviewItemStatusEnum("status").notNull().default("pending"),
+    /** Agent proposal payload (mapping slot, cell edit, etc.). */
+    proposal: jsonb("proposal")
+      .$type<Record<string, unknown>>()
+      .notNull()
+      .default({}),
+    confidence: numeric("confidence", { precision: 5, scale: 4 }),
+    /** Origin of the proposal (e.g. mapper, rates, agent). */
+    source: text("source"),
+    sourceMetadata: jsonb("source_metadata")
+      .$type<Record<string, unknown>>()
+      .default({}),
+    decidedByUserId: text("decided_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    decidedAt: timestamp("decided_at"),
+    decisionNote: text("decision_note"),
+    /**
+     * User edit payload and/or agent consumption notes after decision.
+     * Cleared/filled by writers in later 2b tickets.
+     */
+    resolution: jsonb("resolution")
+      .$type<Record<string, unknown>>()
+      .default({}),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("rfp_review_items_rfp_id_idx").on(table.rfpId),
+    index("rfp_review_items_organization_status_idx").on(
+      table.organizationId,
+      table.status
+    ),
+    index("rfp_review_items_rfp_status_idx").on(table.rfpId, table.status),
+    index("rfp_review_items_rfp_step_key_idx").on(table.rfpId, table.stepKey),
+  ]
+)
+
+/**
  * Agent chat thread for an RFP (1:1).
  * Active SSE stream bytes live in Redis (`resumable-stream`); Postgres only
  * stores the pointer (`activeStreamId`) plus completed UIMessages.
@@ -390,9 +462,24 @@ export const rfpsRelations = relations(rfps, ({ one, many }) => ({
   progressSteps: many(rfpProgressSteps),
   logs: many(rfpLogs),
   fillReport: one(rfpFillReports),
+  reviewItems: many(rfpReviewItems),
   chats: many(rfpChats),
 }))
 
+export const rfpReviewItemsRelations = relations(rfpReviewItems, ({ one }) => ({
+  rfp: one(rfps, {
+    fields: [rfpReviewItems.rfpId],
+    references: [rfps.id],
+  }),
+  organization: one(organization, {
+    fields: [rfpReviewItems.organizationId],
+    references: [organization.id],
+  }),
+  decidedBy: one(user, {
+    fields: [rfpReviewItems.decidedByUserId],
+    references: [user.id],
+  }),
+}))
 export const rfpSourceFilesRelations = relations(rfpSourceFiles, ({ one }) => ({
   rfp: one(rfps, {
     fields: [rfpSourceFiles.rfpId],
