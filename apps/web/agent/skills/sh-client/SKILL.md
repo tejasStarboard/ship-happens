@@ -65,10 +65,10 @@ decision from chat; wait for the UI decision path.
 
 ## vs `fill-pipeline` skill
 
-| Concern | Tool |
-|--------|------|
+| Concern                                            | Tool                                                          |
+| -------------------------------------------------- | ------------------------------------------------------------- |
 | Progress step / run status / append log **writes** | Host `fill-pipeline` / `agent-pipeline` (FillPipelineManager) |
-| Inspect status/progress/logs + review CRUD | **`sh-client`** in sandbox |
+| Inspect status/progress/logs + review CRUD         | **`sh-client`** in sandbox                                    |
 
 Do **not** refuse `reviews create` as an “ad-hoc write” — it is the supported
 HITL submit path for the sandbox agent.
