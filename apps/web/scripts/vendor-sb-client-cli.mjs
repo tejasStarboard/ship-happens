@@ -1,9 +1,12 @@
 /**
- * Build @starboard/sb-client and copy the standalone CLI into apps/web so
- * Next/Vercel file tracing can ship it with serverless functions.
+ * Build @starboard/sb-client (if needed) and copy the standalone CLI into
+ * apps/web so Next/Vercel file tracing can ship it with serverless functions.
  *
  * Dynamic fs lookups of workspace node_modules/dist/cli.js are not traced,
  * which breaks sandbox inject on Vercel.
+ *
+ * When Turbo already ran `^build` for @starboard/sb-client, skip the rebuild
+ * and only copy dist/cli.js → vendor.
  */
 import { cp, mkdir, access } from "node:fs/promises"
 import { dirname, join } from "node:path"
@@ -30,12 +33,25 @@ function run(command, args, cwd) {
   }
 }
 
-async function main() {
-  run("pnpm", ["run", "build"], packageDir)
-
+async function cliExists() {
   try {
     await access(cliSrc)
+    return true
   } catch {
+    return false
+  }
+}
+
+async function main() {
+  if (await cliExists()) {
+    console.log(
+      `[vendor-sb-client-cli] reusing existing ${cliSrc} (skip rebuild)`
+    )
+  } else {
+    run("pnpm", ["run", "build"], packageDir)
+  }
+
+  if (!(await cliExists())) {
     throw new Error(`Expected CLI at ${cliSrc} after sb-client build`)
   }
 

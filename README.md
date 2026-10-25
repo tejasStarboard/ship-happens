@@ -142,10 +142,16 @@ Ticket investigation details: `.agents/skills/ticket-resolution/SKILL.md`.
 ## Layout
 
 ```
-apps/web              # Primary Next.js + eve app
-packages/ui           # Shared UI kit
-packages/sb-client    # Starboard Public API library + CLI
-.agents/skills/       # Agent skills (development-workflow, etc.)
-docker-compose.yml    # Postgres :54325 + Redis :63799
-.env.example          # Env template aligned with compose ports
+apps/web                 # Primary Next.js + eve app
+packages/db              # @workspace/db — Drizzle schema + createDb()
+packages/fill            # @ship-happens/fill — intake + fill pipeline
+packages/ui              # Shared UI kit
+packages/sb-client       # Starboard Public API library + CLI
+.agents/skills/          # Agent skills (development-workflow, etc.)
+docker-compose.yml       # Postgres :54325 + Redis :63799
+.env.example             # Env template aligned with compose ports
 ```
+
+## Architecture
+
+Shared packages: `@workspace/db`, `@ship-happens/fill`. App wiring + DI: `apps/web/lib/di`. See [`docs/architecture.md`](docs/architecture.md).

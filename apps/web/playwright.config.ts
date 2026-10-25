@@ -7,14 +7,16 @@ const authFile = path.join(__dirname, "e2e/.auth/user.json")
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:3000"
 const isCI = !!process.env.CI
+const skipWebServerBuild = process.env.PLAYWRIGHT_SKIP_WEBSERVER_BUILD === "1"
 
 export default defineConfig({
   testDir: "./e2e",
-  // Shared Better Auth session (storageState) is not safe across parallel workers
-  fullyParallel: false,
+  // Guest specs are independent; settings.spec configures serial for shared-user mutations.
+  fullyParallel: true,
   forbidOnly: isCI,
   retries: isCI ? 1 : 0,
-  workers: 1,
+  // CI: 2 workers (guest ∥ authenticated after setup). Local: 1 for simpler debugging.
+  workers: isCI ? 2 : 1,
   reporter: isCI ? [["github"], ["html", { open: "never" }]] : "list",
   timeout: 45_000,
   expect: { timeout: 10_000 },
@@ -47,11 +49,14 @@ export default defineConfig({
   ],
   webServer: {
     // Local: reuse `pnpm --filter web dev` if already on :3000 (much faster).
-    // CI: build workspace deps (e.g. @starboard/sb-client → dist/) then
-    // production server — avoids Next compile-on-demand stalls.
+    // CI: prefer a dedicated `turbo build --filter=web...` step, then start-only
+    // (PLAYWRIGHT_SKIP_WEBSERVER_BUILD=1). Fallback builds workspace deps + web.
     command: isCI
-      ? "pnpm --filter @starboard/sb-client build && pnpm build && pnpm start"
-      : "pnpm dev",
+      ? skipWebServerBuild
+        ? "pnpm --filter web start"
+        : "pnpm exec turbo build --filter=web... && pnpm --filter web start"
+      : "pnpm --filter web dev",
+    cwd: path.join(__dirname, "../.."),
     url: baseURL,
     reuseExistingServer: !isCI,
     timeout: isCI ? 300_000 : 120_000,

@@ -10,7 +10,10 @@ export default withEve({
   // Playwright hits 127.0.0.1; without this, Next blocks /_next assets and
   // client hydration never runs (e2e waitForAppReady hangs until timeout).
   allowedDevOrigins: ["127.0.0.1", "localhost"],
-  serverExternalPackages: ["pg", "ioredis"],
+  // Keep Node DB drivers out of the bundler; client UI must import
+  // `@ship-happens/fill/browser` for labels/types (not the server barrel).
+  serverExternalPackages: ["pg", "ioredis", "@workspace/db"],
+  // @workspace/db + @ship-happens/fill ship prebuilt dist/ (tsup); ui stays source.
   transpilePackages: ["@workspace/ui"],
   // Include the vendored sb-client CLI (copied in build:sb-client-cli) in every
   // serverless/workflow bundle — dynamic fs reads are not auto-traced.

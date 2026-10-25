@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import {
   deleteWorkspace,
   getWorkspace,
@@ -12,24 +13,26 @@ export async function GET(
   context: { readonly params: Promise<{ readonly workspaceId: string }> }
 ) {
   try {
-    await requireOrgSession()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    const { organizationId } = await requireOrgSession()
+    const { workspaceId } = await context.params
+    if (!isValidWorkspaceId(workspaceId)) {
+      return NextResponse.json(
+        { error: "Invalid workspace id" },
+        { status: 400 }
+      )
+    }
+
+    const workspace = await getWorkspace(workspaceId, organizationId)
+    if (!workspace) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 })
+    }
+
+    await reconcileWorkspaceFiles(organizationId, workspaceId)
+
+    return NextResponse.json(workspace)
+  } catch (error) {
+    return jsonDomainError(error, "Unauthorized")
   }
-
-  const { workspaceId } = await context.params
-  if (!isValidWorkspaceId(workspaceId)) {
-    return NextResponse.json({ error: "Invalid workspace id" }, { status: 400 })
-  }
-
-  const workspace = await getWorkspace(workspaceId)
-  if (!workspace) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 })
-  }
-
-  await reconcileWorkspaceFiles(workspaceId)
-
-  return NextResponse.json(workspace)
 }
 
 export async function DELETE(
@@ -37,23 +40,18 @@ export async function DELETE(
   context: { readonly params: Promise<{ readonly workspaceId: string }> }
 ) {
   try {
-    await requireOrgSession()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+    const { organizationId } = await requireOrgSession()
+    const { workspaceId } = await context.params
+    if (!isValidWorkspaceId(workspaceId)) {
+      return NextResponse.json(
+        { error: "Invalid workspace id" },
+        { status: 400 }
+      )
+    }
 
-  const { workspaceId } = await context.params
-  if (!isValidWorkspaceId(workspaceId)) {
-    return NextResponse.json({ error: "Invalid workspace id" }, { status: 400 })
-  }
-
-  try {
-    await deleteWorkspace(workspaceId)
+    await deleteWorkspace(organizationId, workspaceId)
     return NextResponse.json({ ok: true })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to delete" },
-      { status: 404 }
-    )
+    return jsonDomainError(error, "Failed to delete")
   }
 }

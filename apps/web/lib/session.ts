@@ -1,8 +1,5 @@
-import { headers } from "next/headers"
-import { auth } from "@/lib/auth"
-
-export async function getServerSession() {
-  return auth.api.getSession({
-    headers: await headers(),
-  })
-}
+/**
+ * @deprecated Import `getSession` / `getServerSession` from `@/lib/auth/session`.
+ * Prefer `requireOrgSession` for org-scoped data routes.
+ */
+export { getServerSession, getSession } from "@/lib/auth/session"

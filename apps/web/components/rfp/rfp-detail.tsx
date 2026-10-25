@@ -18,8 +18,11 @@ import {
 } from "@workspace/ui/components/tabs"
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
 import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
-import { RFP_STATUS_LABEL, type RfpStatus } from "@/lib/mock/rfps"
-import type { RfpDetailView } from "@/lib/server/rfps"
+import {
+  RFP_STATUS_LABEL,
+  type RfpDetailView,
+  type RfpStatus,
+} from "@/lib/domain/rfp/rfp.types"
 
 type FillTab = "overview" | "map" | "review" | "chat"
 

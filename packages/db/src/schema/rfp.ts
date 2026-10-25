@@ -280,10 +280,10 @@ export const rfpChats = pgTable(
   "rfp_chats",
   {
     id: text("id").primaryKey(),
+    /** Workspace / RFP id — multiple chats per RFP are allowed. */
     rfpId: text("rfp_id")
       .notNull()
-      .references(() => rfps.id, { onDelete: "cascade" })
-      .unique(),
+      .references(() => rfps.id, { onDelete: "cascade" }),
     organizationId: text("organization_id")
       .notNull()
       .references(() => organization.id, { onDelete: "cascade" }),
@@ -293,7 +293,10 @@ export const rfpChats = pgTable(
      * Cleared to null when the stream ends or is explicitly stopped.
      */
     activeStreamId: text("active_stream_id"),
-    /** Opaque eve agent/runtime state (tool context, etc.). */
+    /**
+     * Opaque eve agent/runtime state. Session bind stores
+     * `{ eveSessionId: string }` for indexed workspace lookup.
+     */
     agentSession: jsonb("agent_session").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -387,7 +390,7 @@ export const rfpsRelations = relations(rfps, ({ one, many }) => ({
   progressSteps: many(rfpProgressSteps),
   logs: many(rfpLogs),
   fillReport: one(rfpFillReports),
-  chat: one(rfpChats),
+  chats: many(rfpChats),
 }))
 
 export const rfpSourceFilesRelations = relations(rfpSourceFiles, ({ one }) => ({
