@@ -4,6 +4,8 @@
  * new code should call through this manager / createAppContext().workspaces.
  */
 import { assertOrgOwnsWorkspace } from "@/lib/domain/workspace/workspace.authorize"
+import { persistEditedSourceFiles } from "@/lib/domain/workspace/persist-edited-sources.runtime"
+import type { PersistEditedSourcesResult } from "@/lib/domain/workspace/persist-edited-sources"
 import type { VercelBlobStorage } from "@/lib/storage/vbs"
 import {
   addWorkspaceChat,
@@ -25,7 +27,7 @@ import {
 import { ensureWorkspace, mergeWorkspaceFiles } from "@/lib/workspace-fs"
 
 export class WorkspaceManager {
-  constructor(private readonly _blob: VercelBlobStorage) {}
+  constructor(private readonly blob: VercelBlobStorage) {}
 
   assertOwned(organizationId: string, workspaceId: string) {
     return assertOrgOwnsWorkspace(organizationId, workspaceId)
@@ -112,5 +114,15 @@ export class WorkspaceManager {
     organizationId?: string
   ): Promise<string | null> {
     return resolveWorkspaceIdForSession(sessionId, organizationId)
+  }
+
+  /**
+   * After sandbox→host pull: upload changed `source/*` workbooks to Blob and
+   * update `rfp_source_files` / `filledFileUrl` so preview + hydrate stay current.
+   */
+  persistEditedSources(
+    workspaceId: string
+  ): Promise<PersistEditedSourcesResult> {
+    return persistEditedSourceFiles(workspaceId, this.blob)
   }
 }

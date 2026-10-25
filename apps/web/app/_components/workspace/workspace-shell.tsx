@@ -135,13 +135,53 @@ export function WorkspaceShell({
     void refreshTree(workspaceId)
   }, [workspaceId, refreshTree])
 
+  const refreshOpenOfficePublicUrls = useCallback(async (id: string) => {
+    const officeTabs = tabsRef.current.filter(
+      (tab) => tab.viewerKind === "xlsx" || tab.publicUrl
+    )
+    if (officeTabs.length === 0) return
+
+    const updates = await Promise.all(
+      officeTabs.map(async (tab) => {
+        try {
+          const response = await fetch(
+            `/api/workspace/${encodeURIComponent(id)}/file?path=${encodeURIComponent(tab.path)}`
+          )
+          if (!response.ok) return null
+          const body = (await response.json()) as {
+            path: string
+            publicUrl?: string | null
+          }
+          return {
+            path: tab.path,
+            publicUrl: body.publicUrl ?? null,
+          }
+        } catch {
+          return null
+        }
+      })
+    )
+
+    setTabs((prev) =>
+      prev.map((tab) => {
+        const update = updates.find((entry) => entry && entry.path === tab.path)
+        if (!update || update.publicUrl === tab.publicUrl) return tab
+        return { ...tab, publicUrl: update.publicUrl }
+      })
+    )
+  }, [])
+
   const scheduleRefresh = useCallback(() => {
     if (!workspaceId) return
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
+    // Delay so turn.completed Blob persist can finish before we re-fetch publicUrl.
     refreshTimer.current = setTimeout(() => {
-      void refreshTree(workspaceId)
-    }, 400)
-  }, [workspaceId, refreshTree])
+      void (async () => {
+        await refreshTree(workspaceId)
+        await refreshOpenOfficePublicUrls(workspaceId)
+      })()
+    }, 1500)
+  }, [workspaceId, refreshTree, refreshOpenOfficePublicUrls])
 
   const openFile = useCallback(
     async (path: string) => {
