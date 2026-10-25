@@ -37,7 +37,8 @@ export type ResolvedRate = SearchRateHit & {
   resolved_currency: string | null
 }
 
-function asRateList(searchBody: unknown): SearchRateHit[] {
+/** Normalize contract/spot search JSON into a rate hit list. */
+export function asRateList(searchBody: unknown): SearchRateHit[] {
   if (!searchBody || typeof searchBody !== "object") return []
   const o = searchBody as Record<string, unknown>
   const candidates = [o.rates, o.data, o.results]
@@ -45,6 +46,11 @@ function asRateList(searchBody: unknown): SearchRateHit[] {
     if (Array.isArray(c)) return c as SearchRateHit[]
   }
   return []
+}
+
+/** Hit count for empty vs success discrimination (raw body still available). */
+export function countRateSearchHits(searchBody: unknown): number {
+  return asRateList(searchBody).length
 }
 
 function equipmentFromHit(
