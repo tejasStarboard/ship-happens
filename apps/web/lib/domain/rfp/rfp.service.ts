@@ -5,11 +5,13 @@ import {
 } from "@/lib/domain/rfp/rfp.types"
 import type { RfpRepository } from "@/lib/domain/rfp/rfp.repository"
 import type { FillPipelineManager } from "@/lib/domain/pipeline/fill-pipeline.manager"
+import type { ReviewItemService } from "@ship-happens/fill"
 
 export class RfpService {
   constructor(
     private readonly repo: RfpRepository,
-    private readonly pipeline: FillPipelineManager
+    private readonly pipeline: FillPipelineManager,
+    private readonly reviews: ReviewItemService
   ) {}
 
   async list(
@@ -40,11 +42,13 @@ export class RfpService {
     if (!row) return null
 
     const meta = (row.metadata ?? {}) as { templateName?: string }
-    const [progressSteps, logs, sourceFileRows] = await Promise.all([
-      this.pipeline.listSteps(row.id),
-      this.pipeline.listLogs(row.id),
-      this.repo.listSourceFiles(row.id),
-    ])
+    const [progressSteps, logs, sourceFileRows, pendingReviews] =
+      await Promise.all([
+        this.pipeline.listSteps(row.id),
+        this.pipeline.listLogs(row.id),
+        this.repo.listSourceFiles(row.id),
+        this.reviews.list(organizationId, row.id, { status: "pending" }),
+      ])
 
     return {
       id: row.id,
@@ -81,6 +85,17 @@ export class RfpService {
         fileUrl: file.fileUrl,
         sheetNames: (file.sheetNames as string[] | null) ?? [],
         createdAt: file.createdAt.toISOString(),
+      })),
+      pendingReviews: pendingReviews.map((item) => ({
+        id: item.id,
+        stepKey: item.stepKey,
+        title: item.title,
+        proposal: item.proposal,
+        confidence: item.confidence,
+        source: item.source,
+        sourceMetadata: item.sourceMetadata,
+        createdAt: item.createdAt.toISOString(),
+        updatedAt: item.updatedAt.toISOString(),
       })),
     }
   }

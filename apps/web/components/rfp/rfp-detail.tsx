@@ -119,7 +119,7 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 overflow-auto">
-          <FillOverviewDashboard rfp={rfp} />
+          <FillOverviewDashboard rfp={rfp} onAskAgent={() => setTab("chat")} />
         </TabsContent>
 
         <TabsContent value="map" className="mt-4 overflow-auto">
