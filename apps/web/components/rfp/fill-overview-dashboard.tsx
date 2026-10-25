@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@workspace/ui/components/card"
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
+import { WaitingOnYouPanel } from "@/components/rfp/waiting-on-you-panel"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { formatBytes } from "@/lib/shared/format-bytes"
 import type { RfpDetailView } from "@/lib/domain/rfp/rfp.types"
@@ -47,7 +48,13 @@ function LogLines({ logs }: { logs: RfpDetailView["logs"] }) {
   )
 }
 
-export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
+export function FillOverviewDashboard({
+  rfp,
+  onAskAgent,
+}: {
+  rfp: RfpDetailView
+  onAskAgent?: (reviewId: string) => void
+}) {
   const source = rfp.sourceFiles[0] ?? null
   const counts = stepCounts(rfp.progressSteps)
   const reduce = useReducedMotion()
@@ -67,6 +74,13 @@ export function FillOverviewDashboard({ rfp }: { rfp: RfpDetailView }) {
 
   return (
     <div className="flex flex-col gap-4">
+      <WaitingOnYouPanel
+        pendingReviews={rfp.pendingReviews ?? []}
+        progressSteps={rfp.progressSteps}
+        status={rfp.status}
+        onAskAgent={onAskAgent ?? (() => undefined)}
+      />
+
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {statTiles.map((tile, i) => (
           <motion.div
