@@ -54,12 +54,41 @@ export type RateResultRow = {
 
 export type RateSearchErrorKind = "config" | "auth" | "api" | "validation"
 
+/**
+ * Ocean FCL equipment universe — aligns with starboard-2 `oceanEquipmentTypes`
+ * and sb-client `ContainerTypeSchema` (subset used for Rates search).
+ */
+export const OCEAN_EQUIPMENT_TYPES = [
+  "20GP",
+  "20HC",
+  "40GP",
+  "40HC",
+  "45GP",
+  "45HC",
+  "40NOR",
+  "40REEF",
+  "40RH",
+  "20REEF",
+  "20OT",
+  "40OT",
+] as const
+
+export type OceanEquipmentType = (typeof OCEAN_EQUIPMENT_TYPES)[number]
+
 export type RateSearchLaneSummary = {
   origin: string
   destination: string
+  /** Selected container types (multi-eq FCL search). */
+  equipmentTypes: string[]
+  /** Display helper — joined equipmentTypes (legacy single-eq callers). */
   equipment: string
   spotCarrier: string
   serviceType: string
+  validFrom: string | null
+  validTo: string | null
+  originVia: string[]
+  destinationVia: string[]
+  transitTimeMax: number | null
 }
 
 /** Contract-channel pagination from Starboard Qv2 (spot is not paginated). */
@@ -73,3 +102,11 @@ export type RateSearchPagination = {
 
 /** Default page size for Rates UI — keeps payloads under serverless limits. */
 export const RATES_SEARCH_PAGE_SIZE = 25
+
+/** Local calendar day as YYYY-MM-DD (matches Vendor Query `getYMD`). */
+export function todayYmd(date: Date = new Date()): string {
+  const y = date.getFullYear()
+  const m = String(date.getMonth() + 1).padStart(2, "0")
+  const d = String(date.getDate()).padStart(2, "0")
+  return `${y}-${m}-${d}`
+}

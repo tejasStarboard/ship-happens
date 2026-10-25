@@ -37,13 +37,18 @@ export function NavMain({
                 <SidebarMenuButton
                   tooltip={item.title}
                   isActive={isActive}
+                  className={
+                    isActive
+                      ? "relative after:absolute after:top-1.5 after:bottom-1.5 after:left-0 after:w-px after:bg-[var(--selection-line)]"
+                      : undefined
+                  }
                   onClick={() => {
                     if (item.url && item.url !== "#") {
                       router.push(item.url)
                     }
                   }}
                 >
-                  {item.icon ? <item.icon /> : null}
+                  {item.icon ? <item.icon className="size-4" /> : null}
                   <span>{item.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>

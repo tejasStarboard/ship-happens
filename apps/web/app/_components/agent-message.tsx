@@ -10,15 +10,15 @@ import type {
 } from "eve/react"
 import { useState } from "react"
 import {
-  ArrowRightIcon,
-  CheckCircleIcon,
-  CheckIcon,
-  ExternalLinkIcon,
-  FileIcon,
-  ImageIcon,
-  KeyRoundIcon,
-  XCircleIcon,
-} from "lucide-react"
+  IconArrowRight as ArrowRightIcon,
+  IconCircleCheck as CheckCircleIcon,
+  IconCheck as CheckIcon,
+  IconExternalLink as ExternalLinkIcon,
+  IconFile as FileIcon,
+  IconPhoto as ImageIcon,
+  IconKey as KeyRoundIcon,
+  IconCircleX as XCircleIcon,
+} from "@tabler/icons-react"
 import {
   Confirmation,
   ConfirmationAction,

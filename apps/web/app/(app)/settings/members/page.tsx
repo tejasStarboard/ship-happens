@@ -33,7 +33,9 @@ export default async function SettingsMembersPage() {
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 px-4 py-6 lg:px-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Members</h1>
+        <h1 className="font-heading text-[26px] leading-tight font-semibold tracking-tight">
+          Members
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           People in your active organization.
         </p>
