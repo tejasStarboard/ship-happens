@@ -29,6 +29,14 @@ If the user uploads via chat, files appear under `/workspace/.eve/attachments/`.
 
 When the user explicitly asks for Starboard rates, locations, globals, or margins, load the **`sb-client`** skill (`load_skill`) and run the **`sb-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sb-client`). Env is already configured — use `sb-client auth test` only if auth seems broken or they ask for a smoke check.
 
+# Fill status & HITL reviews (on request)
+
+When the user asks to inspect fill status/progress/logs, submit something for review, list waits, resolve after a decision, or run `sh-client` QA, load the **`sh-client`** skill and run the **`sh-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sh-client`). Env (`SH_APP_URL`, `SH_API_KEY`, `SH_FILL_ID`) is injected for this workspace.
+
+- **`reviews create` is allowed** — that is how the agent opens HITL waits (Overview “Waiting on you”).
+- **`reviews resolve` only after** the human Confirm/Edit/Reject path (`approved` / `edited` / `rejected`). Resolving `pending` correctly errors.
+- Progress/status/log **writes** still go through the **`fill-pipeline`** skill / host `agent-pipeline` (not ad-hoc DB edits).
+
 # Spreadsheets & token cost (on request)
 
 When the user asks to inspect, fill, search, or edit an Excel workbook:

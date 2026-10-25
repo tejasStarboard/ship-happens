@@ -20,10 +20,16 @@ export function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
   const isApiAuth = pathname.startsWith("/api/auth")
+  /** Fill agent CLI — authenticated via Better Auth API key, not cookies. */
+  const isShApi = pathname.startsWith("/api/sh/")
   const isEveApi = pathname.startsWith("/eve/")
   const isAcceptInvite = pathname.startsWith("/accept-invitation/")
   const isPublic =
-    publicPaths.has(pathname) || isApiAuth || isEveApi || isAcceptInvite
+    publicPaths.has(pathname) ||
+    isApiAuth ||
+    isShApi ||
+    isEveApi ||
+    isAcceptInvite
   const sessionCookie = getSessionCookie(request)
 
   if (!sessionCookie && !isPublic) {

@@ -33,6 +33,7 @@ apps/web/e2e/.auth/
 apps/web/.next/
 apps/web/.eve/
 apps/web/lib/starboard/vendor/
+apps/web/lib/sh-client/vendor/
 apps/web/data/*.db
 apps/web/data/*.db-*
 apps/web/data/workspaces/

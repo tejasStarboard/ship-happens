@@ -91,12 +91,20 @@ export class FillPipelineManager {
       .orderBy(asc(rfpProgressSteps.sortOrder))
   }
 
-  listLogs(rfpId: string) {
-    return this.db
+  listLogs(rfpId: string, options?: { limit?: number; level?: LogLevel }) {
+    const filters = [eq(rfpLogs.rfpId, rfpId)]
+    if (options?.level) {
+      filters.push(eq(rfpLogs.level, options.level))
+    }
+    const query = this.db
       .select()
       .from(rfpLogs)
-      .where(eq(rfpLogs.rfpId, rfpId))
+      .where(and(...filters))
       .orderBy(asc(rfpLogs.createdAt))
+    if (options?.limit != null && options.limit > 0) {
+      return query.limit(options.limit)
+    }
+    return query
   }
 
   async setRfpStatus(
