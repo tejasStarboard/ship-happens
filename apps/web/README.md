@@ -35,7 +35,8 @@ Unset OpenRouter Anthropic overrides when using Anthropic directly (`dev` script
 | ------------------------------------- | ----------------------------------------------- |
 | `/rfp`, `/rfp/[id]`                   | Product RFP UI; Agent tab embeds eve workspace  |
 | `/w/[workspaceId]`                    | Standalone workspace IDE (workspaceId = rfp id) |
-| `/templates`, `/rates`, `/settings/*` | Product surfaces (mock data parity)             |
+| `/templates`, `/rates`, `/settings/*` | Product surfaces (`/rates` = live Starboard)    |
+| `/api/starboard/rates/search`         | Auth’d Rates page contract + spot search        |
 | `/api/starboard/rates/smoke`          | Auth’d read-only rate search smoke              |
 
 ## E2E

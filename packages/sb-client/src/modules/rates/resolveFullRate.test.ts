@@ -15,6 +15,22 @@ describe("asRateList / countRateSearchHits", () => {
     expect(countRateSearchHits({ results: [] })).toBe(0)
   })
 
+  it("merges paginated_rates with non_paginated_rates", () => {
+    expect(
+      asRateList({
+        paginated_rates: [{ id: "p1" }],
+        non_paginated_rates: [{ id: "n1" }, { id: "n2" }],
+        pagination: {
+          page: 1,
+          page_size: 25,
+          total_count: 100,
+          total_pages: 4,
+          cache_key: "ck",
+        },
+      })
+    ).toEqual([{ id: "p1" }, { id: "n1" }, { id: "n2" }])
+  })
+
   it("treats non-list bodies as empty (not error)", () => {
     expect(countRateSearchHits(null)).toBe(0)
     expect(countRateSearchHits({})).toBe(0)
