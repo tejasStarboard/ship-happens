@@ -12,6 +12,12 @@ import {
 } from "@workspace/ui/components/card"
 import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@workspace/ui/components/pagination"
 import { Skeleton } from "@workspace/ui/components/skeleton"
 import {
   Table,
@@ -27,7 +33,16 @@ import type {
   RateResultSurcharge,
   RateSearchErrorKind,
   RateSearchLaneSummary,
+  RateSearchPagination,
 } from "@/lib/starboard/rate-result"
+import { RATES_SEARCH_PAGE_SIZE } from "@/lib/starboard/rate-result"
+
+type QueryFields = {
+  origin: string
+  destination: string
+  equipment: string
+  carrier: string
+}
 
 type SearchUiState =
   | { status: "idle" }
@@ -37,11 +52,15 @@ type SearchUiState =
       rows: RateResultRow[]
       lane: RateSearchLaneSummary
       companyId: string
+      pagination: RateSearchPagination | null
+      query: QueryFields
     }
   | {
       status: "empty"
       lane: RateSearchLaneSummary
       companyId: string
+      pagination: RateSearchPagination | null
+      query: QueryFields
     }
   | {
       status: "error"
@@ -56,6 +75,7 @@ type SearchApiResponse = {
   companyId?: string
   lane?: RateSearchLaneSummary
   rows?: RateResultRow[]
+  pagination?: RateSearchPagination | null
   error?: string
 }
 
@@ -347,30 +367,112 @@ function RateResultRowView({ row }: { row: RateResultRow }) {
   )
 }
 
+function pageNumbers(current: number, total: number): (number | "ellipsis")[] {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const pages: (number | "ellipsis")[] = [1]
+  const start = Math.max(2, current - 1)
+  const end = Math.min(total - 1, current + 1)
+  if (start > 2) pages.push("ellipsis")
+  for (let p = start; p <= end; p++) pages.push(p)
+  if (end < total - 1) pages.push("ellipsis")
+  pages.push(total)
+  return pages
+}
+
+function RatesPagination({
+  pagination,
+  disabled,
+  onPageChange,
+}: {
+  pagination: RateSearchPagination
+  disabled: boolean
+  onPageChange: (page: number) => void
+}) {
+  if (pagination.totalPages <= 1) return null
+
+  return (
+    <div className="flex flex-col items-center gap-2 sm:flex-row sm:justify-between">
+      <p className="text-sm text-muted-foreground">
+        Page {pagination.page} of {pagination.totalPages} ·{" "}
+        {pagination.totalCount.toLocaleString()} contract rates
+        {pagination.page === 1 ? " (spot on page 1)" : ""}
+      </p>
+      <Pagination className="mx-0 w-auto justify-end">
+        <PaginationContent>
+          <PaginationItem>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={disabled || pagination.page <= 1}
+              onClick={() => onPageChange(pagination.page - 1)}
+            >
+              Previous
+            </Button>
+          </PaginationItem>
+          {pageNumbers(pagination.page, pagination.totalPages).map((item, i) =>
+            item === "ellipsis" ? (
+              <PaginationItem key={`e-${i}`}>
+                <PaginationEllipsis />
+              </PaginationItem>
+            ) : (
+              <PaginationItem key={item}>
+                <Button
+                  type="button"
+                  variant={item === pagination.page ? "outline" : "ghost"}
+                  size="icon"
+                  disabled={disabled}
+                  aria-current={item === pagination.page ? "page" : undefined}
+                  onClick={() => onPageChange(item)}
+                >
+                  {item}
+                </Button>
+              </PaginationItem>
+            )
+          )}
+          <PaginationItem>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={disabled || pagination.page >= pagination.totalPages}
+              onClick={() => onPageChange(pagination.page + 1)}
+            >
+              Next
+            </Button>
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    </div>
+  )
+}
+
 export function RatesQuery() {
   const [state, setState] = React.useState<SearchUiState>({ status: "idle" })
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    const form = new FormData(event.currentTarget)
-    const origin = String(form.get("origin") ?? "").trim()
-    const destination = String(form.get("destination") ?? "").trim()
-    const equipment = String(form.get("container") ?? "").trim()
-    const carrier = String(form.get("carrier") ?? "").trim()
-
+  function runSearch(
+    query: QueryFields,
+    page: number,
+    cacheKey: string | null
+  ) {
     const laneHint: RateSearchLaneSummary = {
-      origin: origin || "CNSHA",
-      destination: destination || "USLAX",
-      equipment: equipment || "40HC",
-      spotCarrier: carrier || "cma",
+      origin: query.origin || "CNSHA",
+      destination: query.destination || "USLAX",
+      equipment: query.equipment || "40HC",
+      spotCarrier: query.carrier || "cma",
       serviceType: "ocean_fcl",
     }
 
     const params = new URLSearchParams()
-    if (origin) params.set("origin", origin)
-    if (destination) params.set("destination", destination)
-    if (equipment) params.set("equipment", equipment)
-    if (carrier) params.set("carrier", carrier)
+    if (query.origin) params.set("origin", query.origin)
+    if (query.destination) params.set("destination", query.destination)
+    if (query.equipment) params.set("equipment", query.equipment)
+    if (query.carrier) params.set("carrier", query.carrier)
+    params.set("page", String(page))
+    params.set("page_size", String(RATES_SEARCH_PAGE_SIZE))
+    if (page > 1 && cacheKey) params.set("cache_key", cacheKey)
 
     setState({ status: "loading", laneHint })
 
@@ -395,12 +497,15 @@ export function RatesQuery() {
         }
 
         const lane = body.lane ?? laneHint
+        const pagination = body.pagination ?? null
 
         if (body.status === "empty" || !body.rows?.length) {
           setState({
             status: "empty",
             companyId: body.companyId ?? "",
             lane,
+            pagination,
+            query,
           })
           return
         }
@@ -410,6 +515,8 @@ export function RatesQuery() {
           rows: body.rows,
           companyId: body.companyId ?? "",
           lane,
+          pagination,
+          query,
         })
       } catch (err) {
         setState({
@@ -421,7 +528,29 @@ export function RatesQuery() {
     })()
   }
 
+  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    runSearch(
+      {
+        origin: String(form.get("origin") ?? "").trim(),
+        destination: String(form.get("destination") ?? "").trim(),
+        equipment: String(form.get("container") ?? "").trim(),
+        carrier: String(form.get("carrier") ?? "").trim(),
+      },
+      1,
+      null
+    )
+  }
+
+  function onPageChange(page: number) {
+    if (state.status !== "ok" && state.status !== "empty") return
+    runSearch(state.query, page, state.pagination?.cacheKey ?? null)
+  }
+
   const showLoading = state.status === "loading"
+  const pagination =
+    state.status === "ok" || state.status === "empty" ? state.pagination : null
 
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
@@ -439,9 +568,9 @@ export function RatesQuery() {
         <CardHeader>
           <CardTitle>Query</CardTitle>
           <CardDescription>
-            Searches Starboard contract rates and optional spot (carrier slug
-            defaults to CMA when empty). Expand a row for surcharges and
-            validity from the Qv2 search shape.
+            Searches Starboard contract rates (paginated) and optional spot on
+            page 1 (carrier slug defaults to CMA when empty). Expand a row for
+            surcharges and validity from the Qv2 search shape.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -534,15 +663,24 @@ export function RatesQuery() {
       ) : null}
 
       {state.status === "ok" ? (
-        <div className="overflow-hidden rounded-lg border">
-          <Table>
-            <RatesTableHeader />
-            <TableBody>
-              {state.rows.map((rate) => (
-                <RateResultRowView key={rate.id} row={rate} />
-              ))}
-            </TableBody>
-          </Table>
+        <div className="flex flex-col gap-3">
+          <div className="overflow-hidden rounded-lg border">
+            <Table>
+              <RatesTableHeader />
+              <TableBody>
+                {state.rows.map((rate) => (
+                  <RateResultRowView key={rate.id} row={rate} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+          {pagination ? (
+            <RatesPagination
+              pagination={pagination}
+              disabled={showLoading}
+              onPageChange={onPageChange}
+            />
+          ) : null}
         </div>
       ) : null}
     </div>

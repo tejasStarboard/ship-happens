@@ -7,7 +7,9 @@ import {
   asRateList,
   assembleResolvedRate,
   countRateSearchHits,
+  paginationFromSearchBody,
   resolveContractRates,
+  type RateSearchPaginationMeta,
   type ResolvedRate,
   type SearchRateHit,
 } from "./resolveFullRate.js"
@@ -22,10 +24,11 @@ import type { RateItemRow } from "../globals/filter.js"
 export type {
   ContractSearchInput,
   SpotSearchInput,
+  RateSearchPaginationMeta,
   ResolvedRate,
   SearchRateHit,
 }
-export { asRateList, countRateSearchHits }
+export { asRateList, countRateSearchHits, paginationFromSearchBody }
 
 export class RatesModule {
   constructor(private readonly http: StarboardHttp) {}

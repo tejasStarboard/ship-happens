@@ -61,3 +61,15 @@ export type RateSearchLaneSummary = {
   spotCarrier: string
   serviceType: string
 }
+
+/** Contract-channel pagination from Starboard Qv2 (spot is not paginated). */
+export type RateSearchPagination = {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  cacheKey: string | null
+}
+
+/** Default page size for Rates UI — keeps payloads under serverless limits. */
+export const RATES_SEARCH_PAGE_SIZE = 25

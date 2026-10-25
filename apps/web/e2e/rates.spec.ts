@@ -88,6 +88,13 @@ const okSearchBody = {
       surcharges: emptySurcharges,
     },
   ],
+  pagination: {
+    page: 1,
+    pageSize: 25,
+    totalCount: 2,
+    totalPages: 1,
+    cacheKey: "e2e-cache",
+  },
   contract: { status: "ok" as const, count: 1 },
   spot: { status: "ok" as const, count: 1 },
 }

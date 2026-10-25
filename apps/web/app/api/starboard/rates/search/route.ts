@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireOrgSession } from "@/lib/server/session"
 import {
+  RATES_SEARCH_PAGE_SIZE,
   mapRateSearchResultToRows,
   searchRatesReadOnly,
   type RateSearchChannelResult,
@@ -34,9 +35,21 @@ function httpStatusFor(result: RateSearchResult): number {
   return 502
 }
 
+function parsePositiveInt(
+  value: string | null,
+  fallback: number,
+  max?: number
+): number {
+  if (value == null || value === "") return fallback
+  const n = Number.parseInt(value, 10)
+  if (!Number.isFinite(n) || n < 1) return fallback
+  return max != null ? Math.min(n, max) : n
+}
+
 /**
  * Auth’d Rates page search: contract + spot via searchRatesReadOnly.
- * Returns mapped rows (not bulky raw payloads). Does not expose secrets.
+ * Contract uses Starboard Qv2 pagination (`page` / `page_size` / `cache_key`).
+ * Spot is only requested on page 1. Does not expose secrets.
  */
 export async function GET(request: Request) {
   try {
@@ -49,11 +62,21 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url)
+  const page = parsePositiveInt(url.searchParams.get("page"), 1)
+  const pageSize = parsePositiveInt(
+    url.searchParams.get("page_size"),
+    RATES_SEARCH_PAGE_SIZE,
+    200
+  )
+
   const result = await searchRatesReadOnly({
     origin: url.searchParams.get("origin") ?? undefined,
     destination: url.searchParams.get("destination") ?? undefined,
     equipment: url.searchParams.get("equipment") ?? undefined,
     spotCarrier: url.searchParams.get("carrier") ?? undefined,
+    page,
+    pageSize,
+    cacheKey: url.searchParams.get("cache_key"),
   })
 
   const headers = {
@@ -69,6 +92,7 @@ export async function GET(request: Request) {
         companyId: result.companyId,
         lane: result.lane,
         rows: [] as const,
+        pagination: result.pagination ?? null,
         contract: result.contract
           ? summarizeChannel(result.contract)
           : undefined,
@@ -84,6 +108,7 @@ export async function GET(request: Request) {
       companyId: result.companyId,
       lane: result.lane,
       rows: mapRateSearchResultToRows(result),
+      pagination: result.pagination ?? null,
       contract: summarizeChannel(result.contract),
       spot: summarizeChannel(result.spot),
     },
