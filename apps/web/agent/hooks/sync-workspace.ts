@@ -1,4 +1,5 @@
 import { defineHook } from "eve/hooks"
+import { createAppContext } from "@/lib/di/create-app-context"
 import { injectShClientCli } from "@/lib/sh-client/sandbox-cli"
 import { mergeWorkspaceFiles } from "@/lib/workspace-fs"
 import {
@@ -69,6 +70,25 @@ export default defineHook({
           workspaceId,
           files: count,
         })
+
+        try {
+          const result =
+            await createAppContext().workspaces.persistEditedSources(
+              workspaceId
+            )
+          if (result.uploaded > 0) {
+            console.info("[workspace-sync] persisted edited sources → Blob", {
+              sessionId,
+              workspaceId,
+              ...result,
+            })
+          }
+        } catch (persistError) {
+          console.warn(
+            "[workspace-sync] persist edited sources failed",
+            persistError
+          )
+        }
       } catch (error) {
         console.warn("[workspace-sync] pull failed", error)
       }

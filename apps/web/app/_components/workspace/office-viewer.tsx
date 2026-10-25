@@ -68,6 +68,7 @@ export function OfficeViewer({
           <OfficeSpreadsheetViewer
             className="relative size-full min-h-0 overflow-hidden rounded-xl border bg-muted/20"
             fileUrl={publicUrl}
+            key={publicUrl}
             title={path.split("/").pop() ?? path}
           />
         </div>
