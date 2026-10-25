@@ -10,4 +10,16 @@ describe("DomainError", () => {
   it("detects instances", () => {
     expect(isDomainError(new DomainError("n", "VALIDATION"))).toBe(true)
   })
+
+  it("detects duck-typed DomainError (cross-bundle)", () => {
+    const alien = Object.assign(
+      new Error('Cannot resolve review item in status "pending"'),
+      {
+        name: "DomainError",
+        code: "VALIDATION" as const,
+      }
+    )
+    expect(isDomainError(alien)).toBe(true)
+    expect(domainErrorStatus(alien)).toBe(400)
+  })
 })
