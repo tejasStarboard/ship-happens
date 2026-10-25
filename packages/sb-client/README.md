@@ -33,6 +33,17 @@ const { rates } = await client.rates.resolve({
 })
 ```
 
+## Read-only rate search smoke (Ship Happens)
+
+After env is pointed at Starboard **dev**, run the web smoke (contract + spot, CNSHA→USLAX 40HC):
+
+```bash
+pnpm --filter @starboard/sb-client build
+pnpm --filter web starboard:smoke-rates
+```
+
+Exit `0` for `ok` or honest `empty`; exit `1` for typed config/auth/API errors. Server code uses `searchRatesReadOnly` / `runStarboardRateSearchSmoke` in `apps/web/lib/starboard/rate-search.ts` (also `GET /api/starboard/rates/smoke` when signed in).
+
 ## CLI
 
 Published bin: `bin/sb-client.js` → runs the built `dist/cli.js`.

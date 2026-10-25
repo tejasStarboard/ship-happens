@@ -4,7 +4,9 @@ import {
   type RateCandidateInput,
 } from "../../lib/recommendRate.js"
 import {
+  asRateList,
   assembleResolvedRate,
+  countRateSearchHits,
   resolveContractRates,
   type ResolvedRate,
   type SearchRateHit,
@@ -17,7 +19,13 @@ import {
 } from "./schemas.js"
 import type { RateItemRow } from "../globals/filter.js"
 
-export type { ContractSearchInput, SpotSearchInput, ResolvedRate }
+export type {
+  ContractSearchInput,
+  SpotSearchInput,
+  ResolvedRate,
+  SearchRateHit,
+}
+export { asRateList, countRateSearchHits }
 
 export class RatesModule {
   constructor(private readonly http: StarboardHttp) {}
