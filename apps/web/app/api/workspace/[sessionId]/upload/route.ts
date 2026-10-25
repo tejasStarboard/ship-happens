@@ -2,7 +2,11 @@ import { NextResponse } from "next/server"
 import path from "node:path"
 import { requireOrgWorkspaceAccess } from "@/lib/auth/session"
 import { jsonDomainError } from "@/lib/domain/http"
-import { isValidSessionId, writeWorkspaceFile } from "@/lib/workspace-fs"
+import {
+  assertUserReadableWorkspacePath,
+  isValidSessionId,
+  writeWorkspaceFile,
+} from "@/lib/workspace-fs"
 
 export async function POST(
   request: Request,
@@ -36,6 +40,11 @@ export async function POST(
       const relative = directory
         ? `${directory.replace(/^\/+|\/+$/g, "")}/${safeName}`
         : safeName
+      try {
+        assertUserReadableWorkspacePath(relative)
+      } catch {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+      }
       const bytes = Buffer.from(await file.arrayBuffer())
       await writeWorkspaceFile(sessionId, relative, bytes)
       written.push(relative)

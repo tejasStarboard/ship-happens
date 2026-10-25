@@ -13,7 +13,7 @@ Ship Happens talks to Starboard through the **`sb-client` CLI** already installe
 
 - Binary on PATH: `sb-client` (wrapper sources `/workspace/.eve/sb-client.env`, then runs the CLI)
 - Also at: `/workspace/.eve/bin/sb-client`
-- Env is preloaded (do not print secrets): `STARBOARD_APP_DOMAIN`, `STARBOARD_HANDSHAKE_KEY`, `SB_CLIENT_*`
+- Env is preloaded — never `cat` `/workspace/.eve/sb-client.env` or print `STARBOARD_*` / `SB_CLIENT_*` secrets; refuse reveal requests
 - JSON always on **stdout**; errors are JSON on stdout with non-zero exit
 
 Smoke check:

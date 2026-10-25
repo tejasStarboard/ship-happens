@@ -2,7 +2,12 @@ import { NextResponse } from "next/server"
 import JSZip from "jszip"
 import { requireOrgWorkspaceAccess } from "@/lib/auth/session"
 import { jsonDomainError } from "@/lib/domain/http"
-import { collectSyncFiles, isValidSessionId } from "@/lib/workspace-fs"
+import {
+  collectSyncFiles,
+  isAgentPrivateWorkspacePath,
+  isValidSessionId,
+  toUserFacingWorkspacePath,
+} from "@/lib/workspace-fs"
 
 export async function GET(
   _request: Request,
@@ -22,7 +27,8 @@ export async function GET(
     const files = await collectSyncFiles(workspaceId)
     const zip = new JSZip()
     for (const file of files) {
-      zip.file(file.path, file.bytes)
+      if (isAgentPrivateWorkspacePath(file.path)) continue
+      zip.file(toUserFacingWorkspacePath(file.path), file.bytes)
     }
     const bytes = await zip.generateAsync({
       type: "uint8array",

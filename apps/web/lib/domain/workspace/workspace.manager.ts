@@ -10,16 +10,19 @@ import type { VercelBlobStorage } from "@/lib/storage/vbs"
 import {
   addWorkspaceChat,
   bindChatSession,
+  clearChatSession,
   createWorkspace,
   deleteWorkspace,
-  deleteWorkspaceChat,
   ensureRfpWorkspace,
   getWorkspace,
+  hideWorkspaceChat,
   hydrateWorkspaceFromSourceFiles,
   listWorkspaces,
   reconcileWorkspaceFiles,
   renameWorkspaceChat,
   resolveWorkspaceIdForSession,
+  saveChatEvents,
+  showWorkspaceChat,
   type WorkspaceChatRecord,
   type WorkspaceListItem,
   type WorkspaceRecord,
@@ -92,6 +95,30 @@ export class WorkspaceManager {
     return bindChatSession(organizationId, workspaceId, chatId, sessionId)
   }
 
+  clearSession(
+    organizationId: string,
+    workspaceId: string,
+    chatId: string
+  ): Promise<WorkspaceChatRecord> {
+    return clearChatSession(organizationId, workspaceId, chatId)
+  }
+
+  saveEvents(
+    organizationId: string,
+    workspaceId: string,
+    chatId: string,
+    events?: readonly unknown[],
+    priorMessages?: readonly unknown[]
+  ): Promise<WorkspaceChatRecord> {
+    return saveChatEvents(
+      organizationId,
+      workspaceId,
+      chatId,
+      events,
+      priorMessages
+    )
+  }
+
   renameChat(
     organizationId: string,
     workspaceId: string,
@@ -101,12 +128,20 @@ export class WorkspaceManager {
     return renameWorkspaceChat(organizationId, workspaceId, chatId, title)
   }
 
-  deleteChat(
+  hideChat(
     organizationId: string,
     workspaceId: string,
     chatId: string
-  ): Promise<boolean> {
-    return deleteWorkspaceChat(organizationId, workspaceId, chatId)
+  ): Promise<WorkspaceChatRecord> {
+    return hideWorkspaceChat(organizationId, workspaceId, chatId)
+  }
+
+  showChat(
+    organizationId: string,
+    workspaceId: string,
+    chatId: string
+  ): Promise<WorkspaceChatRecord> {
+    return showWorkspaceChat(organizationId, workspaceId, chatId)
   }
 
   resolveBySession(

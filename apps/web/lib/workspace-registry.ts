@@ -32,6 +32,19 @@ export type WorkspaceChatRecord = {
   readonly sessionId: string | null
   readonly title: string
   readonly createdAt: number
+  readonly updatedAt: number
+  /** Soft-closed: kept alive on eve, omitted from the open tab strip. */
+  readonly hiddenFromTabs: boolean
+  /**
+   * Current eve session stream only (never concatenate across remints — turn
+   * ids restart and scramble order on hydrate).
+   */
+  readonly events: readonly unknown[]
+  /**
+   * Frozen UI transcript from before the current session (survives remint +
+   * reload). Rendered above live eve messages.
+   */
+  readonly priorMessages: readonly unknown[]
 }
 
 export type WorkspaceRecord = {
@@ -53,6 +66,58 @@ type WorkspaceChatMeta = {
   sessionId: string | null
   title: string
   createdAt: number
+  hiddenFromTabs?: boolean
+  events?: unknown[]
+  priorMessages?: unknown[]
+}
+
+type AgentSessionPayload = {
+  eveSessionId?: string
+  hiddenFromTabs?: boolean
+  events?: unknown[]
+  priorMessages?: unknown[]
+}
+
+/** Cap stored events so agent_session jsonb stays bounded. */
+const MAX_PERSISTED_EVENTS = 2000
+const MAX_PERSISTED_PRIOR_MESSAGES = 500
+
+function agentSessionPayload(
+  chat: Pick<
+    WorkspaceChatRecord,
+    "sessionId" | "hiddenFromTabs" | "events" | "priorMessages"
+  >
+): AgentSessionPayload | null {
+  const payload: AgentSessionPayload = {}
+  if (chat.sessionId) payload.eveSessionId = chat.sessionId
+  if (chat.hiddenFromTabs) payload.hiddenFromTabs = true
+  if (chat.events.length > 0) {
+    payload.events =
+      chat.events.length > MAX_PERSISTED_EVENTS
+        ? chat.events.slice(-MAX_PERSISTED_EVENTS)
+        : [...chat.events]
+  }
+  if (chat.priorMessages.length > 0) {
+    payload.priorMessages =
+      chat.priorMessages.length > MAX_PERSISTED_PRIOR_MESSAGES
+        ? chat.priorMessages.slice(-MAX_PERSISTED_PRIOR_MESSAGES)
+        : [...chat.priorMessages]
+  }
+  return Object.keys(payload).length > 0 ? payload : null
+}
+
+function eventsFromAgentSession(
+  agentSession: Record<string, unknown> | null | undefined
+): unknown[] {
+  const value = agentSession?.events
+  return Array.isArray(value) ? value : []
+}
+
+function priorMessagesFromAgentSession(
+  agentSession: Record<string, unknown> | null | undefined
+): unknown[] {
+  const value = agentSession?.priorMessages
+  return Array.isArray(value) ? value : []
 }
 
 type RfpMetadata = {
@@ -72,22 +137,36 @@ function sessionIdFromAgentSession(
   return typeof value === "string" ? value : null
 }
 
+function hiddenFromTabsFromAgentSession(
+  agentSession: Record<string, unknown> | null | undefined
+): boolean {
+  return agentSession?.hiddenFromTabs === true
+}
+
 function chatsFromRows(
   workspaceId: string,
   rows: Array<{
     id: string
     title: string
     createdAt: Date | null
+    updatedAt: Date | null
     agentSession: Record<string, unknown> | null
   }>
 ): WorkspaceChatRecord[] {
-  return rows.map((row) => ({
-    id: row.id,
-    workspaceId,
-    sessionId: sessionIdFromAgentSession(row.agentSession),
-    title: row.title,
-    createdAt: row.createdAt?.getTime() ?? Date.now(),
-  }))
+  return rows.map((row) => {
+    const createdAt = row.createdAt?.getTime() ?? Date.now()
+    return {
+      id: row.id,
+      workspaceId,
+      sessionId: sessionIdFromAgentSession(row.agentSession),
+      title: row.title,
+      createdAt,
+      updatedAt: row.updatedAt?.getTime() ?? createdAt,
+      hiddenFromTabs: hiddenFromTabsFromAgentSession(row.agentSession),
+      events: eventsFromAgentSession(row.agentSession),
+      priorMessages: priorMessagesFromAgentSession(row.agentSession),
+    }
+  })
 }
 
 /** Legacy metadata fallback while migrating off dual chat storage. */
@@ -101,6 +180,10 @@ function chatsFromMetadata(
     sessionId: c.sessionId,
     title: c.title,
     createdAt: c.createdAt,
+    updatedAt: c.createdAt,
+    hiddenFromTabs: c.hiddenFromTabs === true,
+    events: Array.isArray(c.events) ? c.events : [],
+    priorMessages: Array.isArray(c.priorMessages) ? c.priorMessages : [],
   }))
 }
 
@@ -122,6 +205,7 @@ async function writeChats(
   const nextIds = new Set(chats.map((c) => c.id))
 
   for (const chat of chats) {
+    const agentSession = agentSessionPayload(chat)
     await db
       .insert(rfpChats)
       .values({
@@ -129,15 +213,13 @@ async function writeChats(
         rfpId: workspaceId,
         organizationId: row.organizationId,
         title: chat.title,
-        agentSession: chat.sessionId ? { eveSessionId: chat.sessionId } : null,
+        agentSession,
       })
       .onConflictDoUpdate({
         target: rfpChats.id,
         set: {
           title: chat.title,
-          agentSession: chat.sessionId
-            ? { eveSessionId: chat.sessionId }
-            : null,
+          agentSession,
           updatedAt: new Date(),
         },
       })
@@ -254,6 +336,10 @@ export async function createWorkspace(
     sessionId: null,
     title: "Chat 1",
     createdAt: createdAt.getTime(),
+    updatedAt: createdAt.getTime(),
+    hiddenFromTabs: false,
+    events: [],
+    priorMessages: [],
   }
 
   await db.insert(rfps).values({
@@ -355,6 +441,10 @@ export async function getWorkspace(
       sessionId: null,
       title: "Fill agent",
       createdAt: Date.now(),
+      updatedAt: Date.now(),
+      hiddenFromTabs: false,
+      events: [],
+      priorMessages: [],
     }
     await writeChats(row.id, [created])
     return {
@@ -381,12 +471,17 @@ export async function addWorkspaceChat(
   const workspace = await getWorkspace(workspaceId, organizationId)
   if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
 
+  const now = Date.now()
   const record: WorkspaceChatRecord = {
     id: chatId(),
     workspaceId,
     sessionId: null,
     title: title ?? `Chat ${workspace.chats.length + 1}`,
-    createdAt: Date.now(),
+    createdAt: now,
+    updatedAt: now,
+    hiddenFromTabs: false,
+    events: [],
+    priorMessages: [],
   }
   await writeChats(workspaceId, [...workspace.chats, record])
   return record
@@ -404,12 +499,13 @@ export async function bindChatSession(
   const workspace = await getWorkspace(workspaceId, organizationId)
   if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
 
+  const now = Date.now()
   const chats = workspace.chats.map((chat) => {
     if (chat.sessionId === sessionId && chat.id !== chatIdValue) {
-      return { ...chat, sessionId: null }
+      return { ...chat, sessionId: null, updatedAt: now }
     }
     if (chat.id === chatIdValue) {
-      return { ...chat, sessionId }
+      return { ...chat, sessionId, updatedAt: now }
     }
     return chat
   })
@@ -419,6 +515,72 @@ export async function bindChatSession(
 
   await writeChats(workspaceId, chats)
   return bound
+}
+
+/** Clear the eve session bind so the chat can mint a fresh session in-place. */
+export async function clearChatSession(
+  organizationId: string,
+  workspaceId: string,
+  chatIdValue: string
+): Promise<WorkspaceChatRecord> {
+  const workspace = await getWorkspace(workspaceId, organizationId)
+  if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  const now = Date.now()
+  let cleared: WorkspaceChatRecord | undefined
+  const chats = workspace.chats.map((chat) => {
+    if (chat.id !== chatIdValue) return chat
+    // Keep events so remint can rehydrate the transcript in the same chat.
+    cleared = { ...chat, sessionId: null, updatedAt: now }
+    return cleared
+  })
+  if (!cleared) throw new DomainError("Chat not found", "NOT_FOUND")
+  await writeChats(workspaceId, chats)
+  return cleared
+}
+
+/**
+ * Persist the current-session event log and/or frozen prior transcript.
+ * Do not concatenate events across remints — turn ids collide on hydrate.
+ */
+export async function saveChatEvents(
+  organizationId: string,
+  workspaceId: string,
+  chatIdValue: string,
+  events?: readonly unknown[],
+  priorMessages?: readonly unknown[]
+): Promise<WorkspaceChatRecord> {
+  const workspace = await getWorkspace(workspaceId, organizationId)
+  if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  if (events === undefined && priorMessages === undefined) {
+    throw new DomainError("Nothing to update", "VALIDATION")
+  }
+  const now = Date.now()
+  let saved: WorkspaceChatRecord | undefined
+  const nextEvents =
+    events === undefined
+      ? undefined
+      : events.length > MAX_PERSISTED_EVENTS
+        ? events.slice(-MAX_PERSISTED_EVENTS)
+        : [...events]
+  const nextPrior =
+    priorMessages === undefined
+      ? undefined
+      : priorMessages.length > MAX_PERSISTED_PRIOR_MESSAGES
+        ? priorMessages.slice(-MAX_PERSISTED_PRIOR_MESSAGES)
+        : [...priorMessages]
+  const chats = workspace.chats.map((chat) => {
+    if (chat.id !== chatIdValue) return chat
+    saved = {
+      ...chat,
+      ...(nextEvents !== undefined ? { events: nextEvents } : {}),
+      ...(nextPrior !== undefined ? { priorMessages: nextPrior } : {}),
+      updatedAt: now,
+    }
+    return saved
+  })
+  if (!saved) throw new DomainError("Chat not found", "NOT_FOUND")
+  await writeChats(workspaceId, chats)
+  return saved
 }
 
 /**
@@ -503,12 +665,59 @@ export async function renameWorkspaceChat(
 ): Promise<void> {
   const workspace = await getWorkspace(workspaceId, organizationId)
   if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  const now = Date.now()
   const chats = workspace.chats.map((chat) =>
-    chat.id === chatIdValue ? { ...chat, title: title.trim() || "Chat" } : chat
+    chat.id === chatIdValue
+      ? { ...chat, title: title.trim() || "Chat", updatedAt: now }
+      : chat
   )
   await writeChats(workspaceId, chats)
 }
 
+/**
+ * Soft-close a chat tab. The eve session keeps running; the chat stays in
+ * history and can be reopened. Does not cancel the durable turn.
+ */
+export async function hideWorkspaceChat(
+  organizationId: string,
+  workspaceId: string,
+  chatIdValue: string
+): Promise<WorkspaceChatRecord> {
+  const workspace = await getWorkspace(workspaceId, organizationId)
+  if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  const now = Date.now()
+  let hidden: WorkspaceChatRecord | undefined
+  const chats = workspace.chats.map((chat) => {
+    if (chat.id !== chatIdValue) return chat
+    hidden = { ...chat, hiddenFromTabs: true, updatedAt: now }
+    return hidden
+  })
+  if (!hidden) throw new DomainError("Chat not found", "NOT_FOUND")
+  await writeChats(workspaceId, chats)
+  return hidden
+}
+
+/** Re-open a soft-closed chat in the tab strip. */
+export async function showWorkspaceChat(
+  organizationId: string,
+  workspaceId: string,
+  chatIdValue: string
+): Promise<WorkspaceChatRecord> {
+  const workspace = await getWorkspace(workspaceId, organizationId)
+  if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  const now = Date.now()
+  let shown: WorkspaceChatRecord | undefined
+  const chats = workspace.chats.map((chat) => {
+    if (chat.id !== chatIdValue) return chat
+    shown = { ...chat, hiddenFromTabs: false, updatedAt: now }
+    return shown
+  })
+  if (!shown) throw new DomainError("Chat not found", "NOT_FOUND")
+  await writeChats(workspaceId, chats)
+  return shown
+}
+
+/** Hard-delete a chat row. Prefer {@link hideWorkspaceChat} for tab close. */
 export async function deleteWorkspaceChat(
   organizationId: string,
   workspaceId: string,
