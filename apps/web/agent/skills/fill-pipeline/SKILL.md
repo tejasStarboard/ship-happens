@@ -33,6 +33,6 @@ Typical flow:
 
 ## Not this skill
 
-Sandbox **inspect** (status/progress/logs) and **review items** (create/list/update/resolve)
+Sandbox **inspect**, **submit-for-review**, **read decisions**, and **resolve after ack**
 use the **`sh-client`** CLI skill. Creating a review item is the supported HITL
 submit path — it is not an ad-hoc DB write.
