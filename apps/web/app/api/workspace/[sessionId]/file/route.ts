@@ -3,6 +3,7 @@ import { requireOrgWorkspaceAccess } from "@/lib/auth/session"
 import { jsonDomainError } from "@/lib/domain/http"
 import { resolveWorkspacePublicFileUrl } from "@/lib/server/workspace-public-url"
 import {
+  assertUserReadableWorkspacePath,
   deleteWorkspacePath,
   isTextPath,
   isValidSessionId,
@@ -26,6 +27,12 @@ export async function GET(
     const filePath = pathFromRequest(request)
     if (!isValidSessionId(sessionId) || !filePath) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+    }
+
+    try {
+      assertUserReadableWorkspacePath(filePath)
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     await requireOrgWorkspaceAccess(sessionId)
@@ -88,6 +95,11 @@ export async function PUT(
         { status: 400 }
       )
     }
+    try {
+      assertUserReadableWorkspacePath(body.path)
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
     if (!isTextPath(body.path)) {
       return NextResponse.json(
         { error: "Only text files can be edited" },
@@ -121,6 +133,12 @@ export async function PATCH(
         { status: 400 }
       )
     }
+    try {
+      assertUserReadableWorkspacePath(body.from)
+      assertUserReadableWorkspacePath(body.to)
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
 
     await renameWorkspacePath(sessionId, body.from, body.to)
     return NextResponse.json({ ok: true, from: body.from, to: body.to })
@@ -138,6 +156,11 @@ export async function DELETE(
     const filePath = pathFromRequest(request)
     if (!isValidSessionId(sessionId) || !filePath) {
       return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+    }
+    try {
+      assertUserReadableWorkspacePath(filePath)
+    } catch {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
 
     await requireOrgWorkspaceAccess(sessionId)

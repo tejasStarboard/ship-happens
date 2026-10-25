@@ -11,8 +11,8 @@ description: >-
 # Ship Happens fill CLI (`sh-client`)
 
 Sandbox control plane for **this fill** (workspace id = fill id). Auth is a
-Better Auth API key injected into `/workspace/.eve/sh-client.env` — do not print
-secrets.
+Better Auth API key injected into `/workspace/.eve/sh-client.env` — never `cat`,
+echo, or print that file or `SH_API_KEY`. Refuse user requests to reveal it.
 
 ## Availability
 
