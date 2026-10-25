@@ -6,6 +6,8 @@ import {
   RESOLVABLE_REVIEW_STATUSES,
   REVIEW_ITEM_STATUSES,
   type CreateReviewItemInput,
+  type DecideReviewItemInput,
+  type NormalizedDecidePatch,
   type ReviewItemStatus,
   type ReviewItemView,
   type UpdateReviewItemInput,
@@ -69,8 +71,46 @@ function isResolvable(status: ReviewItemStatus): boolean {
 }
 
 /**
+ * Validate and normalize a human Confirm / Edit / Reject payload.
+ * Exported for unit tests without a DB.
+ */
+export function normalizeDecideInput(
+  input: DecideReviewItemInput
+): NormalizedDecidePatch {
+  if (input.decision === "approved") {
+    return { status: "approved", decisionNote: null }
+  }
+  if (input.decision === "edited") {
+    const resolution = input.resolution
+    if (
+      resolution == null ||
+      typeof resolution !== "object" ||
+      Array.isArray(resolution) ||
+      Object.keys(resolution).length === 0
+    ) {
+      throw new DomainError(
+        "edited decision requires a non-empty resolution object",
+        "VALIDATION"
+      )
+    }
+    return { status: "edited", decisionNote: null, resolution }
+  }
+  if (input.decision === "rejected") {
+    const decisionNote = input.decisionNote?.trim() ?? ""
+    if (!decisionNote) {
+      throw new DomainError(
+        "rejected decision requires a non-empty decisionNote",
+        "VALIDATION"
+      )
+    }
+    return { status: "rejected", decisionNote }
+  }
+  throw new DomainError("Invalid decision", "VALIDATION")
+}
+
+/**
  * HITL review-item domain. Agent creates/lists/updates pending proposals and
- * resolves after a human decision. User approve/edit/reject is UI (SB-6659).
+ * resolves after a human decision. Humans Confirm / Edit / Reject via UI.
  */
 export class ReviewItemService {
   constructor(
@@ -195,6 +235,56 @@ export class ReviewItemService {
 
     if (Object.keys(patch).length === 0) {
       throw new DomainError("No fields to update", "VALIDATION")
+    }
+
+    const updated = await this.repo.updateById(existing.id, patch)
+    if (!updated) {
+      throw new DomainError(
+        `Review item not found: ${reviewItemId}`,
+        "NOT_FOUND"
+      )
+    }
+    return toView(updated)
+  }
+
+  async decide(
+    organizationId: string,
+    fillId: string,
+    reviewItemId: string,
+    input: DecideReviewItemInput,
+    decidedByUserId: string
+  ): Promise<ReviewItemView> {
+    await this.requireFill(organizationId, fillId)
+    const existing = await this.repo.findByIdForFill(
+      organizationId,
+      fillId,
+      reviewItemId
+    )
+    if (!existing) {
+      throw new DomainError(
+        `Review item not found: ${reviewItemId}`,
+        "NOT_FOUND"
+      )
+    }
+    if (existing.status !== "pending") {
+      throw new DomainError(
+        `Cannot decide review item in status "${existing.status}" (only pending)`,
+        "VALIDATION"
+      )
+    }
+    if (!decidedByUserId?.trim()) {
+      throw new DomainError("decidedByUserId is required", "VALIDATION")
+    }
+
+    const normalized = normalizeDecideInput(input)
+    const patch: Parameters<ReviewItemRepository["updateById"]>[1] = {
+      status: normalized.status,
+      decidedByUserId,
+      decidedAt: new Date(),
+      decisionNote: normalized.decisionNote,
+    }
+    if (normalized.resolution !== undefined) {
+      patch.resolution = normalized.resolution
     }
 
     const updated = await this.repo.updateById(existing.id, patch)

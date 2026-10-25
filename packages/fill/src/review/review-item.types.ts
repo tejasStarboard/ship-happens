@@ -53,3 +53,15 @@ export type UpdateReviewItemInput = {
   source?: string | null
   sourceMetadata?: Record<string, unknown>
 }
+
+/** Human Confirm / Edit / Reject on a pending review item (UI). */
+export type DecideReviewItemInput =
+  | { decision: "approved" }
+  | { decision: "edited"; resolution: Record<string, unknown> }
+  | { decision: "rejected"; decisionNote: string }
+
+export type NormalizedDecidePatch = {
+  status: "approved" | "edited" | "rejected"
+  decisionNote: string | null
+  resolution?: Record<string, unknown>
+}
