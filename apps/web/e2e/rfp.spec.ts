@@ -6,7 +6,9 @@ test.describe("Fills surface", () => {
     await page.goto("/rfp")
     await waitForAppReady(page)
     await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
-    await expect(page.getByRole("button", { name: "New fill" }).first()).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "New fill" }).first()
+    ).toBeVisible()
     await expect(page.getByText(/Your fill desk is empty/)).toBeVisible()
 
     await page.getByRole("button", { name: "New fill" }).first().click()

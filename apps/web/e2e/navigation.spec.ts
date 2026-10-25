@@ -7,7 +7,9 @@ test.describe("authenticated navigation", () => {
     await expect(page).toHaveURL(/\/rfp/)
     await expect(page.getByRole("heading", { name: "Fill desk" })).toBeVisible()
     await expect(page.getByText(/Your fill desk is empty/)).toBeVisible()
-    await expect(page.getByRole("button", { name: "New fill" }).first()).toBeVisible()
+    await expect(
+      page.getByRole("button", { name: "New fill" }).first()
+    ).toBeVisible()
   })
 
   test("sidebar navigates between main sections", async ({ page }) => {
