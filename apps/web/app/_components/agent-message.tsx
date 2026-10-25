@@ -63,6 +63,7 @@ import {
   ToolOutput,
 } from "@workspace/ui/ai-elements/tool"
 import { Button } from "@workspace/ui/components/button"
+import { redactSecrets, redactSecretsDeep } from "@/lib/secret-redaction"
 import { cn } from "@/lib/utils"
 
 export type AgentInputResponse = {
@@ -88,21 +89,25 @@ export function AgentMessage({
   ) => void | Promise<void>
   readonly questionsFor: (callId: string) => readonly ConversationInput[]
 }) {
-  const lastTextIndex = message.parts.reduce(
+  // Redact before children mount so raw secrets never appear in React props/DOM.
+  const safeMessage = redactEveMessage(message)
+  const lastTextIndex = safeMessage.parts.reduce(
     (last, part, index) => (part.type === "text" ? index : last),
     -1
   )
   const hasAssistantText =
-    message.role === "assistant" &&
-    message.parts.some((part) => part.type === "text" && part.text.length > 0)
+    safeMessage.role === "assistant" &&
+    safeMessage.parts.some(
+      (part) => part.type === "text" && part.text.length > 0
+    )
 
   return (
     <Message
-      data-optimistic={message.metadata?.optimistic ? "true" : undefined}
-      from={message.role}
+      data-optimistic={safeMessage.metadata?.optimistic ? "true" : undefined}
+      from={safeMessage.role}
     >
       <MessageContent>
-        {message.parts.map((part, index) =>
+        {safeMessage.parts.map((part, index) =>
           hasAssistantText && part.type === "reasoning" ? null : (
             <AgentMessagePart
               canRespond={canRespond}
@@ -112,7 +117,7 @@ export function AgentMessage({
               questionsFor={questionsFor}
               showCaret={
                 isStreaming &&
-                message.role === "assistant" &&
+                safeMessage.role === "assistant" &&
                 index === lastTextIndex
               }
             />
@@ -121,6 +126,29 @@ export function AgentMessage({
       </MessageContent>
     </Message>
   )
+}
+
+function redactEveMessage(message: EveMessage): EveMessage {
+  return {
+    ...message,
+    parts: message.parts.map((part) => {
+      if (part.type === "text" || part.type === "reasoning") {
+        return { ...part, text: redactSecrets(part.text) }
+      }
+      if (part.type === "dynamic-tool") {
+        return {
+          ...part,
+          input: redactSecretsDeep(part.input),
+          output: redactSecretsDeep(part.output),
+          errorText:
+            typeof part.errorText === "string"
+              ? redactSecrets(part.errorText)
+              : part.errorText,
+        }
+      }
+      return part
+    }),
+  } as EveMessage
 }
 
 function AgentMessagePart({

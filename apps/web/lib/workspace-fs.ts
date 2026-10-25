@@ -10,9 +10,20 @@ import {
 } from "node:fs/promises"
 import path from "node:path"
 import { isTextPath, type WorkspaceEntry } from "@/lib/workspace-types"
+import {
+  isAgentPrivateWorkspacePath,
+  toInternalWorkspacePath,
+  toUserFacingWorkspacePath,
+} from "@/lib/workspace-privacy"
 
 export type { WorkspaceEntry } from "@/lib/workspace-types"
 export { isTextPath } from "@/lib/workspace-types"
+export {
+  assertUserReadableWorkspacePath,
+  isAgentPrivateWorkspacePath,
+  toInternalWorkspacePath,
+  toUserFacingWorkspacePath,
+} from "@/lib/workspace-privacy"
 
 /**
  * Host-side workspace mirror for RFP files.
@@ -70,7 +81,9 @@ export function resolveWorkspacePath(
   relativePath: string
 ): string {
   const root = workspaceRoot(sessionId)
-  const normalized = relativePath.replaceAll("\\", "/").replace(/^\/+/, "")
+  const normalized = toInternalWorkspacePath(
+    relativePath.replaceAll("\\", "/").replace(/^\/+/, "")
+  )
   if (normalized.length === 0 || normalized.includes("\0")) {
     throw new Error("Invalid path")
   }
@@ -119,23 +132,85 @@ async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
       .relative(/*turbopackIgnore: true*/ root, absolute)
       .split(path.sep)
       .join("/")
+
+    // Hide agent-private `.eve` (env/bin). Surface attachments as top-level
+    // `attachments/` so users can still download chat uploads.
+    if (name === ".eve" && info.isDirectory()) {
+      const attachmentsAbs = path.join(
+        /*turbopackIgnore: true*/ absolute,
+        "attachments"
+      )
+      try {
+        const attInfo = await stat(/*turbopackIgnore: true*/ attachmentsAbs)
+        if (attInfo.isDirectory()) {
+          entries.push({
+            type: "dir",
+            name: "attachments",
+            path: "attachments",
+            children: await walkDirMapped(root, attachmentsAbs),
+          })
+        }
+      } catch {
+        // no attachments yet
+      }
+      continue
+    }
+
+    if (isAgentPrivateWorkspacePath(relative)) continue
+
     if (info.isDirectory()) {
       entries.push({
         type: "dir",
         name,
-        path: relative,
+        path: toUserFacingWorkspacePath(relative),
         children: await walkDir(root, absolute),
       })
     } else if (info.isFile()) {
       entries.push({
         type: "file",
         name,
-        path: relative,
+        path: toUserFacingWorkspacePath(relative),
         size: info.size,
       })
     }
   }
 
+  return entries
+}
+
+/** Walk under `.eve/attachments` emitting user-facing `attachments/…` paths. */
+async function walkDirMapped(
+  root: string,
+  dir: string
+): Promise<WorkspaceEntry[]> {
+  const names = await readdir(/*turbopackIgnore: true*/ dir)
+  names.sort((a, b) => a.localeCompare(b))
+  const entries: WorkspaceEntry[] = []
+  for (const name of names) {
+    if (SKIP_DIR_NAMES.has(name)) continue
+    const absolute = path.join(/*turbopackIgnore: true*/ dir, name)
+    const info = await stat(/*turbopackIgnore: true*/ absolute)
+    const relative = path
+      .relative(/*turbopackIgnore: true*/ root, absolute)
+      .split(path.sep)
+      .join("/")
+    const facing = toUserFacingWorkspacePath(relative)
+    if (info.isDirectory()) {
+      entries.push({
+        type: "dir",
+        name,
+        path: facing,
+        children: await walkDirMapped(root, absolute),
+      })
+    } else if (info.isFile()) {
+      entries.push({
+        type: "file",
+        name,
+        path: facing,
+        size: info.size,
+      })
+    }
+  }
   return entries
 }
 
