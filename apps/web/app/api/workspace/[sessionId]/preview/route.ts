@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import path from "node:path"
-import { getServerSession } from "@/lib/session"
+import { requireOrgWorkspaceAccess } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import { isValidSessionId, readWorkspaceFile } from "@/lib/workspace-fs"
 import { mimeTypeForPath } from "@/lib/workspace-types"
 
@@ -9,18 +10,15 @@ export async function GET(
   request: Request,
   context: { readonly params: Promise<{ readonly sessionId: string }> }
 ) {
-  const session = await getServerSession()
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
-
-  const { sessionId } = await context.params
-  const filePath = new URL(request.url).searchParams.get("path")
-  if (!isValidSessionId(sessionId) || !filePath) {
-    return NextResponse.json({ error: "Invalid request" }, { status: 400 })
-  }
-
   try {
+    const { sessionId } = await context.params
+    const filePath = new URL(request.url).searchParams.get("path")
+    if (!isValidSessionId(sessionId) || !filePath) {
+      return NextResponse.json({ error: "Invalid request" }, { status: 400 })
+    }
+
+    await requireOrgWorkspaceAccess(sessionId)
+
     const file = await readWorkspaceFile(sessionId, filePath)
     const bytes =
       file.encoding === "utf-8"
@@ -36,9 +34,6 @@ export async function GET(
       },
     })
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to preview" },
-      { status: 404 }
-    )
+    return jsonDomainError(error, "Failed to preview")
   }
 }

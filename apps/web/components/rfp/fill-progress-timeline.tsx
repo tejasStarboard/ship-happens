@@ -14,7 +14,10 @@ import {
   CollapsibleTrigger,
 } from "@workspace/ui/components/collapsible"
 import { cn } from "@workspace/ui/lib/utils"
-import type { RfpLogView, RfpProgressStepView } from "@/lib/server/rfps"
+import type {
+  RfpLogView,
+  RfpProgressStepView,
+} from "@/lib/domain/rfp/rfp.types"
 
 function initials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean)

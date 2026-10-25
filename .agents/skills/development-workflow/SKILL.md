@@ -74,6 +74,8 @@ on `dev` / `main`.
 
 If the user already said “implement X”, skip re-asking settled points.
 
+**Domain layering:** portable DB/fill logic goes in `@workspace/db` / `@ship-happens/fill`. App adapters use Repository + Service (+ Manager) via `createAppContext()` (`apps/web/lib/di`). Thin `"use server"` / route adapters only. See `docs/architecture.md`. Never add god modules in `lib/server/actions` or unscoped `getServerSession` on data routes — use `requireOrgSession` / `requireOrgWorkspaceAccess`.
+
 ---
 
 ## 4. Branch off `dev`

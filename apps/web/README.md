@@ -57,6 +57,8 @@ pnpm test:e2e           # terminal 2 — skips cold Next boot
 
 Without a running server, Playwright starts `next dev` itself (slow first compile).
 
+**CI:** builds with `turbo build --filter=web...` once, then Playwright only `next start` (`PLAYWRIGHT_SKIP_WEBSERVER_BUILD=1`).
+
 ## Deploy
 
 ```bash

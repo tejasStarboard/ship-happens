@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import {
   RATES_SEARCH_PAGE_SIZE,
   mapRateSearchResultToRows,
@@ -54,11 +55,10 @@ function parsePositiveInt(
 export async function GET(request: Request) {
   try {
     await requireOrgSession()
-  } catch {
-    return NextResponse.json(
-      { error: "Unauthorized" },
-      { status: 401, headers: { "Cache-Control": "no-store" } }
-    )
+  } catch (error) {
+    const response = jsonDomainError(error, "Unauthorized")
+    response.headers.set("Cache-Control", "no-store")
+    return response
   }
 
   const url = new URL(request.url)

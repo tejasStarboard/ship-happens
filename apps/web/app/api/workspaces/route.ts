@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import {
   adoptOrphanSessionFolders,
   createWorkspace,
@@ -15,8 +16,8 @@ export async function GET() {
     return NextResponse.json({
       workspaces: await listWorkspaces(organizationId),
     })
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  } catch (error) {
+    return jsonDomainError(error, "Unauthorized")
   }
 }
 
@@ -40,7 +41,7 @@ export async function POST(request: Request) {
       title
     )
     return NextResponse.json(workspace)
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  } catch (error) {
+    return jsonDomainError(error, "Unauthorized")
   }
 }

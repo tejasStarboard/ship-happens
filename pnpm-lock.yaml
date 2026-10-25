@@ -47,6 +47,9 @@ importers:
       '@shikijs/engine-oniguruma':
         specifier: 3.23.0
         version: 3.23.0
+      '@ship-happens/fill':
+        specifier: workspace:*
+        version: link:../../packages/fill
       '@starboard/sb-client':
         specifier: workspace:*
         version: link:../../packages/sb-client
@@ -83,6 +86,9 @@ importers:
       '@vercel/connect':
         specifier: 2.2.0
         version: 2.2.0(@ai-sdk/mcp@2.0.66(zod@4.5.4))(ai@7.0.133(zod@4.5.4))(better-auth@1.7.7(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.60(crossws@0.4.12(srvx@1.0.5))(esbuild@0.28.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(rolldown@1.2.12)(rollup@4.64.6)(vite@8.0.16(@types/node@24.19.1)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)))(drizzle-kit@0.31.11)(drizzle-orm@0.45.3(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.6)(pg@8.23.1)(sql.js@1.14.2))(next@16.4.3(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.63.0)(@types/node@24.19.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(pg@8.23.1)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(solid-js@1.9.13)(vitest@3.2.7(@types/debug@4.1.13)(@types/node@24.19.1)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)(yaml@2.9.1)))(eve@0.72.1(@opentelemetry/api@1.9.1)(ai@7.0.133(zod@4.5.4))(just-bash@3.6.0)(microsandbox@0.5.5))
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@workspace/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -207,6 +213,62 @@ importers:
       typescript:
         specifier: 6.0.3
         version: 6.0.3
+      vitest:
+        specifier: ^3.2.7
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@24.19.1)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  packages/db:
+    dependencies:
+      ai:
+        specifier: ^7.0.128
+        version: 7.0.133(zod@4.6.7)
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.3(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.6)(pg@8.23.1)(sql.js@1.14.2)
+      pg:
+        specifier: ^8.23.0
+        version: 8.23.1
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.19.19
+      '@types/pg':
+        specifier: ^8.23.1
+        version: 8.23.1
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^6
+        version: 6.0.3
+
+  packages/fill:
+    dependencies:
+      '@workspace/db':
+        specifier: workspace:*
+        version: link:../db
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.3(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(kysely@0.29.6)(pg@8.23.1)(sql.js@1.14.2)
+      xlsx:
+        specifier: ^0.18.5
+        version: 0.18.5
+      zod:
+        specifier: ^4.5.4
+        version: 4.6.7
+    devDependencies:
+      '@types/node':
+        specifier: ^22
+        version: 22.19.19
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^6
+        version: 6.0.3
+      vitest:
+        specifier: ^3.2.0
+        version: 3.2.7(@types/debug@4.1.13)(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)(yaml@2.9.1)
 
   packages/sb-client:
     dependencies:
@@ -7371,6 +7433,13 @@ snapshots:
       '@vercel/oidc': 3.2.0
       zod: 4.6.5
 
+  '@ai-sdk/gateway@4.0.108(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.25
+      '@ai-sdk/provider-utils': 5.0.57(zod@4.6.7)
+      '@vercel/oidc': 3.2.0
+      zod: 4.6.7
+
   '@ai-sdk/mcp@2.0.66(zod@4.5.4)':
     dependencies:
       '@ai-sdk/provider': 4.0.21
@@ -7407,6 +7476,15 @@ snapshots:
       eventsource-parser: 3.1.1
       undici: 7.30.0
       zod: 4.6.5
+
+  '@ai-sdk/provider-utils@5.0.57(zod@4.6.7)':
+    dependencies:
+      '@ai-sdk/provider': 4.0.25
+      '@standard-schema/spec': 1.1.0
+      '@workflow/serde': 4.1.0
+      eventsource-parser: 3.1.1
+      undici: 7.30.0
+      zod: 4.6.7
 
   '@ai-sdk/provider@4.0.21':
     dependencies:
@@ -10007,7 +10085,6 @@ snapshots:
       magic-string: 0.30.21
     optionalDependencies:
       vite: 7.3.7(@types/node@24.19.1)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)(yaml@2.9.1)
-    optional: true
 
   '@vitest/pretty-format@3.2.7':
     dependencies:
@@ -10063,6 +10140,13 @@ snapshots:
       '@ai-sdk/provider': 4.0.25
       '@ai-sdk/provider-utils': 5.0.57(zod@4.6.5)
       zod: 4.6.5
+
+  ai@7.0.133(zod@4.6.7):
+    dependencies:
+      '@ai-sdk/gateway': 4.0.108(zod@4.6.7)
+      '@ai-sdk/provider': 4.0.25
+      '@ai-sdk/provider-utils': 5.0.57(zod@4.6.7)
+      zod: 4.6.7
 
   ajv-formats@2.1.1(ajv@8.20.0):
     optionalDependencies:
@@ -13748,6 +13832,34 @@ snapshots:
       - tsx
       - yaml
 
+  tsup@8.5.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1):
+    dependencies:
+      bundle-require: 5.1.0(esbuild@0.27.7)
+      cac: 6.7.14
+      chokidar: 4.0.3
+      consola: 3.4.2
+      debug: 4.4.3
+      esbuild: 0.27.7
+      fix-dts-default-cjs-exports: 1.0.1
+      joycon: 3.1.1
+      picocolors: 1.1.1
+      postcss-load-config: 6.0.1(jiti@2.7.0)(postcss@8.5.29)(tsx@4.23.15)(yaml@2.9.1)
+      resolve-from: 5.0.0
+      rollup: 4.64.6
+      source-map: 0.7.6
+      sucrase: 3.35.1
+      tinyexec: 0.3.2
+      tinyglobby: 0.2.17
+      tree-kill: 1.2.2
+    optionalDependencies:
+      postcss: 8.5.29
+      typescript: 6.0.3
+    transitivePeerDependencies:
+      - jiti
+      - supports-color
+      - tsx
+      - yaml
+
   tsx@4.23.15:
     dependencies:
       esbuild: 0.28.2
@@ -14039,7 +14151,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-    optional: true
 
   vite@7.3.7(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.33.0)(tsx@4.23.15)(yaml@2.9.1):
     dependencies:
@@ -14072,7 +14183,6 @@ snapshots:
       lightningcss: 1.33.0
       tsx: 4.23.15
       yaml: 2.9.1
-    optional: true
 
   vite@8.0.16(@types/node@22.19.19)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1):
     dependencies:
@@ -14193,7 +14303,6 @@ snapshots:
       - terser
       - tsx
       - yaml
-    optional: true
 
   vue-eslint-parser@10.4.0(eslint@9.39.5(jiti@2.7.0)):
     dependencies:

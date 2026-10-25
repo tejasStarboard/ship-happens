@@ -9,10 +9,11 @@ import {
 } from "@workspace/ui/components/card"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { UseTemplateFillButton } from "@/components/templates/use-template-fill-button"
-import { formatBytes, type MockTemplate } from "@/lib/mock/templates"
+import type { TemplateListItem } from "@/lib/domain/templates/template.types"
+import { formatBytes } from "@/lib/shared/format-bytes"
 import { formatDateTime } from "@/lib/shared/string"
 
-export function TemplateDetail({ template }: { template: MockTemplate }) {
+export function TemplateDetail({ template }: { template: TemplateListItem }) {
   return (
     <div className="flex flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
