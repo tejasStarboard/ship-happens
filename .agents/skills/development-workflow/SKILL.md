@@ -120,6 +120,23 @@ git push -u origin SB-XXXX
 - No drive-by refactors or unsolicited docs.
 - Do not commit / push / open a PR unless the user asks.
 
+### `packages/sb-client` (and Starboard API wiring)
+
+When changing `@starboard/sb-client`, rate search/resolve, margins, globals,
+locations, Public API auth, or any Ship Happens code that calls Starboard:
+
+1. Treat **starboard-2** as the source of truth for endpoints, payloads, and
+   product behavior — do not invent request/response shapes from memory.
+2. Local clone (sibling of this repo):
+
+   `/Users/sanskrutibadnore/Desktop/Starboard/starboard-2`
+
+3. Before implementing: search that tree for the matching route/controller,
+   serializer, and any FI / quote-view isolation rules that must **not** leak
+   into RFP fill pricing.
+4. Align env with Starboard **dev** (`STARBOARD_APP_DOMAIN`, handshake,
+   Public API client id/secret) per `packages/sb-client/README.md`.
+
 ---
 
 ## 6. Run GitHub CI mirror (required before handoff)
@@ -295,6 +312,7 @@ List every ticket id included in the cherry-pick, space-separated.
 |--------|----|
 | Fresh clone / setup | Root `README.md` → Agent quick setup |
 | Local DB/Redis ports | Postgres `54325`, Redis `63799` (never CI `5432`/`6379`) |
+| sb-client / Starboard APIs | Read sibling `/Users/sanskrutibadnore/Desktop/Starboard/starboard-2` first |
 | Start ticket | `git checkout --no-track -b SB-XXXX origin/dev` |
 | Upstream | Ticket branch → `origin/SB-XXXX` only (never `origin/dev`) |
 | Land on staging/dev app | PR → `dev` → title `feat\|fix(SB-XXXX): …` |
@@ -304,6 +322,10 @@ List every ticket id included in the cherry-pick, space-separated.
 ## Related
 
 - **Local setup / ports / env:** root [`README.md`](../../../README.md) (canonical for agents cloning the repo).
+- **Starboard API / sb-client:** sibling repo
+  `/Users/sanskrutibadnore/Desktop/Starboard/starboard-2` — read that codebase
+  when implementing or debugging `@starboard/sb-client` (see §5). Package docs:
+  [`packages/sb-client/README.md`](../../../packages/sb-client/README.md).
 - Ticket investigation loop: `ticket-resolution` — **branch naming, PR titles, and deployment follow this skill**.
 - CI: `.github/workflows/ci.yml`
 - Linear tickets for this product use ids like `SB-6652`.

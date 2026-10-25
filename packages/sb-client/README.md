@@ -4,6 +4,20 @@ Standalone **TypeScript library + CLI** for Ship Happens (and other agents) to c
 
 No MCP. No quote lifecycle. Rate search returns **resolved** rates (carrier surcharges + matching global defaults), like the webapp quote view after add-rate — without saving a quote.
 
+## Source of truth (starboard-2)
+
+When adding or changing client methods, request/response shapes, auth, or
+rate/margin/globals behavior, implement against the **Starboard webapp** — not
+from memory:
+
+```
+/Users/sanskrutibadnore/Desktop/Starboard/starboard-2
+```
+
+Search that repo for the matching API route/controller and serializers before
+editing this package. Keep Freight Index / multi-round quote flows out of RFP
+fill pricing unless a ticket explicitly requires them.
+
 ```
 sb-client / library
   → verify POST /api/public_api_clients/verify
