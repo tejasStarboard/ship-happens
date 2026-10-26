@@ -51,7 +51,7 @@ export const env = createEnv({
     AI_GATEWAY_API_KEY: z.string().optional(),
     ANTHROPIC_API_KEY: z.string().optional(),
 
-    /** Starboard webapp base URL for `@starboard/sb-client` (no trailing slash). */
+    /** Starboard webapp base URL for `@ship-happens/sb-client` (no trailing slash). */
     STARBOARD_APP_DOMAIN: z.url().optional(),
     /** Handshake key for Starboard BFF (`x-starboard-handshake-key`). Never log. */
     STARBOARD_HANDSHAKE_KEY: z.string().min(1).optional(),

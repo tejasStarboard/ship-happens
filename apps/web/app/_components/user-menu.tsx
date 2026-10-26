@@ -1,7 +1,7 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import { signOut, useSession } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 

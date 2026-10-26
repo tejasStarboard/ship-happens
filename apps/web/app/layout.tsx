@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next"
 import type { ReactNode } from "react"
-import { Toaster } from "@workspace/ui/components/sonner"
+import { Toaster } from "@ship-happens/ui/components/sonner"
 import { AppReady } from "@/components/app-ready"
 import { ThemeProvider } from "@/components/theme"
-import { TooltipProvider } from "@workspace/ui/components/tooltip"
-import "@workspace/ui/globals.css"
+import { TooltipProvider } from "@ship-happens/ui/components/tooltip"
+import "@ship-happens/ui/globals.css"
 
 export const metadata: Metadata = {
   title: "Ship Happens",

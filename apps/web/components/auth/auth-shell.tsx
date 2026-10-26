@@ -1,7 +1,7 @@
 "use client"
 
 import type { ReactNode } from "react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 import {
   Card,
   CardContent,
@@ -9,8 +9,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Separator } from "@workspace/ui/components/separator"
+} from "@ship-happens/ui/components/card"
+import { Separator } from "@ship-happens/ui/components/separator"
 import { ShipHappensMark } from "@/components/brand/ship-happens-logo"
 
 export function AuthPage({

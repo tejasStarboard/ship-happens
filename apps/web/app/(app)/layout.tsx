@@ -1,6 +1,9 @@
 import { redirect } from "next/navigation"
 import type { CSSProperties, ReactNode } from "react"
-import { SidebarInset, SidebarProvider } from "@workspace/ui/components/sidebar"
+import {
+  SidebarInset,
+  SidebarProvider,
+} from "@ship-happens/ui/components/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
 import { getSession, listOrganizations } from "@/lib/auth/session"

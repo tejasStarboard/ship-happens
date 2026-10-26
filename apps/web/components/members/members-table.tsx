@@ -31,9 +31,9 @@ import {
 } from "@tanstack/react-table"
 import { z } from "zod"
 
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
-import { Checkbox } from "@workspace/ui/components/checkbox"
+import { Badge } from "@ship-happens/ui/components/badge"
+import { Button } from "@ship-happens/ui/components/button"
+import { Checkbox } from "@ship-happens/ui/components/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -41,7 +41,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@workspace/ui/components/dialog"
+} from "@ship-happens/ui/components/dialog"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -50,9 +50,9 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+} from "@ship-happens/ui/components/dropdown-menu"
+import { Input } from "@ship-happens/ui/components/input"
+import { Label } from "@ship-happens/ui/components/label"
 import {
   Select,
   SelectContent,
@@ -60,7 +60,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
+} from "@ship-happens/ui/components/select"
 import {
   Table,
   TableBody,
@@ -68,7 +68,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import { InviteUserForm } from "@/components/auth/invite-user-form"
 import { UserAvatar } from "@/components/shared/user-avatar"
 import { formatDate } from "@/lib/shared/string"

@@ -2,9 +2,9 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
+} from "@ship-happens/ui/components/avatar"
 import { getInitials } from "@/lib/shared/string"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 
 type UserAvatarProps = {
   name: string

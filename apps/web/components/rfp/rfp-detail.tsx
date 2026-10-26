@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from "@workspace/ui/components/tabs"
+} from "@ship-happens/ui/components/tabs"
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
 import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"

@@ -72,7 +72,7 @@ function defaultWorkspaceHost(): WorkspaceHost {
 
 /**
  * Request-scoped (or test) dependency graph.
- * Fill/intake come from `@ship-happens/fill`; DB schema from `@workspace/db`.
+ * Fill/intake come from `@ship-happens/fill`; DB schema from `@ship-happens/db`.
  */
 export function createAppContext(deps?: Partial<AppDeps>) {
   const database = deps?.db ?? db

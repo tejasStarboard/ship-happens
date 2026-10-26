@@ -54,7 +54,11 @@ export {
   OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
   type OpsAnalyticsAgingBucket,
   type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMappingQuality,
+  type OpsAnalyticsMarginImpact,
   type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsNamedCount,
+  type OpsAnalyticsRateCoverage,
   type OpsAnalyticsStatusBucket,
   type OpsAnalyticsView,
 } from "./analytics/ops-analytics.types"

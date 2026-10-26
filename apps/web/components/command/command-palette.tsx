@@ -20,7 +20,7 @@ import {
   CommandItem,
   CommandList,
   CommandShortcut,
-} from "@workspace/ui/components/command"
+} from "@ship-happens/ui/components/command"
 
 const NAV = [
   { title: "Fill desk", href: "/rfp", icon: IconFileSpreadsheet, keys: "G F" },

@@ -1,14 +1,14 @@
 "use client"
 
 import { motion, useReducedMotion } from "motion/react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from "@ship-happens/ui/components/card"
 import {
   DownloadFilledButton,
   downloadFilledStatusMessage,

@@ -6,7 +6,7 @@ import {
   rfpProgressSteps,
   rfpReviewItems,
   rfps,
-} from "@workspace/db"
+} from "@ship-happens/db"
 import {
   pipelineEventForStepDone,
   type FillPipelineEventType,

@@ -8,38 +8,38 @@ import {
   CommandItem,
   CommandList,
   CommandSeparator,
-} from "@workspace/ui/components/command"
+} from "@ship-happens/ui/components/command"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from "@ship-happens/ui/components/dropdown-menu"
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@workspace/ui/components/hover-card"
+} from "@ship-happens/ui/components/hover-card"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
-} from "@workspace/ui/components/input-group"
+} from "@ship-happens/ui/components/input-group"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/select"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/tooltip"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { ChatStatus, FileUIPart, SourceDocumentUIPart } from "ai"
 import { ArrowUpIcon, ImageIcon, Monitor, PlusIcon, XIcon } from "lucide-react"
 import { nanoid } from "nanoid"

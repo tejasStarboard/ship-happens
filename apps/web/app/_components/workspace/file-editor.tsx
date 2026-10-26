@@ -7,7 +7,7 @@ import {
   IconX as XIcon,
 } from "@tabler/icons-react"
 import { OfficeViewer } from "@/app/_components/workspace/office-viewer"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import { cn } from "@/lib/utils"
 import {
   getOfficeViewerKind,

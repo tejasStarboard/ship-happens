@@ -7,7 +7,7 @@ import {
   type ContractSearchInput,
   type SearchRateHit,
   type SpotSearchInput,
-} from "@starboard/sb-client"
+} from "@ship-happens/sb-client"
 import { ZodError } from "zod"
 import {
   StarboardConfigError,

@@ -3,7 +3,7 @@
 import type { ReactNode } from "react"
 import Image from "next/image"
 import { motion, useReducedMotion } from "motion/react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 import {
   ShipHappensMark,
   ShipHappensWordmark,

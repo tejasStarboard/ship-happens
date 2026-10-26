@@ -7,13 +7,13 @@ import {
   IconLoader2,
   IconX,
 } from "@tabler/icons-react"
-import { Avatar, AvatarFallback } from "@workspace/ui/components/avatar"
+import { Avatar, AvatarFallback } from "@ship-happens/ui/components/avatar"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/collapsible"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type {
   RfpLogView,
   RfpProgressStepView,

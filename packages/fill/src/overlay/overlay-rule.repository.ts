@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { and, desc, eq } from "drizzle-orm"
-import { overlayRules } from "@workspace/db"
+import { overlayRules } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
 import { DomainError } from "../errors"
 import type {

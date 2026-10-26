@@ -1,12 +1,12 @@
 import { IconDownload, IconExternalLink } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from "@ship-happens/ui/components/card"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { UseTemplateFillButton } from "@/components/templates/use-template-fill-button"
 import type { TemplateListItem } from "@/lib/domain/templates/template.types"

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { eq } from "drizzle-orm"
-import { rfpFillReportCells, rfpFillReports } from "@workspace/db"
+import { rfpFillReportCells, rfpFillReports } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
 
 function reportId() {

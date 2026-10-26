@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 
 export type EntityTab<T extends string> = {
   id: T

@@ -1,6 +1,6 @@
 "use client"
 
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { MotionProps } from "motion/react"
 import { motion } from "motion/react"
 import type { CSSProperties, ElementType, JSX } from "react"

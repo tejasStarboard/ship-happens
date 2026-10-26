@@ -8,14 +8,14 @@ import {
   CommandList,
   CommandSeparator,
   CommandShortcut,
-} from "@workspace/ui/components/command"
+} from "@ship-happens/ui/components/command"
 import {
   Dialog,
   DialogContent,
   DialogTitle,
   DialogTrigger,
-} from "@workspace/ui/components/dialog"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/dialog"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { ComponentProps, ReactNode } from "react"
 
 export type ModelSelectorProps = ComponentProps<typeof Dialog>

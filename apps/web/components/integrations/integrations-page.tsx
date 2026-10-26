@@ -9,7 +9,7 @@ import {
   IconLinkOff,
 } from "@tabler/icons-react"
 import { toast } from "sonner"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import { PageChrome } from "@/components/shared/page-chrome"
 import {
   disconnectEmailIntegration,

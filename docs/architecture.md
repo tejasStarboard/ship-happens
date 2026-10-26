@@ -6,13 +6,13 @@ Production layering for `apps/web` (Next.js + eve + Better Auth + Drizzle) plus 
 
 | Package | Role |
 | --- | --- |
-| [`@workspace/db`](../packages/db) | Drizzle schema + `createDb()` — tsup → `dist/` |
+| [`@ship-happens/db`](../packages/db) | Drizzle schema + `createDb()` — tsup → `dist/` |
 | [`@ship-happens/fill`](../packages/fill) | Intake + fill pipeline — tsup → `dist/`; inject blob/workspace ports. Client UI: `@ship-happens/fill/browser` only |
-| `@starboard/sb-client` | Starboard Public API + CLI |
-| `@workspace/ui` | Design system primitives only |
+| `@ship-happens/sb-client` | Starboard Public API + CLI |
+| `@ship-happens/ui` | Design system primitives only |
 
 ```ts
-import { createDb } from "@workspace/db"
+import { createDb } from "@ship-happens/db"
 import { FillPipelineManager, IntakeService, RfpRepository } from "@ship-happens/fill"
 
 const { db, pool } = createDb(process.env.POSTGRES_URL!)
@@ -29,7 +29,7 @@ Migrations stay at repo root (`drizzle.config.ts` → `packages/db` schema → `
 | **Service** | `@ship-happens/fill` + `lib/domain/*` | Use-cases, invariants, DTO mapping |
 | **Manager** | fill pipeline / workspace manager | Cross-cutting lifecycle |
 | **Repository** | fill RFP repo + `lib/domain/templates` | Drizzle queries, org-scoped `where` |
-| **Infra** | `@workspace/db`, `lib/storage`, `lib/workspace-fs.ts` | Postgres, Blob, host FS |
+| **Infra** | `@ship-happens/db`, `lib/storage`, `lib/workspace-fs.ts` | Postgres, Blob, host FS |
 
 ## Dependency injection
 
@@ -60,12 +60,12 @@ Source of truth: `rfp_chats` (multiple rows per RFP). Session bind stores `{ eve
 
 ## New domain checklist
 
-1. Prefer putting portable logic in `@ship-happens/fill` or `@workspace/db`
+1. Prefer putting portable logic in `@ship-happens/fill` or `@ship-happens/db`
 2. App-only UI/adapters stay in `apps/web`
 3. Wire through `createAppContext`
 4. Thin action/route adapter
 5. Unit test for authorize / pure helpers
-6. **Client Components** must not import `@/lib/server/*`, `@/lib/di`, `@workspace/db`, or `@ship-happens/fill` (root). Use `@/lib/domain/*/…types` or `@ship-happens/fill/browser` for types/labels — even `import type` from a server module pulls `pg` into the client graph.
+6. **Client Components** must not import `@/lib/server/*`, `@/lib/di`, `@ship-happens/db`, or `@ship-happens/fill` (root). Use `@/lib/domain/*/…types` or `@ship-happens/fill/browser` for types/labels — even `import type` from a server module pulls `pg` into the client graph.
 
 ## Schema note (unused tables)
 

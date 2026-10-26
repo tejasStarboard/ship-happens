@@ -47,7 +47,7 @@ nc -z 127.0.0.1 54325 && echo postgres_ok
 nc -z 127.0.0.1 63799 && echo redis_ok
 
 # Optional Starboard smoke (needs STARBOARD_* filled in .env)
-pnpm --filter @starboard/sb-client build
+pnpm --filter @ship-happens/sb-client build
 pnpm --filter web starboard:smoke-rates
 ```
 
@@ -85,10 +85,10 @@ These values are already in `.env.example`. **Do not** point local tools at `loc
 - Next.js App Router + eve (agent sandbox / chat)
 - Better Auth (email/password, optional Google, organizations)
 - Drizzle + Postgres
-- `@starboard/sb-client` (`packages/sb-client` — library + CLI for Starboard Public API)
+- `@ship-happens/sb-client` (`packages/sb-client` — library + CLI for Starboard Public API)
 - Redis (session secondary storage)
 - Vercel Blob + AI Gateway
-- `@workspace/ui` (shadcn)
+- `@ship-happens/ui` (shadcn)
 
 ## Scripts
 
@@ -104,7 +104,7 @@ These values are already in `.env.example`. **Do not** point local tools at `loc
 | `pnpm test:e2e` | Playwright against `apps/web` |
 | `pnpm --filter web sb-client -- …` | Starboard CLI |
 | `pnpm --filter web starboard:smoke-rates` | Read-only contract+spot smoke |
-| `pnpm --filter @starboard/sb-client build` | Build CLI/library (`tsup` → `dist/`) |
+| `pnpm --filter @ship-happens/sb-client build` | Build CLI/library (`tsup` → `dist/`) |
 
 ## Local CI mirror
 
@@ -116,10 +116,10 @@ Summary: keep `POSTGRES_URL` / `REDIS_URL` on **compose host ports** (`54325` / 
 
 ## Starboard client
 
-Workspace package `@starboard/sb-client` (`packages/sb-client`). Details: [`packages/sb-client/README.md`](packages/sb-client/README.md).
+Workspace package `@ship-happens/sb-client` (`packages/sb-client`). Details: [`packages/sb-client/README.md`](packages/sb-client/README.md).
 
 ```bash
-pnpm --filter @starboard/sb-client build
+pnpm --filter @ship-happens/sb-client build
 pnpm --filter web sb-client -- auth test
 pnpm --filter web starboard:smoke-rates
 pnpm --filter web sb-client -- rates resolve --body '...'
@@ -145,7 +145,7 @@ Ticket investigation details: `.agents/skills/ticket-resolution/SKILL.md`.
 
 ```
 apps/web                 # Primary Next.js + eve app
-packages/db              # @workspace/db — Drizzle schema + createDb()
+packages/db              # @ship-happens/db — Drizzle schema + createDb()
 packages/fill            # @ship-happens/fill — intake + fill pipeline
 packages/ui              # Shared UI kit
 packages/sb-client       # Starboard Public API library + CLI
@@ -156,4 +156,4 @@ docker-compose.yml       # Postgres :54325 + Redis :63799
 
 ## Architecture
 
-Shared packages: `@workspace/db`, `@ship-happens/fill`. App wiring + DI: `apps/web/lib/di`. See [`docs/architecture.md`](docs/architecture.md).
+Shared packages: `@ship-happens/db`, `@ship-happens/fill`. App wiring + DI: `apps/web/lib/di`. See [`docs/architecture.md`](docs/architecture.md).

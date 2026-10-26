@@ -11,10 +11,10 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@workspace/ui/components/breadcrumb"
-import { Button } from "@workspace/ui/components/button"
-import { Separator } from "@workspace/ui/components/separator"
-import { SidebarTrigger } from "@workspace/ui/components/sidebar"
+} from "@ship-happens/ui/components/breadcrumb"
+import { Button } from "@ship-happens/ui/components/button"
+import { Separator } from "@ship-happens/ui/components/separator"
+import { SidebarTrigger } from "@ship-happens/ui/components/sidebar"
 import { Fragment } from "react"
 import { CommandPalette } from "@/components/command/command-palette"
 

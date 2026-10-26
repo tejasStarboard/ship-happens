@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +13,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@workspace/ui/components/alert-dialog"
+} from "@ship-happens/ui/components/alert-dialog"
 import { exportFillWorkbookAction } from "@/lib/server/actions/export"
 
 export function ExportWorkbookButton({

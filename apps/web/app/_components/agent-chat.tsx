@@ -18,7 +18,7 @@ import {
   AttachmentPreview,
   AttachmentRemove,
   Attachments,
-} from "@workspace/ui/ai-elements/attachments"
+} from "@ship-happens/ui/ai-elements/attachments"
 import {
   Conversation,
   ConversationContent,
@@ -26,8 +26,8 @@ import {
   ConversationEmptyState,
   ConversationScrollButton,
   ConversationTopFade,
-} from "@workspace/ui/ai-elements/conversation"
-import { Message, MessageContent } from "@workspace/ui/ai-elements/message"
+} from "@ship-happens/ui/ai-elements/conversation"
+import { Message, MessageContent } from "@ship-happens/ui/ai-elements/message"
 import {
   ModelSelector,
   ModelSelectorContent,
@@ -40,7 +40,7 @@ import {
   ModelSelectorLogoGroup,
   ModelSelectorName,
   ModelSelectorTrigger,
-} from "@workspace/ui/ai-elements/model-selector"
+} from "@ship-happens/ui/ai-elements/model-selector"
 import {
   PromptInput,
   PromptInputActionAddAttachments,
@@ -56,11 +56,14 @@ import {
   PromptInputTextarea,
   PromptInputTools,
   usePromptInputAttachments,
-} from "@workspace/ui/ai-elements/prompt-input"
-import { Shimmer } from "@workspace/ui/ai-elements/shimmer"
-import { SpeechInput } from "@workspace/ui/ai-elements/speech-input"
-import { Suggestion, Suggestions } from "@workspace/ui/ai-elements/suggestion"
-import { Button } from "@workspace/ui/components/button"
+} from "@ship-happens/ui/ai-elements/prompt-input"
+import { Shimmer } from "@ship-happens/ui/ai-elements/shimmer"
+import { SpeechInput } from "@ship-happens/ui/ai-elements/speech-input"
+import {
+  Suggestion,
+  Suggestions,
+} from "@ship-happens/ui/ai-elements/suggestion"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   CHAT_MODEL_CHEFS,
   CHAT_MODELS,

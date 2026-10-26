@@ -1,5 +1,20 @@
-import { and, eq, gte, sql } from "drizzle-orm"
-import { fillPipelineEvents, rfpReviewItems, rfps } from "@workspace/db"
+import { and, eq, gte, inArray, sql } from "drizzle-orm"
+import {
+  fillPipelineEvents,
+  rfpFillReportCells,
+  rfpFillReports,
+  rfpMappedLanes,
+  rfpReviewItems,
+  rfps,
+} from "@ship-happens/db"
+import {
+  aggregateMappingQuality,
+  aggregateMarginImpact,
+  aggregateRateCoverage,
+  emptyMappingQuality,
+  emptyMarginImpact,
+  emptyRateCoverage,
+} from "./ops-analytics-metrics"
 import { FILL_PIPELINE_EVENT_TYPES } from "./fill-pipeline-events"
 import {
   OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
@@ -58,9 +73,8 @@ function percentileSorted(sorted: number[], p: number): number | null {
 }
 
 /**
- * Org-scoped ops analytics: funnel, time-to-done, review aging, failures.
- * Funnel/TTD/aging/failures read live fill + review rows (works without events).
- * Lifecycle event counts come from `fill_pipeline_events` (forward-filled).
+ * Org-scoped ops analytics: funnel, time-to-done, review aging, failures,
+ * plus rate coverage / margin impact / mapping quality (SB-7086).
  */
 export class OpsAnalyticsService {
   constructor(private readonly db: AppDb) {}
@@ -81,6 +95,8 @@ export class OpsAnalyticsService {
       topFailureReasons,
       lifecycleEvents,
       fillCountRow,
+      rateAndMargin,
+      mappingQuality,
     ] = await Promise.all([
       this.statusFunnel(organizationId, windowStartedAt),
       this.timeToDone(organizationId, windowStartedAt),
@@ -97,6 +113,8 @@ export class OpsAnalyticsService {
           )
         )
         .then((rows) => rows[0]?.count ?? 0),
+      this.rateCoverageAndMargin(organizationId, windowStartedAt),
+      this.mappingQuality(organizationId, windowStartedAt),
     ])
 
     return {
@@ -108,6 +126,9 @@ export class OpsAnalyticsService {
       openReviewAging,
       topFailureReasons,
       lifecycleEvents,
+      rateCoverage: rateAndMargin.rateCoverage,
+      marginImpact: rateAndMargin.marginImpact,
+      mappingQuality,
     }
   }
 
@@ -249,5 +270,110 @@ export class OpsAnalyticsService {
       label: EVENT_LABEL[type] ?? type,
       count: byType.get(type) ?? 0,
     }))
+  }
+
+  /** Windowed fill ids for the org (created in window). */
+  private async windowedFillIds(
+    organizationId: string,
+    since: Date
+  ): Promise<string[]> {
+    const rows = await this.db
+      .select({ id: rfps.id })
+      .from(rfps)
+      .where(
+        and(eq(rfps.organizationId, organizationId), gte(rfps.createdAt, since))
+      )
+    return rows.map((r) => r.id)
+  }
+
+  private async rateCoverageAndMargin(
+    organizationId: string,
+    since: Date
+  ): Promise<{
+    rateCoverage: ReturnType<typeof aggregateRateCoverage>
+    marginImpact: ReturnType<typeof aggregateMarginImpact>
+  }> {
+    const fillIds = await this.windowedFillIds(organizationId, since)
+    if (fillIds.length === 0) {
+      return {
+        rateCoverage: emptyRateCoverage(),
+        marginImpact: emptyMarginImpact(),
+      }
+    }
+
+    const [cells, floorRows] = await Promise.all([
+      this.db
+        .select({
+          outcome: rfpFillReportCells.outcome,
+          metadata: rfpFillReportCells.metadata,
+        })
+        .from(rfpFillReportCells)
+        .innerJoin(
+          rfpFillReports,
+          eq(rfpFillReportCells.reportId, rfpFillReports.id)
+        )
+        .where(inArray(rfpFillReports.rfpId, fillIds)),
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rfpReviewItems)
+        .where(
+          and(
+            eq(rfpReviewItems.organizationId, organizationId),
+            eq(rfpReviewItems.source, "margin-floor"),
+            gte(rfpReviewItems.createdAt, since)
+          )
+        )
+        .then((rows) => Number(rows[0]?.count ?? 0)),
+    ])
+
+    const normalized = cells.map((c) => ({
+      outcome: c.outcome,
+      metadata: (c.metadata ?? {}) as Record<string, unknown>,
+    }))
+
+    return {
+      rateCoverage: aggregateRateCoverage(normalized),
+      marginImpact: aggregateMarginImpact({
+        cells: normalized,
+        floorBreachReviews: floorRows,
+      }),
+    }
+  }
+
+  private async mappingQuality(organizationId: string, since: Date) {
+    const fillIds = await this.windowedFillIds(organizationId, since)
+    if (fillIds.length === 0) return emptyMappingQuality()
+
+    const [laneCountRow, mapReviews] = await Promise.all([
+      this.db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(rfpMappedLanes)
+        .where(
+          and(
+            eq(rfpMappedLanes.organizationId, organizationId),
+            inArray(rfpMappedLanes.rfpId, fillIds)
+          )
+        )
+        .then((rows) => Number(rows[0]?.count ?? 0)),
+      this.db
+        .select({
+          status: rfpReviewItems.status,
+          source: rfpReviewItems.source,
+          decidedByUserId: rfpReviewItems.decidedByUserId,
+        })
+        .from(rfpReviewItems)
+        .where(
+          and(
+            eq(rfpReviewItems.organizationId, organizationId),
+            eq(rfpReviewItems.stepKey, "map"),
+            gte(rfpReviewItems.createdAt, since)
+          )
+        ),
+    ])
+
+    return aggregateMappingQuality({
+      confirmedLanes: laneCountRow,
+      mapReviews,
+    })
   }
 }

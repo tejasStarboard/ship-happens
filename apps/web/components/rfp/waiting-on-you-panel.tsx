@@ -3,14 +3,14 @@
 import { useEffect, useState } from "react"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { motion, useReducedMotion } from "motion/react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
-import { Label } from "@workspace/ui/components/label"
+} from "@ship-happens/ui/components/empty"
+import { Label } from "@ship-happens/ui/components/label"
 import {
   Sheet,
   SheetContent,
@@ -18,8 +18,8 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-} from "@workspace/ui/components/sheet"
-import { Textarea } from "@workspace/ui/components/textarea"
+} from "@ship-happens/ui/components/sheet"
+import { Textarea } from "@ship-happens/ui/components/textarea"
 import { useServerMutation } from "@/hooks/use-server-mutation"
 import type {
   RfpPendingReviewView,

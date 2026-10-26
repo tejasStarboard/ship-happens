@@ -8,8 +8,8 @@ import {
   IconTrash as Trash2Icon,
 } from "@tabler/icons-react"
 import { UserMenu } from "@/app/_components/user-menu"
-import { Button } from "@workspace/ui/components/button"
-import { Input } from "@workspace/ui/components/input"
+import { Button } from "@ship-happens/ui/components/button"
+import { Input } from "@ship-happens/ui/components/input"
 import { formatDateTime } from "@/lib/shared/string"
 import { cn } from "@/lib/utils"
 

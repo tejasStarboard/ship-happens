@@ -13,8 +13,8 @@ import type {
   OverlayRuleMode,
   OverlayRuleView,
 } from "@ship-happens/fill/browser"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@ship-happens/ui/components/badge"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -23,16 +23,16 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@workspace/ui/components/dialog"
+} from "@ship-happens/ui/components/dialog"
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+} from "@ship-happens/ui/components/empty"
+import { Input } from "@ship-happens/ui/components/input"
+import { Label } from "@ship-happens/ui/components/label"
 import {
   Select,
   SelectContent,
@@ -40,8 +40,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Switch } from "@workspace/ui/components/switch"
+} from "@ship-happens/ui/components/select"
+import { Switch } from "@ship-happens/ui/components/switch"
 import {
   Table,
   TableBody,
@@ -49,7 +49,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import {
   createOverlayRule,

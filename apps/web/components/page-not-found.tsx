@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { IconFileUnknown, IconHome } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Empty,
   EmptyContent,
@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 
 export function PageNotFound() {
   return (

@@ -6,7 +6,7 @@ import {
   IconExternalLink,
   IconRefresh,
 } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Empty,
   EmptyContent,
@@ -14,8 +14,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from "@ship-happens/ui/components/empty"
+import { Skeleton } from "@ship-happens/ui/components/skeleton"
 
 type OfficeSpreadsheetViewerProps = {
   /** Public HTTPS URL to an .xls / .xlsx file (required by Office Online Viewer). */

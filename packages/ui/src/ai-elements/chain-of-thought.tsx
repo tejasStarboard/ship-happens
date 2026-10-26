@@ -1,13 +1,13 @@
 "use client"
 
 import { useControllableState } from "@radix-ui/react-use-controllable-state"
-import { Badge } from "@workspace/ui/components/badge"
+import { Badge } from "@ship-happens/ui/components/badge"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/collapsible"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { LucideIcon } from "lucide-react"
 import { BrainIcon, ChevronDownIcon, DotIcon } from "lucide-react"
 import type { ComponentProps, ReactNode } from "react"

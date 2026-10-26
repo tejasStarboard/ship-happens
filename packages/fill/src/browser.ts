@@ -1,5 +1,5 @@
 /**
- * Client-safe surface — no Node builtins, no `@workspace/db` / `pg`.
+ * Client-safe surface — no Node builtins, no `@ship-happens/db` / `pg`.
  * Use from Next.js Client Components. Server code may use `@ship-happens/fill`.
  */
 
@@ -91,7 +91,11 @@ export {
   OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
   type OpsAnalyticsAgingBucket,
   type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMappingQuality,
+  type OpsAnalyticsMarginImpact,
   type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsNamedCount,
+  type OpsAnalyticsRateCoverage,
   type OpsAnalyticsStatusBucket,
   type OpsAnalyticsView,
 } from "./analytics/ops-analytics.types"
