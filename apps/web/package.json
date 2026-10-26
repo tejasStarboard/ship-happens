@@ -48,6 +48,7 @@
     "@tailwindcss/postcss": "4.3.0",
     "@tanstack/react-form": "^1.33.5",
     "@tanstack/react-table": "^9.2.4",
+    "@typesafe-ai/sdk": "^0.7.0",
     "@vercel/blob": "^2.8.0",
     "@vercel/connect": "2.2.0",
     "@workspace/db": "workspace:*",

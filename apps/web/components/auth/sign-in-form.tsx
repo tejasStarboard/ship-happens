@@ -76,13 +76,22 @@ export function SignInForm({
     setFormError(null)
     setGooglePending(true)
     try {
-      const { error } = await authClient.signIn.social({
+      const { data, error } = await authClient.signIn.social({
         provider: "google",
         callbackURL: afterAuthPath,
       })
       if (error) {
         setFormError(error.message ?? "Could not sign in with Google")
         setGooglePending(false)
+        return
+      }
+      // Tunnel / blocked-HMR setups sometimes skip the client auto-redirect.
+      const url =
+        data && typeof data === "object" && "url" in data
+          ? String((data as { url?: string }).url ?? "")
+          : ""
+      if (url) {
+        window.location.assign(url)
       }
     } catch (err) {
       setFormError(

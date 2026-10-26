@@ -6,6 +6,7 @@ import {
   IconFileSpreadsheet,
   IconHelp,
   IconLayersSubtract,
+  IconPlugConnected,
   IconSettings,
   IconTemplate,
 } from "@tabler/icons-react"
@@ -41,6 +42,15 @@ const navMain = [
     title: "Starboard rates",
     url: "/rates",
     icon: IconCurrencyDollar,
+  },
+  {
+    title: "Integrations",
+    url: "/integrations",
+    icon: IconPlugConnected,
+    items: [
+      { title: "Gmail", url: "/integrations#gmail" },
+      { title: "Outlook", url: "/integrations#outlook" },
+    ],
   },
 ]
 

@@ -34,6 +34,8 @@ import { RfpService } from "@/lib/domain/rfp/rfp.service"
 import { TemplateRepository } from "@/lib/domain/templates/template.repository"
 import { TemplateService } from "@/lib/domain/templates/template.service"
 import { WorkspaceManager } from "@/lib/domain/workspace/workspace.manager"
+import { EmailIntegrationRepository } from "@/lib/domain/email-intake/email-integration.repository"
+import { EmailIntakeService } from "@/lib/domain/email-intake/email-intake.service"
 import {
   createStarboardClient,
   type StarboardClient,
@@ -123,6 +125,19 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     sourceFetcher,
     workspace
   )
+  const intake = new IntakeService(
+    database,
+    rfpRepo,
+    pipeline,
+    blobStore,
+    workspace
+  )
+  const emailIntegrations = new EmailIntegrationRepository(database)
+  const emailIntake = new EmailIntakeService(
+    database,
+    emailIntegrations,
+    intake
+  )
 
   return {
     db: database,
@@ -130,13 +145,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     createStarboardClient: starboardFactory,
     rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports, mappingStore),
     templates: new TemplateService(templateRepo),
-    intake: new IntakeService(
-      database,
-      rfpRepo,
-      pipeline,
-      blobStore,
-      workspace
-    ),
+    intake,
+    emailIntake,
     pipeline,
     reviews,
     mapping,
@@ -154,6 +164,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       fillMappings,
       overlayRules: overlayRulesRepo,
       marginFloors: marginFloorsRepo,
+      emailIntegrations,
     },
   }
 }

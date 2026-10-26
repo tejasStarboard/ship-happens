@@ -11,6 +11,16 @@ export const RFP_STATUS_LABEL: Record<RfpStatus, string> = {
   failed: "Failed",
 }
 
+/** Email provenance when the fill was created via mailbox intake. */
+export type RfpEmailRef = {
+  provider: "gmail" | "outlook"
+  messageId: string
+  threadId?: string
+  from?: string
+  subject?: string
+  receivedAt?: string
+}
+
 export type RfpListItem = {
   id: string
   name: string
@@ -19,6 +29,8 @@ export type RfpListItem = {
   templateName: string
   updatedAt: string
   owner: string
+  /** Present when `metadata.intakeSource === "email"`. */
+  emailRef?: RfpEmailRef | null
 }
 
 export type RfpProgressStepView = {

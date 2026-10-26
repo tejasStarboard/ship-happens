@@ -113,6 +113,20 @@ function FillCard({
         >
           {rfp.customer || "No customer"}
         </p>
+        {rfp.emailRef ? (
+          <p
+            className="mt-1 truncate text-[11px] text-muted-foreground"
+            title={
+              [rfp.emailRef.from, rfp.emailRef.subject]
+                .filter(Boolean)
+                .join(" · ") || undefined
+            }
+          >
+            Email
+            {rfp.emailRef.from ? `: ${rfp.emailRef.from}` : ""}
+            {rfp.emailRef.subject ? ` — ${rfp.emailRef.subject}` : ""}
+          </p>
+        ) : null}
       </div>
       <div className="flex items-center gap-2 border-t border-border/70 pt-2.5">
         <IconFileSpreadsheet
@@ -337,6 +351,9 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                 <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                   Template
                 </TableHead>
+                <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                  Source
+                </TableHead>
                 <TableHead className="h-[38px] text-right text-xs font-medium text-muted-foreground">
                   Updated
                 </TableHead>
@@ -374,6 +391,20 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                     title={rfp.templateName || undefined}
                   >
                     {rfp.templateName || "—"}
+                  </TableCell>
+                  <TableCell
+                    className="max-w-[12rem] truncate text-muted-foreground"
+                    title={
+                      rfp.emailRef
+                        ? [rfp.emailRef.from, rfp.emailRef.subject]
+                            .filter(Boolean)
+                            .join(" · ")
+                        : "Upload"
+                    }
+                  >
+                    {rfp.emailRef
+                      ? `Email${rfp.emailRef.from ? `: ${rfp.emailRef.from}` : ""}`
+                      : "Upload"}
                   </TableCell>
                   <TableCell className="tabular text-right text-muted-foreground">
                     {formatDateTime(rfp.updatedAt)}

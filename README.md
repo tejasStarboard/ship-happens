@@ -78,6 +78,8 @@ These values are already in `.env.example`. **Do not** point local tools at `loc
 
 **Starboard client** (rate search / CLI): `STARBOARD_APP_DOMAIN`, `STARBOARD_HANDSHAKE_KEY`, plus `SB_CLIENT_CLIENT_ID` + `SB_CLIENT_CLIENT_SECRET` (or `SB_CLIENT_COMPANY_ID` for local-only).
 
+**Email intake (Integrations):** `JEV_API_KEY` (TypeSafe Jev). Gmail needs `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` plus `GMAIL_PUBSUB_TOPIC` (and a public HTTPS webhook at `/api/webhooks/gmail`). Outlook needs `MICROSOFT_CLIENT_ID` / `MICROSOFT_CLIENT_SECRET` and Graph notifications to `/api/webhooks/outlook`. Fill-desk upload remains the default intake path.
+
 ## Stack
 
 - Next.js App Router + eve (agent sandbox / chat)
