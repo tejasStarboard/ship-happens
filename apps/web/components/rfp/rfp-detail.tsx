@@ -10,6 +10,7 @@ import {
   TabsTrigger,
 } from "@workspace/ui/components/tabs"
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
+import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
 import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
@@ -94,32 +95,10 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
             fillId={rfp.id}
             pendingReviewCount={rfp.pendingReviews?.length ?? 0}
           />
-          {rfp.filledFileUrl ? (
-            <Button
-              variant="outline"
-              size="sm"
-              render={
-                <a
-                  href={rfp.filledFileUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  download
-                />
-              }
-              nativeButton={false}
-            >
-              Download filled
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              size="sm"
-              disabled
-              title={rfp.exportDownloadBlockedReason ?? undefined}
-            >
-              Download filled
-            </Button>
-          )}
+          <DownloadFilledButton
+            filledFileUrl={rfp.filledFileUrl}
+            blockedReason={rfp.exportDownloadBlockedReason}
+          />
           <Button size="sm" disabled>
             Retry
           </Button>
