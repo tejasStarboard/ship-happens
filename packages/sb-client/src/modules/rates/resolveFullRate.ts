@@ -37,14 +37,68 @@ export type ResolvedRate = SearchRateHit & {
   resolved_currency: string | null
 }
 
-function asRateList(searchBody: unknown): SearchRateHit[] {
+/**
+ * Normalize contract/spot search JSON into a rate hit list.
+ * Supports legacy `{ rates }` and Starboard paginated
+ * `{ paginated_rates, non_paginated_rates, pagination }` (qv2 rates/search).
+ */
+export function asRateList(searchBody: unknown): SearchRateHit[] {
   if (!searchBody || typeof searchBody !== "object") return []
   const o = searchBody as Record<string, unknown>
+  if (Array.isArray(o.paginated_rates)) {
+    const page = o.paginated_rates as SearchRateHit[]
+    const extra = Array.isArray(o.non_paginated_rates)
+      ? (o.non_paginated_rates as SearchRateHit[])
+      : []
+    return [...page, ...extra]
+  }
   const candidates = [o.rates, o.data, o.results]
   for (const c of candidates) {
     if (Array.isArray(c)) return c as SearchRateHit[]
   }
   return []
+}
+
+/** Hit count for empty vs success discrimination (raw body still available). */
+export function countRateSearchHits(searchBody: unknown): number {
+  return asRateList(searchBody).length
+}
+
+/** Pagination block from Starboard paginated Qv2 search (when present). */
+export type RateSearchPaginationMeta = {
+  page: number
+  pageSize: number
+  totalCount: number
+  totalPages: number
+  cacheKey: string | null
+}
+
+export function paginationFromSearchBody(
+  searchBody: unknown
+): RateSearchPaginationMeta | null {
+  if (!searchBody || typeof searchBody !== "object") return null
+  const pagination = (searchBody as Record<string, unknown>).pagination
+  if (!pagination || typeof pagination !== "object") return null
+  const p = pagination as Record<string, unknown>
+  const page = typeof p.page === "number" ? p.page : null
+  const pageSize = typeof p.page_size === "number" ? p.page_size : null
+  const totalCount = typeof p.total_count === "number" ? p.total_count : null
+  const totalPages = typeof p.total_pages === "number" ? p.total_pages : null
+  if (
+    page == null ||
+    pageSize == null ||
+    totalCount == null ||
+    totalPages == null
+  ) {
+    return null
+  }
+  return {
+    page,
+    pageSize,
+    totalCount,
+    totalPages,
+    cacheKey: typeof p.cache_key === "string" ? p.cache_key : null,
+  }
 }
 
 function equipmentFromHit(

@@ -1,6 +1,14 @@
 "use client"
 
 import { useRouter } from "next/navigation"
+import { IconTemplate } from "@tabler/icons-react"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@workspace/ui/components/empty"
 import {
   Table,
   TableBody,
@@ -9,9 +17,10 @@ import {
   TableHeader,
   TableRow,
 } from "@workspace/ui/components/table"
+import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
-import { formatBytes } from "@/lib/mock/templates"
-import type { TemplateListItem } from "@/lib/server/templates"
+import { formatBytes } from "@/lib/shared/format-bytes"
+import type { TemplateListItem } from "@/lib/domain/templates/template.types"
 import { formatDateTime } from "@/lib/shared/string"
 
 export function TemplatesTable({
@@ -22,66 +31,81 @@ export function TemplatesTable({
   const router = useRouter()
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 lg:px-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
-          <p className="text-sm text-muted-foreground">
-            Uploaded bid-sheet documents and metadata.
-          </p>
-        </div>
-        <UploadTemplateDialog />
-      </div>
-
-      <div className="px-4 lg:px-6">
-        <div className="overflow-hidden rounded-lg border">
+    <PageChrome
+      title="Templates"
+      description="Customer bid-sheet layouts the desk reuses every season."
+      actions={<UploadTemplateDialog />}
+    >
+      {templates.length === 0 ? (
+        <Empty className="desk-empty relative min-h-[320px] overflow-hidden border border-dashed border-border bg-card">
+          <div
+            className="desk-empty-hero pointer-events-none absolute inset-0 opacity-35"
+            style={{
+              backgroundImage: "url(/marketing/workbook-glow.jpg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+            aria-hidden
+          />
+          <EmptyHeader className="relative">
+            <EmptyMedia variant="icon">
+              <IconTemplate />
+            </EmptyMedia>
+            <EmptyTitle>No templates yet</EmptyTitle>
+            <EmptyDescription>
+              Upload a customer bid sheet once, then start fills from it.
+            </EmptyDescription>
+          </EmptyHeader>
+          <div className="relative">
+            <UploadTemplateDialog />
+          </div>
+        </Empty>
+      ) : (
+        <DataTableShell>
           <Table>
-            <TableHeader className="bg-muted">
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>File</TableHead>
-                <TableHead>Size</TableHead>
-                <TableHead>Uploaded</TableHead>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                  Name
+                </TableHead>
+                <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                  Customer
+                </TableHead>
+                <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                  File
+                </TableHead>
+                <TableHead className="h-[38px] text-right text-xs font-medium text-muted-foreground">
+                  Size
+                </TableHead>
+                <TableHead className="h-[38px] text-right text-xs font-medium text-muted-foreground">
+                  Uploaded
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {templates.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="h-24 text-center text-muted-foreground"
-                  >
-                    No templates yet for this organization.
+              {templates.map((template) => (
+                <TableRow
+                  key={template.id}
+                  className="h-[42px] cursor-pointer"
+                  onClick={() => router.push(`/templates/${template.id}`)}
+                >
+                  <TableCell className="font-medium">{template.name}</TableCell>
+                  <TableCell>{template.customer ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {template.fileName}
+                  </TableCell>
+                  <TableCell className="tabular text-right text-muted-foreground">
+                    {formatBytes(template.sizeBytes)}
+                  </TableCell>
+                  <TableCell className="tabular text-right text-muted-foreground">
+                    {formatDateTime(template.uploadedAt)}
                   </TableCell>
                 </TableRow>
-              ) : (
-                templates.map((template) => (
-                  <TableRow
-                    key={template.id}
-                    className="cursor-pointer"
-                    onClick={() => router.push(`/templates/${template.id}`)}
-                  >
-                    <TableCell className="font-medium">
-                      {template.name}
-                    </TableCell>
-                    <TableCell>{template.customer ?? "—"}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {template.fileName}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatBytes(template.sizeBytes)}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDateTime(template.uploadedAt)}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
+              ))}
             </TableBody>
           </Table>
-        </div>
-      </div>
-    </div>
+        </DataTableShell>
+      )}
+    </PageChrome>
   )
 }

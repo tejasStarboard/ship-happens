@@ -2,6 +2,7 @@ import path from "node:path"
 import {
   collectSyncFiles,
   ensureWorkspace,
+  isAgentPrivateEvePath,
   MAX_SYNC_FILE_BYTES,
   SKIP_DIR_NAMES,
   writeWorkspaceFile,
@@ -66,7 +67,8 @@ export async function pullSandboxToWorkspace(
     .filter(
       (relative) =>
         relative.length > 0 &&
-        !relative.split("/").some((part) => SKIP_DIR_NAMES.has(part))
+        !relative.split("/").some((part) => SKIP_DIR_NAMES.has(part)) &&
+        !isAgentPrivateEvePath(relative)
     )
 
   let written = 0

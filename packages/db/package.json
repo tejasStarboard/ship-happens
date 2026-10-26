@@ -1,0 +1,45 @@
+{
+  "name": "@workspace/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Drizzle schema + createDb() for Ship Happens runtimes",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema/index.d.ts",
+      "import": "./dist/schema/index.js",
+      "default": "./dist/schema/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format": "prettier --write \"**/*.{ts,md}\" --ignore-path ../../.prettierignore",
+    "format:check": "prettier --check \"**/*.{ts,md}\" --ignore-path ../../.prettierignore",
+    "prepack": "pnpm run build"
+  },
+  "dependencies": {
+    "ai": "^7.0.128",
+    "drizzle-orm": "^0.45.2",
+    "pg": "^8.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/pg": "^8.23.1",
+    "tsup": "^8.5.0",
+    "typescript": "^6"
+  }
+}

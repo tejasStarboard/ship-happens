@@ -23,6 +23,8 @@ env:
   EMAIL_SENDER_ADDRESS: noreply@example.com
   BLOB_STORE_ID: local
   BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
+  # Turbo local cache dir (also restored via actions/cache)
+  TURBO_CACHE_DIR: .turbo
 
 jobs:
   ci:
@@ -47,6 +49,24 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.{js,jsx,ts,tsx}', 'packages/**/src/**/*.{js,jsx,ts,tsx}', 'packages/**/tsup.config.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nextjs-${{ runner.os }}-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -97,6 +117,8 @@ jobs:
     env:
       POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/ship_happens
       CI: "true"
+      # Playwright webServer only starts; build runs in a dedicated step below.
+      PLAYWRIGHT_SKIP_WEBSERVER_BUILD: "1"
 
     steps:
       - name: Checkout
@@ -113,11 +135,45 @@ jobs:
           node-version: 24
           cache: pnpm
 
+      - name: Cache Turbo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            turbo-${{ runner.os }}-
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: apps/web/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('apps/web/**/*.{js,jsx,ts,tsx}', 'packages/**/src/**/*.{js,jsx,ts,tsx}', 'packages/**/tsup.config.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+            nextjs-${{ runner.os }}-
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: pnpm --filter web exec playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm --filter web exec playwright install-deps chromium
+
+      - name: Build web + workspace deps
+        # Builds @workspace/db, @ship-happens/fill, @starboard/sb-client, then web
+        run: pnpm exec turbo build --filter=web...
 
       - name: Push database schema
         run: pnpm db:push

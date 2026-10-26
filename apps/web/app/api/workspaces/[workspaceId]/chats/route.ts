@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
-import { requireOrgSession } from "@/lib/server/session"
+import { requireOrgSession } from "@/lib/auth/session"
+import { jsonDomainError } from "@/lib/domain/http"
 import {
   addWorkspaceChat,
   getWorkspace,
@@ -11,24 +12,29 @@ export async function POST(
   context: { readonly params: Promise<{ readonly workspaceId: string }> }
 ) {
   try {
-    await requireOrgSession()
-  } catch {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  }
+    const { organizationId } = await requireOrgSession()
+    const { workspaceId } = await context.params
+    if (
+      !isValidWorkspaceId(workspaceId) ||
+      !(await getWorkspace(workspaceId, organizationId))
+    ) {
+      return NextResponse.json(
+        { error: "Workspace not found" },
+        { status: 404 }
+      )
+    }
 
-  const { workspaceId } = await context.params
-  if (!isValidWorkspaceId(workspaceId) || !(await getWorkspace(workspaceId))) {
-    return NextResponse.json({ error: "Workspace not found" }, { status: 404 })
-  }
+    let title: string | undefined
+    try {
+      const body = (await request.json()) as { title?: unknown }
+      if (typeof body.title === "string") title = body.title
+    } catch {
+      // optional body
+    }
 
-  let title: string | undefined
-  try {
-    const body = (await request.json()) as { title?: unknown }
-    if (typeof body.title === "string") title = body.title
-  } catch {
-    // optional body
+    const chat = await addWorkspaceChat(organizationId, workspaceId, title)
+    return NextResponse.json(chat)
+  } catch (error) {
+    return jsonDomainError(error, "Unauthorized")
   }
-
-  const chat = await addWorkspaceChat(workspaceId, title)
-  return NextResponse.json(chat)
 }

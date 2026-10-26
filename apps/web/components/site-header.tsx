@@ -2,6 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useState } from "react"
+import { IconSearch } from "@tabler/icons-react"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -10,12 +12,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@workspace/ui/components/breadcrumb"
+import { Button } from "@workspace/ui/components/button"
 import { Separator } from "@workspace/ui/components/separator"
 import { SidebarTrigger } from "@workspace/ui/components/sidebar"
 import { Fragment } from "react"
+import { CommandPalette } from "@/components/command/command-palette"
 
 const SEGMENT_LABELS: Record<string, string> = {
-  rfp: "Fills",
+  rfp: "Fill desk",
   templates: "Templates",
   overlays: "Overlays",
   rates: "Starboard rates",
@@ -28,7 +32,6 @@ const SEGMENT_LABELS: Record<string, string> = {
 
 function labelForSegment(segment: string, index: number, parts: string[]) {
   if (SEGMENT_LABELS[segment]) return SEGMENT_LABELS[segment]
-  // Keep raw ids readable on nested fill/template routes.
   if (parts[0] === "rfp" && index === 1) return "Fill"
   if (parts[0] === "templates" && index === 1) return "Template"
   return segment.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
@@ -37,7 +40,7 @@ function labelForSegment(segment: string, index: number, parts: string[]) {
 function crumbsFromPath(pathname: string) {
   const parts = pathname.split("/").filter(Boolean)
   if (parts.length === 0) {
-    return [{ label: "Fills", href: "/rfp" as string | null }]
+    return [{ label: "Fill desk", href: "/rfp" as string | null }]
   }
   const crumbs: { label: string; href: string | null }[] = []
   let acc = ""
@@ -54,39 +57,67 @@ function crumbsFromPath(pathname: string) {
 export function SiteHeader() {
   const pathname = usePathname()
   const crumbs = crumbsFromPath(pathname)
+  const [commandOpen, setCommandOpen] = useState(false)
 
   return (
-    <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-(--header-height)">
-      <div className="flex w-full items-center gap-1 px-4 lg:px-6">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mx-2" />
-        <Breadcrumb className="min-w-0 flex-1">
-          <BreadcrumbList>
-            {crumbs.map((crumb, index) => {
-              const isLast = index === crumbs.length - 1
-              return (
-                <Fragment key={`${crumb.label}-${index}`}>
-                  {index > 0 ? <BreadcrumbSeparator /> : null}
-                  <BreadcrumbItem>
-                    {isLast || !crumb.href ? (
-                      <BreadcrumbPage className="truncate">
-                        {crumb.label}
-                      </BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink
-                        render={<Link href={crumb.href} />}
-                        className="truncate"
-                      >
-                        {crumb.label}
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                </Fragment>
-              )
-            })}
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-    </header>
+    <>
+      <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-border bg-background/90 backdrop-blur-md">
+        <div className="flex w-full items-center gap-1 px-4 lg:px-6">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mx-2 h-4" />
+          <Breadcrumb className="min-w-0 flex-1">
+            <BreadcrumbList className="text-sm">
+              {crumbs.map((crumb, index) => {
+                const isLast = index === crumbs.length - 1
+                return (
+                  <Fragment key={`${crumb.label}-${index}`}>
+                    {index > 0 ? <BreadcrumbSeparator /> : null}
+                    <BreadcrumbItem>
+                      {isLast || !crumb.href ? (
+                        <BreadcrumbPage className="truncate font-medium">
+                          {crumb.label}
+                        </BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink
+                          render={<Link href={crumb.href} />}
+                          className="truncate text-muted-foreground"
+                        >
+                          {crumb.label}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </Fragment>
+                )
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="ml-2 hidden h-8 gap-2 border-border/80 bg-muted/40 text-muted-foreground sm:inline-flex"
+            onClick={() => setCommandOpen(true)}
+          >
+            <IconSearch className="size-3.5" />
+            <span className="text-xs">Search</span>
+            <kbd className="pointer-events-none ml-1 hidden rounded border border-border bg-background px-1.5 font-mono text-[10px] text-muted-foreground md:inline">
+              ⌘K
+            </kbd>
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="sm:hidden"
+            aria-label="Open command palette"
+            onClick={() => setCommandOpen(true)}
+          >
+            <IconSearch className="size-4" />
+          </Button>
+        </div>
+      </header>
+      <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+    </>
   )
 }

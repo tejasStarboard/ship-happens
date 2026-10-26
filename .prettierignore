@@ -6,6 +6,7 @@ node_modules/
 .tanstack/
 .vinxi/
 .next/
+.eve/
 coverage/
 pnpm-lock.yaml
 .pnpm-store/

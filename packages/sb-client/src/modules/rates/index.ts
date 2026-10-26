@@ -4,8 +4,12 @@ import {
   type RateCandidateInput,
 } from "../../lib/recommendRate.js"
 import {
+  asRateList,
   assembleResolvedRate,
+  countRateSearchHits,
+  paginationFromSearchBody,
   resolveContractRates,
+  type RateSearchPaginationMeta,
   type ResolvedRate,
   type SearchRateHit,
 } from "./resolveFullRate.js"
@@ -17,7 +21,14 @@ import {
 } from "./schemas.js"
 import type { RateItemRow } from "../globals/filter.js"
 
-export type { ContractSearchInput, SpotSearchInput, ResolvedRate }
+export type {
+  ContractSearchInput,
+  SpotSearchInput,
+  RateSearchPaginationMeta,
+  ResolvedRate,
+  SearchRateHit,
+}
+export { asRateList, countRateSearchHits, paginationFromSearchBody }
 
 export class RatesModule {
   constructor(private readonly http: StarboardHttp) {}

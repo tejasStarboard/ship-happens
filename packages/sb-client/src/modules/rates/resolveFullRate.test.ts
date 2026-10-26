@@ -1,8 +1,42 @@
 import { describe, expect, it } from "vitest"
-import { assembleResolvedRate } from "./resolveFullRate.js"
+import {
+  asRateList,
+  assembleResolvedRate,
+  countRateSearchHits,
+} from "./resolveFullRate.js"
 import { priceGlobalBuy } from "./priceGlobal.js"
 import { globalMatchesLane } from "./matchGlobals.js"
 import type { RateItemRow } from "../globals/filter.js"
+
+describe("asRateList / countRateSearchHits", () => {
+  it("reads rates, data, or results arrays", () => {
+    expect(countRateSearchHits({ rates: [{ id: "a" }, { id: "b" }] })).toBe(2)
+    expect(asRateList({ data: [{ id: "x" }] })).toHaveLength(1)
+    expect(countRateSearchHits({ results: [] })).toBe(0)
+  })
+
+  it("merges paginated_rates with non_paginated_rates", () => {
+    expect(
+      asRateList({
+        paginated_rates: [{ id: "p1" }],
+        non_paginated_rates: [{ id: "n1" }, { id: "n2" }],
+        pagination: {
+          page: 1,
+          page_size: 25,
+          total_count: 100,
+          total_pages: 4,
+          cache_key: "ck",
+        },
+      })
+    ).toEqual([{ id: "p1" }, { id: "n1" }, { id: "n2" }])
+  })
+
+  it("treats non-list bodies as empty (not error)", () => {
+    expect(countRateSearchHits(null)).toBe(0)
+    expect(countRateSearchHits({})).toBe(0)
+    expect(countRateSearchHits({ rates: "nope" })).toBe(0)
+  })
+})
 
 describe("priceGlobalBuy (QGS parity)", () => {
   it("applies dollar minimum when usage_by=rate (Test Min 4313)", () => {

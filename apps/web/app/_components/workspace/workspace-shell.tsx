@@ -26,7 +26,26 @@ type WorkspacePayload = {
     readonly id: string
     readonly sessionId: string | null
     readonly title: string
+    readonly createdAt?: number
+    readonly updatedAt?: number
+    readonly hiddenFromTabs?: boolean
+    readonly events?: readonly unknown[]
+    readonly priorMessages?: readonly unknown[]
   }>
+}
+
+function toChatTabState(chat: WorkspacePayload["chats"][number]): ChatTabState {
+  const createdAt = chat.createdAt ?? Date.now()
+  return {
+    id: chat.id,
+    sessionId: chat.sessionId,
+    title: chat.title,
+    createdAt,
+    updatedAt: chat.updatedAt ?? createdAt,
+    hiddenFromTabs: chat.hiddenFromTabs === true,
+    events: Array.isArray(chat.events) ? chat.events : [],
+    priorMessages: Array.isArray(chat.priorMessages) ? chat.priorMessages : [],
+  }
 }
 
 export function WorkspaceShell({
@@ -59,11 +78,27 @@ export function WorkspaceShell({
   const applyWorkspace = useCallback(
     (workspace: WorkspacePayload, preferChatId?: string) => {
       setWorkspaceId(workspace.id)
-      const nextChats = workspace.chats.map((chat) => ({
-        id: chat.id,
-        sessionId: chat.sessionId,
-        title: chat.title,
-      }))
+      let nextChats = workspace.chats.map(toChatTabState)
+      let openChats = nextChats.filter((chat) => !chat.hiddenFromTabs)
+      // Always keep at least one tab visible so the shell can mount.
+      if (openChats.length === 0 && nextChats.length > 0) {
+        const reopenId =
+          preferChatId && nextChats.some((chat) => chat.id === preferChatId)
+            ? preferChatId
+            : nextChats[0]!.id
+        nextChats = nextChats.map((chat) =>
+          chat.id === reopenId ? { ...chat, hiddenFromTabs: false } : chat
+        )
+        openChats = nextChats.filter((chat) => !chat.hiddenFromTabs)
+        void fetch(
+          `/api/workspaces/${encodeURIComponent(workspace.id)}/chats/${encodeURIComponent(reopenId)}`,
+          {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ hiddenFromTabs: false }),
+          }
+        )
+      }
       setChats(nextChats)
       setActiveChatId((current) => {
         if (
@@ -72,10 +107,10 @@ export function WorkspaceShell({
         ) {
           return preferChatId
         }
-        if (current && nextChats.some((chat) => chat.id === current)) {
+        if (current && openChats.some((chat) => chat.id === current)) {
           return current
         }
-        return nextChats[0]?.id ?? ""
+        return openChats[0]?.id ?? nextChats[0]?.id ?? ""
       })
     },
     []
@@ -135,13 +170,53 @@ export function WorkspaceShell({
     void refreshTree(workspaceId)
   }, [workspaceId, refreshTree])
 
+  const refreshOpenOfficePublicUrls = useCallback(async (id: string) => {
+    const officeTabs = tabsRef.current.filter(
+      (tab) => tab.viewerKind === "xlsx" || tab.publicUrl
+    )
+    if (officeTabs.length === 0) return
+
+    const updates = await Promise.all(
+      officeTabs.map(async (tab) => {
+        try {
+          const response = await fetch(
+            `/api/workspace/${encodeURIComponent(id)}/file?path=${encodeURIComponent(tab.path)}`
+          )
+          if (!response.ok) return null
+          const body = (await response.json()) as {
+            path: string
+            publicUrl?: string | null
+          }
+          return {
+            path: tab.path,
+            publicUrl: body.publicUrl ?? null,
+          }
+        } catch {
+          return null
+        }
+      })
+    )
+
+    setTabs((prev) =>
+      prev.map((tab) => {
+        const update = updates.find((entry) => entry && entry.path === tab.path)
+        if (!update || update.publicUrl === tab.publicUrl) return tab
+        return { ...tab, publicUrl: update.publicUrl }
+      })
+    )
+  }, [])
+
   const scheduleRefresh = useCallback(() => {
     if (!workspaceId) return
     if (refreshTimer.current) clearTimeout(refreshTimer.current)
+    // Delay so turn.completed Blob persist can finish before we re-fetch publicUrl.
     refreshTimer.current = setTimeout(() => {
-      void refreshTree(workspaceId)
-    }, 400)
-  }, [workspaceId, refreshTree])
+      void (async () => {
+        await refreshTree(workspaceId)
+        await refreshOpenOfficePublicUrls(workspaceId)
+      })()
+    }, 1500)
+  }, [workspaceId, refreshTree, refreshOpenOfficePublicUrls])
 
   const openFile = useCallback(
     async (path: string) => {
@@ -368,31 +443,92 @@ export function WorkspaceShell({
       setTreeError("Failed to create chat")
       return
     }
-    const chat = (await response.json()) as ChatTabState
+    const chat = toChatTabState(
+      (await response.json()) as WorkspacePayload["chats"][number]
+    )
     setChats((prev) => [...prev, chat])
     setActiveChatId(chat.id)
   }, [workspaceId])
 
+  const selectChat = useCallback(
+    async (chatId: string) => {
+      if (!workspaceId) return
+      const existing = chats.find((chat) => chat.id === chatId)
+      if (!existing) return
+
+      if (existing.hiddenFromTabs) {
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === chatId
+              ? { ...chat, hiddenFromTabs: false, updatedAt: Date.now() }
+              : chat
+          )
+        )
+        setActiveChatId(chatId)
+        const response = await fetch(
+          `/api/workspaces/${encodeURIComponent(workspaceId)}/chats/${encodeURIComponent(chatId)}`,
+          {
+            method: "PATCH",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ hiddenFromTabs: false }),
+          }
+        )
+        if (!response.ok) {
+          setTreeError("Failed to reopen chat")
+          setChats((prev) =>
+            prev.map((chat) =>
+              chat.id === chatId ? { ...chat, hiddenFromTabs: true } : chat
+            )
+          )
+          return
+        }
+        const chat = toChatTabState(
+          (await response.json()) as WorkspacePayload["chats"][number]
+        )
+        setChats((prev) =>
+          prev.map((entry) => (entry.id === chat.id ? chat : entry))
+        )
+        return
+      }
+
+      setActiveChatId(chatId)
+    },
+    [chats, workspaceId]
+  )
+
   const closeChat = useCallback(
     async (chatId: string) => {
-      if (!workspaceId || chats.length <= 1) return
+      if (!workspaceId) return
+      const openCount = chats.filter((chat) => !chat.hiddenFromTabs).length
+      // Keep at least one open tab so the workspace shell stays mounted.
+      if (openCount <= 1) return
+      // Soft-close: keep the eve session running; only hide from the tab strip.
+      setChats((prev) => {
+        const next = prev.map((chat) =>
+          chat.id === chatId
+            ? { ...chat, hiddenFromTabs: true, updatedAt: Date.now() }
+            : chat
+        )
+        if (activeChatId === chatId) {
+          const stillOpen = next.filter((chat) => !chat.hiddenFromTabs)
+          setActiveChatId(stillOpen.at(-1)?.id ?? "")
+        }
+        return next
+      })
       const response = await fetch(
         `/api/workspaces/${encodeURIComponent(workspaceId)}/chats/${encodeURIComponent(chatId)}`,
         { method: "DELETE" }
       )
       if (!response.ok) {
         setTreeError("Failed to close chat")
-        return
+        setChats((prev) =>
+          prev.map((chat) =>
+            chat.id === chatId ? { ...chat, hiddenFromTabs: false } : chat
+          )
+        )
       }
-      setChats((prev) => {
-        const next = prev.filter((chat) => chat.id !== chatId)
-        if (activeChatId === chatId) {
-          setActiveChatId(next.at(-1)?.id ?? "")
-        }
-        return next
-      })
     },
-    [activeChatId, chats.length, workspaceId]
+    [activeChatId, chats, workspaceId]
   )
 
   const bindSession = useCallback(
@@ -413,6 +549,64 @@ export function WorkspaceShell({
       void refreshTree(workspaceId)
     },
     [refreshTree, workspaceId]
+  )
+
+  const clearSession = useCallback(
+    async (chatId: string) => {
+      if (!workspaceId) return
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === chatId
+            ? { ...chat, sessionId: null, updatedAt: Date.now() }
+            : chat
+        )
+      )
+      await fetch(
+        `/api/workspaces/${encodeURIComponent(workspaceId)}/chats/${encodeURIComponent(chatId)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ sessionId: null }),
+        }
+      )
+    },
+    [workspaceId]
+  )
+
+  const persistEvents = useCallback(
+    async (
+      chatId: string,
+      events: readonly unknown[],
+      priorMessages?: readonly unknown[]
+    ) => {
+      if (!workspaceId) return
+      setChats((prev) =>
+        prev.map((chat) =>
+          chat.id === chatId
+            ? {
+                ...chat,
+                events: [...events],
+                ...(priorMessages !== undefined
+                  ? { priorMessages: [...priorMessages] }
+                  : {}),
+                updatedAt: Date.now(),
+              }
+            : chat
+        )
+      )
+      await fetch(
+        `/api/workspaces/${encodeURIComponent(workspaceId)}/chats/${encodeURIComponent(chatId)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            events,
+            ...(priorMessages !== undefined ? { priorMessages } : {}),
+          }),
+        }
+      )
+    },
+    [workspaceId]
   )
 
   const renameChat = useCallback(
@@ -553,11 +747,13 @@ export function WorkspaceShell({
             insertText={chatInsertText}
             onAddChat={addChat}
             onBindSession={bindSession}
+            onClearSession={clearSession}
             onCloseChat={closeChat}
+            onPersistEvents={persistEvents}
             onIdle={scheduleRefresh}
             onInsertTextConsumed={() => setChatInsertText(null)}
             onRenameChat={renameChat}
-            onSelectChat={setActiveChatId}
+            onSelectChat={selectChat}
             workspaceContext={workspaceContext}
             workspaceId={workspaceId}
           />

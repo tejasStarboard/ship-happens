@@ -9,16 +9,18 @@ import type {
   EveMessagePart,
 } from "eve/react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
-  ArrowRightIcon,
-  CheckCircleIcon,
-  CheckIcon,
-  ExternalLinkIcon,
-  FileIcon,
-  ImageIcon,
-  KeyRoundIcon,
-  XCircleIcon,
-} from "lucide-react"
+  IconArrowRight as ArrowRightIcon,
+  IconCircleCheck as CheckCircleIcon,
+  IconCheck as CheckIcon,
+  IconExternalLink as ExternalLinkIcon,
+  IconFile as FileIcon,
+  IconPhoto as ImageIcon,
+  IconKey as KeyRoundIcon,
+  IconClipboardList as ClipboardListIcon,
+  IconCircleX as XCircleIcon,
+} from "@tabler/icons-react"
 import {
   Confirmation,
   ConfirmationAction,
@@ -63,6 +65,11 @@ import {
   ToolOutput,
 } from "@workspace/ui/ai-elements/tool"
 import { Button } from "@workspace/ui/components/button"
+import {
+  parseReviewCreatedFromBash,
+  type ReviewCreatedNotify,
+} from "@/lib/agent/parse-review-created"
+import { redactSecrets, redactSecretsDeep } from "@/lib/secret-redaction"
 import { cn } from "@/lib/utils"
 
 export type AgentInputResponse = {
@@ -88,21 +95,25 @@ export function AgentMessage({
   ) => void | Promise<void>
   readonly questionsFor: (callId: string) => readonly ConversationInput[]
 }) {
-  const lastTextIndex = message.parts.reduce(
+  // Redact before children mount so raw secrets never appear in React props/DOM.
+  const safeMessage = redactEveMessage(message)
+  const lastTextIndex = safeMessage.parts.reduce(
     (last, part, index) => (part.type === "text" ? index : last),
     -1
   )
   const hasAssistantText =
-    message.role === "assistant" &&
-    message.parts.some((part) => part.type === "text" && part.text.length > 0)
+    safeMessage.role === "assistant" &&
+    safeMessage.parts.some(
+      (part) => part.type === "text" && part.text.length > 0
+    )
 
   return (
     <Message
-      data-optimistic={message.metadata?.optimistic ? "true" : undefined}
-      from={message.role}
+      data-optimistic={safeMessage.metadata?.optimistic ? "true" : undefined}
+      from={safeMessage.role}
     >
       <MessageContent>
-        {message.parts.map((part, index) =>
+        {safeMessage.parts.map((part, index) =>
           hasAssistantText && part.type === "reasoning" ? null : (
             <AgentMessagePart
               canRespond={canRespond}
@@ -112,7 +123,7 @@ export function AgentMessage({
               questionsFor={questionsFor}
               showCaret={
                 isStreaming &&
-                message.role === "assistant" &&
+                safeMessage.role === "assistant" &&
                 index === lastTextIndex
               }
             />
@@ -121,6 +132,29 @@ export function AgentMessage({
       </MessageContent>
     </Message>
   )
+}
+
+function redactEveMessage(message: EveMessage): EveMessage {
+  return {
+    ...message,
+    parts: message.parts.map((part) => {
+      if (part.type === "text" || part.type === "reasoning") {
+        return { ...part, text: redactSecrets(part.text) }
+      }
+      if (part.type === "dynamic-tool") {
+        return {
+          ...part,
+          input: redactSecretsDeep(part.input),
+          output: redactSecretsDeep(part.output),
+          errorText:
+            typeof part.errorText === "string"
+              ? redactSecrets(part.errorText)
+              : part.errorText,
+        }
+      }
+      return part
+    }),
+  } as EveMessage
 }
 
 function AgentMessagePart({
@@ -176,6 +210,11 @@ function AgentMessagePart({
         )
       }
 
+      const reviewCreated =
+        part.toolName === "bash"
+          ? parseReviewCreatedFromBash(part.input, part.output, part.errorText)
+          : null
+
       return (
         <>
           <Tool>
@@ -200,6 +239,7 @@ function AgentMessagePart({
               )}
             </ToolContent>
           </Tool>
+          {reviewCreated ? <ReviewCreatedCard review={reviewCreated} /> : null}
           {/* Kept outside the collapsed card so a pending approval is always visible. */}
           <InputRequestActions
             canRespond={canRespond}
@@ -210,6 +250,40 @@ function AgentMessagePart({
       )
     }
   }
+}
+
+function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
+  const router = useRouter()
+  const href = `/rfp/${review.rfpId}?review=${encodeURIComponent(review.id)}`
+
+  return (
+    <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300">
+          <ClipboardListIcon className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-sm font-medium">Review waiting on you</p>
+          <p className="text-sm text-muted-foreground">{review.title}</p>
+          <p className="text-xs text-muted-foreground">
+            Open Overview to Confirm, Edit, or Reject. Chat alone does not
+            decide this item.
+          </p>
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => {
+              router.push(href)
+              router.refresh()
+            }}
+          >
+            Open in Overview
+            <ExternalLinkIcon className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function QuestionRequest({

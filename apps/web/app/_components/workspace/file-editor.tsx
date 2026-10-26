@@ -1,6 +1,11 @@
 "use client"
 
-import { DownloadIcon, FileIcon, SaveIcon, XIcon } from "lucide-react"
+import {
+  IconDownload as DownloadIcon,
+  IconFile as FileIcon,
+  IconDeviceFloppy as SaveIcon,
+  IconX as XIcon,
+} from "@tabler/icons-react"
 import { OfficeViewer } from "@/app/_components/workspace/office-viewer"
 import { Button } from "@workspace/ui/components/button"
 import { cn } from "@/lib/utils"

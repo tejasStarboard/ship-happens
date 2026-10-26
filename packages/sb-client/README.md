@@ -4,6 +4,20 @@ Standalone **TypeScript library + CLI** for Ship Happens (and other agents) to c
 
 No MCP. No quote lifecycle. Rate search returns **resolved** rates (carrier surcharges + matching global defaults), like the webapp quote view after add-rate — without saving a quote.
 
+## Source of truth (starboard-2)
+
+When adding or changing client methods, request/response shapes, auth, or
+rate/margin/globals behavior, implement against the **Starboard webapp** — not
+from memory:
+
+```
+/Users/sanskrutibadnore/Desktop/Starboard/starboard-2
+```
+
+Search that repo for the matching API route/controller and serializers before
+editing this package. Keep Freight Index / multi-round quote flows out of RFP
+fill pricing unless a ticket explicitly requires them.
+
 ```
 sb-client / library
   → verify POST /api/public_api_clients/verify
@@ -32,6 +46,17 @@ const { rates } = await client.rates.resolve({
   cargo: { cargo_type: "container", container_types: ["40HC"] },
 })
 ```
+
+## Read-only rate search smoke (Ship Happens)
+
+After env is pointed at Starboard **dev**, run the web smoke (contract + spot, CNSHA→USLAX 40HC):
+
+```bash
+pnpm --filter @starboard/sb-client build
+pnpm --filter web starboard:smoke-rates
+```
+
+Exit `0` for `ok` or honest `empty`; exit `1` for typed config/auth/API errors. Server code uses `searchRatesReadOnly` / `runStarboardRateSearchSmoke` in `apps/web/lib/starboard/rate-search.ts` (also `GET /api/starboard/rates/smoke` when signed in).
 
 ## CLI
 

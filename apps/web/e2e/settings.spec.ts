@@ -2,6 +2,9 @@ import { test, expect } from "./fixtures"
 import { waitForAppReady } from "./helpers"
 
 test.describe("settings", () => {
+  // Mutates the shared seeded user (theme / profile) — keep serial under parallel workers.
+  test.describe.configure({ mode: "serial" })
+
   test("preferences persist theme selection", async ({ page }) => {
     await page.goto("/settings/preferences")
     await waitForAppReady(page)
