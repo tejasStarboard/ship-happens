@@ -63,6 +63,27 @@ export type OpsAnalyticsMappingQuality = {
   resolutionSources: OpsAnalyticsNamedCount[]
 }
 
+/**
+ * Bid conversion (SB-7090): decided by `decided_at` in window;
+ * due aging includes open/overdue fills regardless of decide date.
+ * Win rate = won / (won + lost); closed/expired excluded from denominator.
+ */
+export type OpsAnalyticsBidConversion = {
+  decidedCount: number
+  won: number
+  lost: number
+  closed: number
+  expired: number
+  /** null when won+lost === 0. */
+  winRate: number | null
+  outcomeMix: OpsAnalyticsNamedCount[]
+  dueAging: {
+    withDue: number
+    overdue: number
+    buckets: OpsAnalyticsAgingBucket[]
+  }
+}
+
 export type OpsAnalyticsView = {
   /** Rolling window used for aggregates (days). */
   windowDays: number
@@ -85,6 +106,7 @@ export type OpsAnalyticsView = {
   rateCoverage: OpsAnalyticsRateCoverage
   marginImpact: OpsAnalyticsMarginImpact
   mappingQuality: OpsAnalyticsMappingQuality
+  bidConversion: OpsAnalyticsBidConversion
 }
 
 export const OPS_ANALYTICS_DEFAULT_WINDOW_DAYS = 30

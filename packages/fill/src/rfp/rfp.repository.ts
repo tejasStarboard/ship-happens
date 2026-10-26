@@ -1,6 +1,7 @@
 import { and, desc, eq } from "drizzle-orm"
 import type { Database } from "@ship-happens/db"
 import { rfpSourceFiles, rfps, templates } from "@ship-happens/db"
+import type { RfpBidOutcome } from "./fill-bid-outcome"
 
 export type AppDb = Database
 
@@ -19,6 +20,9 @@ export class RfpRepository {
         templateName: templates.name,
         ownerName: rfps.ownerUserId,
         filledFileUrl: rfps.filledFileUrl,
+        dueAt: rfps.dueAt,
+        bidOutcome: rfps.bidOutcome,
+        decidedAt: rfps.decidedAt,
       })
       .from(rfps)
       .leftJoin(templates, eq(rfps.templateId, templates.id))
@@ -44,6 +48,10 @@ export class RfpRepository {
         completedAt: rfps.completedAt,
         createdAt: rfps.createdAt,
         organizationId: rfps.organizationId,
+        dueAt: rfps.dueAt,
+        bidOutcome: rfps.bidOutcome,
+        decidedAt: rfps.decidedAt,
+        decidedByUserId: rfps.decidedByUserId,
       })
       .from(rfps)
       .leftJoin(templates, eq(rfps.templateId, templates.id))
@@ -97,6 +105,32 @@ export class RfpRepository {
     await this.db
       .update(rfps)
       .set({ customer: trimmed, updatedAt: new Date() })
+      .where(eq(rfps.id, rfpId))
+  }
+
+  async updateDueAt(rfpId: string, dueAt: Date | null) {
+    await this.db
+      .update(rfps)
+      .set({ dueAt, updatedAt: new Date() })
+      .where(eq(rfps.id, rfpId))
+  }
+
+  async updateBidOutcome(
+    rfpId: string,
+    input: {
+      bidOutcome: RfpBidOutcome | null
+      decidedAt: Date | null
+      decidedByUserId: string | null
+    }
+  ) {
+    await this.db
+      .update(rfps)
+      .set({
+        bidOutcome: input.bidOutcome,
+        decidedAt: input.decidedAt,
+        decidedByUserId: input.decidedByUserId,
+        updatedAt: new Date(),
+      })
       .where(eq(rfps.id, rfpId))
   }
 

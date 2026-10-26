@@ -1,10 +1,17 @@
 /** Client-safe re-exports — must use `@ship-happens/fill/browser` (no pg). */
 export {
   asRfpStatus,
+  isBidOverdue,
+  isRfpBidOutcome,
+  resolveEffectiveBidOutcome,
+  RFP_BID_OUTCOME_HINT,
+  RFP_BID_OUTCOME_LABEL,
+  RFP_BID_OUTCOMES,
   RFP_STATUS_LABEL,
   type FillReportCellView,
   type LanePriceAudit,
   type MappedLane,
+  type RfpBidOutcome,
   type RfpDetailView,
   type RfpEmailRef,
   type RfpFillReportView,

@@ -14,6 +14,7 @@ import {
   downloadFilledStatusMessage,
 } from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
+import { FillBidOutcomePanel } from "@/components/rfp/fill-bid-outcome-panel"
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
 import { WaitingOnYouPanel } from "@/components/rfp/waiting-on-you-panel"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
@@ -153,6 +154,8 @@ export function FillOverviewDashboard({
           ) : null}
         </div>
       ) : null}
+
+      <FillBidOutcomePanel rfp={rfp} />
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-2">

@@ -29,11 +29,25 @@ import { FILLS_WORST_CASE } from "@/components/rfp/fills-break-fixtures"
 import { NewFillDialog } from "@/components/rfp/new-fill-dialog"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import {
+  RFP_BID_OUTCOME_LABEL,
   RFP_STATUS_LABEL,
+  type RfpBidOutcome,
   type RfpListItem,
   type RfpStatus,
 } from "@/lib/domain/rfp/rfp.types"
 import { formatDateTime } from "@/lib/shared/string"
+
+function bidOutcomePillClass(outcome: RfpBidOutcome) {
+  switch (outcome) {
+    case "won":
+      return "status-pill status-pill-positive"
+    case "lost":
+    case "expired":
+      return "status-pill status-pill-negative"
+    default:
+      return "status-pill status-pill-neutral"
+  }
+}
 
 type ViewMode = "board" | "list"
 
@@ -93,10 +107,20 @@ function FillCard({
       )}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className={statusPillClass(rfp.status)}>
-          {RFP_STATUS_LABEL[rfp.status]}
-        </span>
-        <span className="tabular text-[11px] text-muted-foreground">
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+          <span className={statusPillClass(rfp.status)}>
+            {RFP_STATUS_LABEL[rfp.status]}
+          </span>
+          {rfp.effectiveBidOutcome ? (
+            <span className={bidOutcomePillClass(rfp.effectiveBidOutcome)}>
+              {RFP_BID_OUTCOME_LABEL[rfp.effectiveBidOutcome]}
+              {rfp.bidOutcomeDerived ? " · due" : ""}
+            </span>
+          ) : rfp.dueAt ? (
+            <span className="status-pill status-pill-warning">Due</span>
+          ) : null}
+        </div>
+        <span className="tabular shrink-0 text-[11px] text-muted-foreground">
           {formatDateTime(rfp.updatedAt)}
         </span>
       </div>
@@ -343,6 +367,9 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                   Status
                 </TableHead>
                 <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                  Outcome
+                </TableHead>
+                <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                   Name
                 </TableHead>
                 <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
@@ -373,6 +400,17 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                     <span className={statusPillClass(rfp.status)}>
                       {RFP_STATUS_LABEL[rfp.status]}
                     </span>
+                  </TableCell>
+                  <TableCell>
+                    {rfp.effectiveBidOutcome ? (
+                      <span
+                        className={bidOutcomePillClass(rfp.effectiveBidOutcome)}
+                      >
+                        {RFP_BID_OUTCOME_LABEL[rfp.effectiveBidOutcome]}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                   <TableCell
                     className="max-w-[14rem] truncate font-medium"
