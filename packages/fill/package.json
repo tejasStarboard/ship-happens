@@ -33,7 +33,7 @@
     "prepack": "pnpm run build"
   },
   "dependencies": {
-    "@workspace/db": "workspace:*",
+    "@ship-happens/db": "workspace:*",
     "drizzle-orm": "^0.45.2",
     "xlsx": "^0.18.5",
     "zod": "^4.5.4"

@@ -21,7 +21,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@workspace/ui/components/sidebar"
+} from "@ship-happens/ui/components/sidebar"
 
 const navMain = [
   {

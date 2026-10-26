@@ -14,8 +14,8 @@ import {
   type MappedLane,
 } from "@ship-happens/fill/browser"
 import { toast } from "sonner"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@ship-happens/ui/components/badge"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Empty,
   EmptyContent,
@@ -23,8 +23,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
-import { Input } from "@workspace/ui/components/input"
+} from "@ship-happens/ui/components/empty"
+import { Input } from "@ship-happens/ui/components/input"
 import {
   Table,
   TableBody,
@@ -32,7 +32,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import { DataTableShell } from "@/components/shared/page-chrome"
 import { confirmFillMapping } from "@/lib/server/actions/mapping"
 import { decideReviewItem } from "@/lib/server/actions/reviews"

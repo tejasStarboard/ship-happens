@@ -13,5 +13,5 @@ export default defineConfig({
   outDir: "dist",
   target: "node20",
   splitting: false,
-  external: ["@workspace/db", "drizzle-orm", "xlsx", "zod"],
+  external: ["@ship-happens/db", "drizzle-orm", "xlsx", "zod"],
 })

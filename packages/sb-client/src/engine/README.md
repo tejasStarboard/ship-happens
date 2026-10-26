@@ -1,7 +1,7 @@
 # Surcharge engine twins
 
 These files are copies of `apps/webapp/utils/shared/quotes/{teuFactor,usageUnit,deriveRawUsage,computeSurchargeRow}.ts`
-so `@starboard/sb-client` stays a shippable package without Next.js path aliases.
+so `@ship-happens/sb-client` stays a shippable package without Next.js path aliases.
 
 **Do not edit logic here in isolation.** Change the webapp copy first, then re-copy
 (or keep byte-identical). TEU billing factor `2.5332` is guarded by

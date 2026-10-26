@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { eq } from "drizzle-orm"
-import { rfpMappedLanes, rfps } from "@workspace/db"
+import { rfpMappedLanes, rfps } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
 import type { MappedLane } from "./mapped-lane"
 

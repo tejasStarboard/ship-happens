@@ -30,9 +30,9 @@ export default withEve({
   allowedDevOrigins: ["127.0.0.1", "localhost", ...extraDevOrigins()],
   // Keep Node DB drivers out of the bundler; client UI must import
   // `@ship-happens/fill/browser` for labels/types (not the server barrel).
-  serverExternalPackages: ["pg", "ioredis", "@workspace/db"],
-  // @workspace/db + @ship-happens/fill ship prebuilt dist/ (tsup); ui stays source.
-  transpilePackages: ["@workspace/ui"],
+  serverExternalPackages: ["pg", "ioredis", "@ship-happens/db"],
+  // @ship-happens/db + @ship-happens/fill ship prebuilt dist/ (tsup); ui stays source.
+  transpilePackages: ["@ship-happens/ui"],
   // Include the vendored sb-client CLI (copied in build:sb-client-cli) in every
   // serverless/workflow bundle — dynamic fs reads are not auto-traced.
   outputFileTracingRoot: path.join(appDir, "../.."),

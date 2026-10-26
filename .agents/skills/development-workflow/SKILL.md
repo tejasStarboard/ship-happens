@@ -74,7 +74,7 @@ force-push on `dev` / `main`.
 
 If the user already said “implement X”, skip re-asking settled points.
 
-**Domain layering:** portable DB/fill logic goes in `@workspace/db` / `@ship-happens/fill`. App adapters use Repository + Service (+ Manager) via `createAppContext()` (`apps/web/lib/di`). Thin `"use server"` / route adapters only. See `docs/architecture.md`. Never add god modules in `lib/server/actions` or unscoped `getServerSession` on data routes — use `requireOrgSession` / `requireOrgWorkspaceAccess`.
+**Domain layering:** portable DB/fill logic goes in `@ship-happens/db` / `@ship-happens/fill`. App adapters use Repository + Service (+ Manager) via `createAppContext()` (`apps/web/lib/di`). Thin `"use server"` / route adapters only. See `docs/architecture.md`. Never add god modules in `lib/server/actions` or unscoped `getServerSession` on data routes — use `requireOrgSession` / `requireOrgWorkspaceAccess`.
 
 ---
 
@@ -124,7 +124,7 @@ git push -u origin SB-XXXX
 
 ### `packages/sb-client` (and Starboard API wiring)
 
-When changing `@starboard/sb-client`, rate search/resolve, margins, globals,
+When changing `@ship-happens/sb-client`, rate search/resolve, margins, globals,
 locations, Public API auth, or any Ship Happens code that calls Starboard:
 
 1. Treat **starboard-2** as the source of truth for endpoints, payloads, and
@@ -348,7 +348,7 @@ List every ticket id included in the cherry-pick, space-separated.
 - **Local setup / ports / env:** root [`README.md`](../../../README.md) (canonical for agents cloning the repo).
 - **Starboard API / sb-client:** sibling repo
   `/Users/sanskrutibadnore/Desktop/Starboard/starboard-2` — read that codebase
-  when implementing or debugging `@starboard/sb-client` (see §5). Package docs:
+  when implementing or debugging `@ship-happens/sb-client` (see §5). Package docs:
   [`packages/sb-client/README.md`](../../../packages/sb-client/README.md).
 - Ticket investigation loop: `ticket-resolution` — **branch naming, PR titles, and deployment follow this skill**.
 - CI: `.github/workflows/ci.yml`

@@ -1,8 +1,8 @@
 "use client"
 
-import { Alert, AlertDescription } from "@workspace/ui/components/alert"
-import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
+import { Alert, AlertDescription } from "@ship-happens/ui/components/alert"
+import { Button } from "@ship-happens/ui/components/button"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { ToolUIPart } from "ai"
 import type { ComponentProps, ReactNode } from "react"
 import { createContext, useContext, useMemo } from "react"

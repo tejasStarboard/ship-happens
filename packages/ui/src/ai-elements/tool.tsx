@@ -4,8 +4,8 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/collapsible"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { DynamicToolUIPart, ToolUIPart } from "ai"
 import { ChevronRightIcon, TerminalIcon, WrenchIcon } from "lucide-react"
 import type { ComponentProps, ReactNode } from "react"

@@ -1,5 +1,5 @@
 import { env } from "@/env"
-import { createDb } from "@workspace/db"
+import { createDb } from "@ship-happens/db"
 import { Redis } from "ioredis"
 
 const databaseUrl = env.POSTGRES_URL
@@ -9,7 +9,7 @@ if (!databaseUrl) {
 
 const { db: database, pool } = createDb(databaseUrl)
 
-/** App-scoped Drizzle client (Postgres). Schema lives in `@workspace/db`. */
+/** App-scoped Drizzle client (Postgres). Schema lives in `@ship-happens/db`. */
 export const db = database
 export { pool }
 
@@ -18,5 +18,5 @@ if (!redisUrl) {
   throw new Error("REDIS_URL is not set")
 }
 
-/** Redis — web/auth runtime only (not part of `@workspace/db`). */
+/** Redis — web/auth runtime only (not part of `@ship-happens/db`). */
 export const redis = new Redis(redisUrl)

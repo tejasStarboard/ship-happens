@@ -9,7 +9,7 @@ import {
   IconEye,
   IconDownload,
 } from "@tabler/icons-react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { RfpStatus } from "@/lib/domain/rfp/rfp.types"
 
 const STEPS = [

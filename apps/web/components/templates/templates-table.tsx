@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
 import { formatBytes } from "@/lib/shared/format-bytes"

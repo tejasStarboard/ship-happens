@@ -2,29 +2,33 @@
 
 import * as React from "react"
 import { IconChevronDown, IconLoader2, IconSearch } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
-import { Checkbox } from "@workspace/ui/components/checkbox"
-import { Field, FieldGroup, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
+} from "@ship-happens/ui/components/card"
+import { Checkbox } from "@ship-happens/ui/components/checkbox"
+import {
+  Field,
+  FieldGroup,
+  FieldLabel,
+} from "@ship-happens/ui/components/field"
+import { Input } from "@ship-happens/ui/components/input"
 import {
   Pagination,
   PaginationContent,
   PaginationEllipsis,
   PaginationItem,
-} from "@workspace/ui/components/pagination"
+} from "@ship-happens/ui/components/pagination"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@workspace/ui/components/popover"
-import { Skeleton } from "@workspace/ui/components/skeleton"
+} from "@ship-happens/ui/components/popover"
+import { Skeleton } from "@ship-happens/ui/components/skeleton"
 import {
   Table,
   TableBody,
@@ -32,8 +36,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/table"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type {
   RateResultRow,
   RateResultSurcharge,

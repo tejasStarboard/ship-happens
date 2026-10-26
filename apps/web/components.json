@@ -12,11 +12,11 @@
   },
   "iconLibrary": "lucide",
   "aliases": {
-    "components": "@workspace/ui",
-    "utils": "@workspace/ui/lib/utils",
-    "ui": "@workspace/ui/components",
+    "components": "@ship-happens/ui",
+    "utils": "@ship-happens/ui/lib/utils",
+    "ui": "@ship-happens/ui/components",
     "lib": "@/lib",
-    "hooks": "@workspace/ui/hooks"
+    "hooks": "@ship-happens/ui/hooks"
   },
   "registries": {}
 }

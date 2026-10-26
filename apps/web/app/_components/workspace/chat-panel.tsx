@@ -10,14 +10,14 @@ import {
   AgentChat,
   type WorkspaceChatContext,
 } from "@/app/_components/agent-chat"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Popover,
   PopoverContent,
   PopoverHeader,
   PopoverTitle,
   PopoverTrigger,
-} from "@workspace/ui/components/popover"
+} from "@ship-happens/ui/components/popover"
 import { cn } from "@/lib/utils"
 
 export type ChatTabState = {

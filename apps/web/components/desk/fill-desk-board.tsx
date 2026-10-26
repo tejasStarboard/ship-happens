@@ -15,7 +15,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 import {
   Table,
   TableBody,
@@ -23,8 +23,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/table"
+import { cn } from "@ship-happens/ui/lib/utils"
 import { FILLS_WORST_CASE } from "@/components/rfp/fills-break-fixtures"
 import { NewFillDialog } from "@/components/rfp/new-fill-dialog"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"

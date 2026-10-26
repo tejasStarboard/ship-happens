@@ -9,7 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
+} from "@ship-happens/ui/components/select"
 import { usePreferences } from "@/hooks/use-preferences"
 import {
   DISPLAY_NAME_OPTIONS,

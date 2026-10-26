@@ -6,22 +6,22 @@ import { useRouter } from "next/navigation"
 import { useForm } from "@tanstack/react-form"
 import { IconArrowRight, IconEye, IconEyeOff } from "@tabler/icons-react"
 import { z } from "zod"
-import { Alert, AlertDescription } from "@workspace/ui/components/alert"
-import { Button } from "@workspace/ui/components/button"
+import { Alert, AlertDescription } from "@ship-happens/ui/components/alert"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
+} from "@ship-happens/ui/components/field"
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@workspace/ui/components/input-group"
-import { Input } from "@workspace/ui/components/input"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/input-group"
+import { Input } from "@ship-happens/ui/components/input"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import {
   AuthBody,
   AuthCard,

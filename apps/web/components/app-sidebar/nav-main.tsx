@@ -7,7 +7,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@workspace/ui/components/collapsible"
+} from "@ship-happens/ui/components/collapsible"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -17,8 +17,8 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@workspace/ui/components/sidebar"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/sidebar"
+import { cn } from "@ship-happens/ui/lib/utils"
 
 export type NavMainItem = {
   title: string

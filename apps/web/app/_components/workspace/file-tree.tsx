@@ -15,21 +15,21 @@ import {
   IconUpload as UploadIcon,
 } from "@tabler/icons-react"
 import { useMemo, useRef, useState } from "react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
   ContextMenuSeparator,
   ContextMenuTrigger,
-} from "@workspace/ui/components/context-menu"
+} from "@ship-happens/ui/components/context-menu"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
+} from "@ship-happens/ui/components/dropdown-menu"
 import { cn } from "@/lib/utils"
 import type { WorkspaceEntry } from "@/lib/workspace-types"
 

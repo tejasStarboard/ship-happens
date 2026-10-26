@@ -2,12 +2,12 @@
 
 Framework-free fill/intake domain: `FillPipelineManager`, `IntakeService`, RFP repository helpers.
 
-Built with **tsup** → `dist/` (`pnpm --filter @ship-happens/fill build`). Depends on `@workspace/db` (build db first). Inject blob + workspace ports from the host runtime.
+Built with **tsup** → `dist/` (`pnpm --filter @ship-happens/fill build`). Depends on `@ship-happens/db` (build db first). Inject blob + workspace ports from the host runtime.
 
 **Client Components:** import from `@ship-happens/fill/browser` (types, status labels, spreadsheet constants, `DomainError`) — never the root barrel (it pulls `pg`).
 
 ```ts
-import { createDb } from "@workspace/db"
+import { createDb } from "@ship-happens/db"
 import {
   FillPipelineManager,
   IntakeService,

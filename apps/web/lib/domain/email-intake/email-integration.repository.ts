@@ -3,7 +3,7 @@ import {
   emailIntegrations,
   emailIntakeMessages,
   type Database,
-} from "@workspace/db"
+} from "@ship-happens/db"
 
 export type AppDb = Database
 

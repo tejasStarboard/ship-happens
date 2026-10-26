@@ -74,7 +74,9 @@ export async function resolveSbClientCliPath(): Promise<string> {
   }
 
   try {
-    const resolved = fileURLToPath(import.meta.resolve("@starboard/sb-client"))
+    const resolved = fileURLToPath(
+      import.meta.resolve("@ship-happens/sb-client")
+    )
     candidates.push(join(dirname(resolved), "cli.js"))
   } catch {
     // Fall through to cwd-relative candidates.
@@ -82,7 +84,7 @@ export async function resolveSbClientCliPath(): Promise<string> {
 
   candidates.push(
     join(process.cwd(), "lib/starboard/vendor/sb-client.cli.js"),
-    join(process.cwd(), "node_modules/@starboard/sb-client/dist/cli.js"),
+    join(process.cwd(), "node_modules/@ship-happens/sb-client/dist/cli.js"),
     join(process.cwd(), "../../packages/sb-client/dist/cli.js"),
     join(process.cwd(), "../packages/sb-client/dist/cli.js"),
     join(process.cwd(), "packages/sb-client/dist/cli.js")
@@ -98,7 +100,7 @@ export async function resolveSbClientCliPath(): Promise<string> {
   }
 
   throw new Error(
-    "Built @starboard/sb-client CLI not found. Run: pnpm --filter web build:sb-client-cli"
+    "Built @ship-happens/sb-client CLI not found. Run: pnpm --filter web build:sb-client-cli"
   )
 }
 
@@ -192,7 +194,7 @@ exec node ${SB_CLIENT_SANDBOX_JS} "$@"
 `
 
 /**
- * Copy the built `@starboard/sb-client` CLI into the sandbox and install on PATH.
+ * Copy the built `@ship-happens/sb-client` CLI into the sandbox and install on PATH.
  * Re-run on each sandbox open so local rebuilds are picked up.
  * Writes Starboard env to `.eve/sb-client.env` (sourced by the wrapper).
  */

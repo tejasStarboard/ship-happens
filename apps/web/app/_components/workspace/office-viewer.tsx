@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
 import { cn } from "@/lib/utils"
 import type { OfficeViewerKind } from "@/lib/workspace-types"

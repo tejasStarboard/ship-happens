@@ -16,16 +16,20 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@workspace/ui/components/alert-dialog"
+} from "@ship-happens/ui/components/alert-dialog"
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
-import { Button } from "@workspace/ui/components/button"
-import { Field, FieldError, FieldLabel } from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/avatar"
+import { Button } from "@ship-happens/ui/components/button"
+import {
+  Field,
+  FieldError,
+  FieldLabel,
+} from "@ship-happens/ui/components/field"
+import { Input } from "@ship-happens/ui/components/input"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import { authClient } from "@/lib/auth/client"
 import { getInitials } from "@/lib/shared/string"
 

@@ -1,7 +1,7 @@
 "use client"
 
-import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@ship-happens/ui/components/button"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { UIMessage } from "ai"
 import { ArrowDownIcon, DownloadIcon } from "lucide-react"
 import type { ComponentProps } from "react"

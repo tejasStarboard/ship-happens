@@ -5,7 +5,7 @@ import { cn } from "cn"
 import useEmblaCarousel from "embla-carousel-react"
 import type { UseEmblaCarouselType } from "embla-carousel-react"
 
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 
 type CarouselApi = UseEmblaCarouselType[1]

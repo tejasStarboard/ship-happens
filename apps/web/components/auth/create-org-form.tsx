@@ -9,18 +9,18 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
-import { Alert, AlertDescription } from "@workspace/ui/components/alert"
-import { Button } from "@workspace/ui/components/button"
+} from "@ship-happens/ui/components/avatar"
+import { Alert, AlertDescription } from "@ship-happens/ui/components/alert"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/field"
+import { Input } from "@ship-happens/ui/components/input"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import {
   AuthBody,
   AuthCard,

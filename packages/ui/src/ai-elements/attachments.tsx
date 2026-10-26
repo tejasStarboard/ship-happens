@@ -1,12 +1,12 @@
 "use client"
 
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
-} from "@workspace/ui/components/hover-card"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/hover-card"
+import { cn } from "@ship-happens/ui/lib/utils"
 import type { FileUIPart, SourceDocumentUIPart } from "ai"
 import {
   FileTextIcon,

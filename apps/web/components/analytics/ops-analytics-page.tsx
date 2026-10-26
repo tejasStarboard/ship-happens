@@ -15,6 +15,11 @@ function formatDuration(ms: number | null): string {
   return hours < 10 ? `${hours.toFixed(1)}h` : `${Math.round(hours)}h`
 }
 
+function formatPct(rate: number | null): string {
+  if (rate == null || !Number.isFinite(rate)) return "—"
+  return `${Math.round(rate * 100)}%`
+}
+
 function formatWindowLabel(view: OpsAnalyticsView): string {
   const start = new Date(view.windowStartedAt)
   return `Last ${view.windowDays} days · since ${start.toLocaleDateString(
@@ -110,12 +115,29 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
     ...view.openReviewAging.buckets.map((b) => b.count)
   )
   const eventMax = Math.max(0, ...view.lifecycleEvents.map((b) => b.count))
+  const rateMax = Math.max(0, ...view.rateCoverage.mix.map((b) => b.count))
+  const marginBucketMax = Math.max(
+    0,
+    ...view.marginImpact.marginPctBuckets.map((b) => b.count)
+  )
+  const mappingSourceMax = Math.max(
+    0,
+    ...view.mappingQuality.resolutionSources.map((b) => b.count)
+  )
+  const marginSectionEmpty =
+    view.marginImpact.floorBreachReviews === 0 &&
+    view.marginImpact.markupCells === 0 &&
+    view.marginImpact.projectedCells === 0
+  const mappingSectionEmpty =
+    view.mappingQuality.confirmedLanes === 0 &&
+    view.mappingQuality.agentOnlyPending === 0 &&
+    view.mappingQuality.mapReviewsDecided === 0
   const isEmpty = view.fillCount === 0
 
   return (
     <PageChrome
       title="Analytics"
-      description="Fill ops for the active organization — status funnel, time-to-done, open review aging, and failure reasons."
+      description="Fill ops, rate coverage, margins, and mapping quality for the active organization."
       meta={
         <p className="text-xs text-muted-foreground">
           {formatWindowLabel(view)}
@@ -128,8 +150,8 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
             No fills in the last {view.windowDays} days
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create a fill from the Fill desk or email intake. Lifecycle events
-            and funnel metrics will show up here as work completes.
+            Create a fill from the Fill desk or email intake. Funnel, rate
+            coverage, and mapping metrics will show up here as work completes.
           </p>
         </div>
       ) : (
@@ -237,6 +259,124 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
                   </li>
                 ))}
               </ul>
+            </Section>
+          </div>
+
+          <div className="grid gap-10 lg:grid-cols-2">
+            <Section
+              title="Rate coverage"
+              description="Contract hit vs skip vs overlay-only on fill report cells (fill resolve is contract-only)."
+              empty={view.rateCoverage.laneCellCount === 0}
+            >
+              <div className="flex flex-col gap-4">
+                <p className="text-xs text-muted-foreground">
+                  {view.rateCoverage.laneCellCount} lane cell
+                  {view.rateCoverage.laneCellCount === 1 ? "" : "s"} in window
+                </p>
+                <div className="flex flex-col gap-2.5">
+                  {view.rateCoverage.mix.map((bucket) => (
+                    <BarRow
+                      key={bucket.key}
+                      label={bucket.label}
+                      count={bucket.count}
+                      max={rateMax}
+                    />
+                  ))}
+                </div>
+              </div>
+            </Section>
+
+            <Section
+              title="Margins & overlay"
+              description="Floor-margin review opens, markup vs projected overlay cells, and margin % mix on markup lanes."
+              empty={marginSectionEmpty}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-4 sm:grid-cols-3">
+                  <MetricCard
+                    label="Floor breaches"
+                    value={String(view.marginImpact.floorBreachReviews)}
+                    hint="margin-floor reviews"
+                  />
+                  <MetricCard
+                    label="Markup cells"
+                    value={String(view.marginImpact.markupCells)}
+                  />
+                  <MetricCard
+                    label="Projected cells"
+                    value={String(view.marginImpact.projectedCells)}
+                    hint="Overlay-only sell"
+                  />
+                </div>
+                {marginBucketMax > 0 ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      Margin % (markup)
+                    </p>
+                    {view.marginImpact.marginPctBuckets.map((bucket) => (
+                      <BarRow
+                        key={bucket.key}
+                        label={bucket.label}
+                        count={bucket.count}
+                        max={marginBucketMax}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </Section>
+
+            <Section
+              title="Mapping quality"
+              description="Confirmed lanes vs pending agent map proposals, HITL correction rate, and proposal source mix."
+              empty={mappingSectionEmpty}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <MetricCard
+                    label="Confirmed lanes"
+                    value={String(view.mappingQuality.confirmedLanes)}
+                  />
+                  <MetricCard
+                    label="Agent-only pending"
+                    value={String(view.mappingQuality.agentOnlyPending)}
+                    hint="Open map reviews"
+                  />
+                  <MetricCard
+                    label="HITL corrections"
+                    value={String(view.mappingQuality.hitlCorrections)}
+                    hint="Edited map reviews"
+                  />
+                  <MetricCard
+                    label="Correction rate"
+                    value={formatPct(view.mappingQuality.hitlCorrectionRate)}
+                    hint={
+                      view.mappingQuality.mapReviewsDecided > 0
+                        ? `${view.mappingQuality.mapReviewsDecided} decided`
+                        : "No decided map reviews"
+                    }
+                  />
+                </div>
+                {view.mappingQuality.resolutionSources.length > 0 ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      Proposal sources
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      LOCODE Jev/manual/agent mix is not instrumented yet —
+                      showing map-review source when present.
+                    </p>
+                    {view.mappingQuality.resolutionSources.map((bucket) => (
+                      <BarRow
+                        key={bucket.key}
+                        label={bucket.label}
+                        count={bucket.count}
+                        max={mappingSourceMax}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </Section>
           </div>
         </div>
