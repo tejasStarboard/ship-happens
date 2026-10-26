@@ -1,7 +1,7 @@
 import {
   DomainError,
   parseMappingJson,
-  toFillReportCellView,
+  toFillReportCellViewsWithBidPriority,
   type LogLevel,
   type CreateReviewItemInput,
   type ProposeLanesInput,
@@ -109,7 +109,10 @@ export async function getFillCells(
   if (!fill) {
     throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
   }
-  const report = await app.repos.fillReports.getReport(fillId)
+  const [report, reviews] = await Promise.all([
+    app.repos.fillReports.getReport(fillId),
+    app.reviews.list(ctx.organizationId, fillId, { status: "pending" }),
+  ])
   if (!report) {
     return {
       fillId,
@@ -118,10 +121,10 @@ export async function getFillCells(
       skippedCount: 0,
       needsHumanCount: 0,
       errorCount: 0,
-      cells: [] as ReturnType<typeof toFillReportCellView>[],
+      cells: [] as ReturnType<typeof toFillReportCellViewsWithBidPriority>,
     }
   }
-  let cells = report.cells.map(toFillReportCellView)
+  let cells = toFillReportCellViewsWithBidPriority(report.cells, reviews)
   const laneId = options?.laneId?.trim()
   if (laneId) {
     cells = cells.filter((cell) => cell.audit.laneId === laneId)

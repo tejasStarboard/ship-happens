@@ -7,6 +7,7 @@
  * Phase 3 fill resolve is contract-only (`channel: "contract"`).
  */
 
+import type { LaneBidPriority } from "./lane-bid-priority"
 import type { MappedLane } from "./mapped-lane"
 import type { ResolvedRateCandidate } from "./rate-ports"
 import type { RatePickConfidenceReason } from "./rate-pick-confidence"
@@ -74,6 +75,8 @@ export type FillReportCellView = {
   value: string | null
   reason: string | null
   audit: LanePriceAudit
+  /** Analyst bid priority (SB-7092); null until attached via with-priority mapper. */
+  bidPriority?: LaneBidPriority | null
 }
 
 export type FillReportView = {

@@ -83,6 +83,15 @@ export {
   RATE_PICK_REVIEW_SOURCE,
   type RatePickConfidenceReason,
 } from "./rates/rate-pick-confidence"
+export {
+  compareLaneBidPriorityDesc,
+  LANE_BID_PRIORITY_FACTOR_LABEL,
+  LANE_BID_PRIORITY_TIER_LABEL,
+  scoreLaneBidPriority,
+  type LaneBidPriority,
+  type LaneBidPriorityFactor,
+  type LaneBidPriorityTier,
+} from "./rates/lane-bid-priority"
 
 export {
   ALLOWED_SPREADSHEET_MIME_TYPES,

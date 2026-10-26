@@ -241,6 +241,20 @@ export {
   type RatePickConfidenceReason,
 } from "./rates/rate-pick-confidence"
 export {
+  collectPendingBidPriorityLanes,
+  compareLaneBidPriorityDesc,
+  LANE_BID_PRIORITY_ATTENTION_SCORE,
+  LANE_BID_PRIORITY_CRITICAL_SCORE,
+  LANE_BID_PRIORITY_FACTOR_LABEL,
+  LANE_BID_PRIORITY_TIER_LABEL,
+  laneKeyFromAudit,
+  scoreLaneBidPriority,
+  toFillReportCellViewsWithBidPriority,
+  type LaneBidPriority,
+  type LaneBidPriorityFactor,
+  type LaneBidPriorityTier,
+} from "./rates/lane-bid-priority"
+export {
   RateResolutionService,
   type ResolveMappedLanesResult,
 } from "./rates/rate-resolution.service"
