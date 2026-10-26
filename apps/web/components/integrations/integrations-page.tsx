@@ -53,9 +53,12 @@ function statusLabel(status: string) {
 
 export function IntegrationsPage({
   integrations,
+  gmailRedirectUri,
   flash,
 }: {
   integrations: IntegrationPublicView[]
+  /** Exact redirect URI Google Cloud OAuth client must allow. */
+  gmailRedirectUri: string
   flash?: { connected?: string | null; error?: string | null }
 }) {
   const router = useRouter()
@@ -169,6 +172,21 @@ export function IntegrationsPage({
                 ) : (
                   <p className="text-muted-foreground">Not connected</p>
                 )}
+                {uiEnabled && provider.id === "gmail" ? (
+                  <div className="space-y-1 pt-1">
+                    <p className="text-muted-foreground">
+                      Google Cloud → Credentials → your OAuth client →{" "}
+                      <span className="text-foreground">
+                        Authorized redirect URIs
+                      </span>{" "}
+                      must include (exact match; this is not the Better Auth
+                      sign-in callback):
+                    </p>
+                    <code className="block break-all rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[11px] text-foreground">
+                      {gmailRedirectUri}
+                    </code>
+                  </div>
+                ) : null}
               </div>
 
               {uiEnabled ? (

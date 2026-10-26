@@ -95,13 +95,21 @@ export function SignUpForm({
     setFormError(null)
     setGooglePending(true)
     try {
-      const { error } = await authClient.signIn.social({
+      const { data, error } = await authClient.signIn.social({
         provider: "google",
         callbackURL: afterAuthPath,
       })
       if (error) {
         setFormError(error.message ?? "Could not sign up with Google")
         setGooglePending(false)
+        return
+      }
+      const url =
+        data && typeof data === "object" && "url" in data
+          ? String((data as { url?: string }).url ?? "")
+          : ""
+      if (url) {
+        window.location.assign(url)
       }
     } catch (err) {
       setFormError(
