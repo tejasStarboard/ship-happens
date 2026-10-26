@@ -126,15 +126,27 @@ export {
   lanePriceAuditFromMetadata,
   toFillReportCellView,
   withOverlayAuditMetadata,
+  withPickConfidenceMetadata,
   type FillAuditCellOutcome,
   type FillReportCellView,
   type FillReportView,
   type LaneOverlayAudit,
   type LaneOverlayMode,
+  type LanePickConfidenceAudit,
   type LanePriceAudit,
   type LaneStarboardAudit,
   type StarboardRateChannel,
 } from "./rates/lane-price-audit"
+export {
+  isLowConfidenceRatePick,
+  rankPricedBuys,
+  RATE_PICK_LOW_CONFIDENCE_THRESHOLD,
+  RATE_PICK_REVIEW_SOURCE,
+  scoreContractPick,
+  scoreOverlayPick,
+  type RatePickConfidence,
+  type RatePickConfidenceReason,
+} from "./rates/rate-pick-confidence"
 export {
   RateResolutionService,
   type ResolveMappedLanesResult,

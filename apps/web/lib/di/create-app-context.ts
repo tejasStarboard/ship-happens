@@ -102,7 +102,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     fillReports,
     mappingStore,
     starboardRates,
-    reviewRepo
+    reviewRepo,
+    reviews
   )
   const overlays = new OverlayApplicationService(
     rfpRepo,
