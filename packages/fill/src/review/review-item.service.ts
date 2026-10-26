@@ -110,7 +110,8 @@ export function normalizeDecideInput(
 
 /**
  * HITL review-item domain. Agent creates/lists/updates pending proposals and
- * resolves after a human decision. Humans Confirm / Edit / Reject via UI.
+ * resolves after Edit/Reject. Humans Confirm / Edit / Reject via UI; Confirm
+ * auto-resolves (no agent ack). See REVIEW_ITEM_STATUSES transition docs.
  */
 export class ReviewItemService {
   constructor(
@@ -277,8 +278,10 @@ export class ReviewItemService {
     }
 
     const normalized = normalizeDecideInput(input)
+    // Confirm (approved) auto-resolves: no agent follow-up needed.
+    // Edit/Reject stay intermediate until the agent acks via resolve().
     const patch: Parameters<ReviewItemRepository["updateById"]>[1] = {
-      status: normalized.status,
+      status: normalized.status === "approved" ? "resolved" : normalized.status,
       decidedByUserId,
       decidedAt: new Date(),
       decisionNote: normalized.decisionNote,
