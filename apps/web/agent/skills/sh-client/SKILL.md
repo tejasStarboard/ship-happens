@@ -3,9 +3,10 @@ name: sh-client
 description: >-
   Ship Happens fill CLI for this workspace: inspect fill status/progress/logs;
   submit-for-review (create/update pending HITL items); read user decisions
-  (list/get approved|edited|rejected); mark resolved after ack. Load when the
-  user asks to check fill status, open a wait, list decisions, or resolve after
-  Confirm/Edit/Reject. Prefer this over inventing review state in chat.
+  (list/get edited|rejected; Confirm is already resolved); mark resolved after
+  Edit/Reject ack. Load when the user asks to check fill status, open a wait,
+  list decisions, or resolve after Edit/Reject. Prefer this over inventing
+  review state in chat.
 ---
 
 # Ship Happens fill CLI (`sh-client`)
@@ -63,39 +64,43 @@ decision.
 
 ## 3. Read user decisions
 
-After the human Confirm / Edit / Reject path on Overview, status becomes
-`approved`, `edited`, or `rejected`. **Read those before resolving** — do not
-guess from chat.
+After Overview Confirm / Edit / Reject:
+
+- **Confirm** → status is already **`resolved`** (auto-resolve; no agent ack)
+- **Edit** → `edited`; **Reject** → `rejected` — read these before resolving
+
+Do not guess from chat.
 
 ```bash
 sh-client reviews list
-sh-client reviews list --status approved
 sh-client reviews list --status edited
 sh-client reviews list --status rejected
 sh-client reviews get --id rev_…
 ```
 
 Use `get` / filtered `list` to confirm `status`, `decisionNote`, and any edited
-`proposal` before acknowledging.
+`resolution` before acknowledging Edit/Reject.
 
-## 4. Mark resolved after ack
+## 4. Mark resolved after ack (Edit / Reject only)
 
-Only after status is `approved` | `edited` | `rejected`:
+Only after status is `edited` | `rejected` (or legacy `approved`):
 
 ```bash
 sh-client reviews resolve --id rev_… --body '{"resolution":{"applied":true}}'
 ```
 
-`reviews resolve` on `pending` **must fail** — that is correct. Do not invent a
-decision from chat; wait for the UI decision path (or another explicit decision
-write). Never set `resolved` based on free-text agreement in the conversation.
+- Confirm is already `resolved` — do **not** call resolve on it (errors as already resolved).
+- `reviews resolve` on `pending` **must fail** — that is correct.
+- Never invent a decision from chat; never set `resolved` from free-text agreement.
 
 ## Lifecycle (do not invent)
 
 1. Agent **`reviews create`** → `pending` (“Waiting on you”) + short chat notify with Overview deep-link
-2. Human on Overview → `approved` / `edited` / `rejected`
-3. Agent **reads** decision via `list` / `get`
-4. Agent **`reviews resolve`** → `resolved`
+2. Human on Overview:
+   - **Confirm** → `resolved` (done; leave the inbox)
+   - **Edit** / **Reject** → `edited` / `rejected`
+3. For Edit/Reject: agent **reads** decision via `list` / `get`
+4. Agent **`reviews resolve`** → `resolved` (Edit/Reject only)
 
 ## vs `fill-pipeline` skill
 

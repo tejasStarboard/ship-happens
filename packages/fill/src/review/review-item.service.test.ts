@@ -1,9 +1,12 @@
-import { describe, expect, it } from "vitest"
+import { describe, expect, it, vi } from "vitest"
 import { DomainError } from "../errors"
-import { normalizeDecideInput } from "./review-item.service"
+import type { RfpRepository } from "../rfp/rfp.repository"
+import type { ReviewItemRepository } from "./review-item.repository"
+import { normalizeDecideInput, ReviewItemService } from "./review-item.service"
 import {
   RESOLVABLE_REVIEW_STATUSES,
   REVIEW_ITEM_STATUSES,
+  type ReviewItemStatus,
 } from "./review-item.types"
 
 describe("review item status machine", () => {
@@ -78,5 +81,176 @@ describe("normalizeDecideInput", () => {
     expect(() =>
       normalizeDecideInput({ decision: "rejected", decisionNote: "   " })
     ).toThrow(DomainError)
+  })
+})
+
+function pendingRow(overrides?: {
+  status?: ReviewItemStatus
+  resolution?: Record<string, unknown>
+}) {
+  const now = new Date("2026-01-15T12:00:00.000Z")
+  return {
+    id: "rev_test1",
+    rfpId: "fill_1",
+    organizationId: "org_1",
+    stepKey: "map",
+    title: "Map column X",
+    status: overrides?.status ?? ("pending" as ReviewItemStatus),
+    proposal: { col: "A" },
+    confidence: "0.4",
+    source: "mapper",
+    sourceMetadata: {},
+    decidedByUserId: null,
+    decidedAt: null,
+    decisionNote: null,
+    resolution: overrides?.resolution ?? {},
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+function createService(opts?: { row?: ReturnType<typeof pendingRow> | null }) {
+  const row = opts?.row === undefined ? pendingRow() : opts.row
+  const updateById = vi.fn(
+    async (_id: string, patch: Record<string, unknown>) => {
+      if (!row) return null
+      return { ...row, ...patch, updatedAt: new Date() }
+    }
+  )
+  const repo = {
+    findByIdForFill: vi.fn(async () => row),
+    updateById,
+  } as unknown as ReviewItemRepository
+
+  const rfps = {
+    findByIdForOrganization: vi.fn(async () =>
+      row
+        ? {
+            id: row.rfpId,
+            organizationId: row.organizationId,
+            name: "Test",
+          }
+        : { id: "fill_1", organizationId: "org_1", name: "Test" }
+    ),
+  } as unknown as RfpRepository
+
+  return {
+    service: new ReviewItemService(repo, rfps),
+    repo,
+    updateById,
+  }
+}
+
+describe("ReviewItemService.decide", () => {
+  it("auto-resolves Confirm to resolved with decision fields", async () => {
+    const { service, updateById } = createService()
+    const view = await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+
+    expect(view.status).toBe("resolved")
+    expect(view.decidedByUserId).toBe("user_1")
+    expect(view.decidedAt).toBeInstanceOf(Date)
+    expect(view.decisionNote).toBeNull()
+    expect(updateById).toHaveBeenCalledWith(
+      "rev_test1",
+      expect.objectContaining({
+        status: "resolved",
+        decidedByUserId: "user_1",
+        decisionNote: null,
+      })
+    )
+  })
+
+  it("leaves Edit at edited (agent must resolve)", async () => {
+    const { service, updateById } = createService()
+    const view = await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "edited", resolution: { col: "B" } },
+      "user_1"
+    )
+
+    expect(view.status).toBe("edited")
+    expect(view.resolution).toEqual({ col: "B" })
+    expect(updateById).toHaveBeenCalledWith(
+      "rev_test1",
+      expect.objectContaining({
+        status: "edited",
+        resolution: { col: "B" },
+      })
+    )
+  })
+
+  it("leaves Reject at rejected (agent must resolve)", async () => {
+    const { service, updateById } = createService()
+    const view = await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "rejected", decisionNote: "wrong mapping" },
+      "user_1"
+    )
+
+    expect(view.status).toBe("rejected")
+    expect(view.decisionNote).toBe("wrong mapping")
+    expect(updateById).toHaveBeenCalledWith(
+      "rev_test1",
+      expect.objectContaining({
+        status: "rejected",
+        decisionNote: "wrong mapping",
+      })
+    )
+  })
+})
+
+describe("ReviewItemService.resolve", () => {
+  it("rejects resolve from pending", async () => {
+    const { service } = createService({ row: pendingRow() })
+    await expect(
+      service.resolve("org_1", "fill_1", "rev_test1")
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining("pending"),
+    })
+  })
+
+  it("resolves from edited", async () => {
+    const { service, updateById } = createService({
+      row: pendingRow({
+        status: "edited",
+        resolution: { col: "B" },
+      }),
+    })
+    const view = await service.resolve("org_1", "fill_1", "rev_test1", {
+      resolution: { applied: true },
+    })
+
+    expect(view.status).toBe("resolved")
+    expect(view.resolution).toEqual({ applied: true })
+    expect(updateById).toHaveBeenCalledWith(
+      "rev_test1",
+      expect.objectContaining({
+        status: "resolved",
+        resolution: { applied: true },
+      })
+    )
+  })
+
+  it("rejects resolve when already resolved", async () => {
+    const { service } = createService({
+      row: pendingRow({ status: "resolved" }),
+    })
+    await expect(
+      service.resolve("org_1", "fill_1", "rev_test1")
+    ).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining("already resolved"),
+    })
   })
 })

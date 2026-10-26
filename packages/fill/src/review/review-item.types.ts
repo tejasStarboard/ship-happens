@@ -1,3 +1,17 @@
+/**
+ * HITL review-item status machine (system of record — not chat).
+ *
+ * Transitions:
+ * - Agent create/update → `pending` (open wait; Waiting on you inbox)
+ * - UI Confirm → `resolved` atomically (auto-resolve; no agent follow-up)
+ * - UI Edit → `edited`; agent must apply then `resolve` → `resolved`
+ * - UI Reject → `rejected`; agent must ack then `resolve` → `resolved`
+ * - Agent `resolve` from `approved`|`edited`|`rejected` → `resolved`
+ *   (`approved` kept for legacy rows; new Confirms never land on `approved`)
+ * - `pending` → `resolved` is forbidden
+ *
+ * Open waits = rows with `status === "pending"` only.
+ */
 export const REVIEW_ITEM_STATUSES = [
   "pending",
   "approved",
@@ -8,7 +22,11 @@ export const REVIEW_ITEM_STATUSES = [
 
 export type ReviewItemStatus = (typeof REVIEW_ITEM_STATUSES)[number]
 
-/** Statuses from which the agent may mark a review item resolved. */
+/**
+ * Statuses from which the agent may mark a review item resolved.
+ * Includes `approved` for legacy pre-auto-resolve rows; new Confirms
+ * write `resolved` directly via UI decide.
+ */
 export const RESOLVABLE_REVIEW_STATUSES = [
   "approved",
   "edited",

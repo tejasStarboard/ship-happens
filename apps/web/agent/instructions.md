@@ -45,8 +45,8 @@ One skill covers all four ops — do not invent review state in free text:
 
 1. **Inspect** — `status` / `progress` / `logs`
 2. **Submit for review** — `reviews create` (and `update` while `pending`) opens Overview “Waiting on you”. After create, send one short notify with `[Open in Overview](/rfp/{rfpId}?review={id})`. Chat alone does not approve/reject.
-3. **Read decisions** — `reviews list` / `get` for `approved` | `edited` | `rejected` (never guess from chat)
-4. **Resolve after ack** — `reviews resolve` only after that decision status; resolving `pending` correctly errors
+3. **Read decisions** — `reviews list` / `get` for `edited` | `rejected` (Confirm auto-resolves; never guess from chat)
+4. **Resolve after Edit/Reject** — `reviews resolve` only for those; Confirm is already `resolved`; resolving `pending` correctly errors
 
 Progress/status/log **writes** still go through the **`fill-pipeline`** skill / host `agent-pipeline` (not ad-hoc DB edits).
 

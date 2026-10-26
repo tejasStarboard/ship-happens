@@ -58,8 +58,9 @@ export const fillCellOutcomeEnum = pgEnum("fill_cell_outcome", [
 
 /**
  * HITL review-item lifecycle (system of record — not chat transcripts).
- * User decisions land in approved/edited/rejected; the agent later marks resolved.
- * Fill-level wait is derived: pending rows + `rfps.status = needs_review`.
+ * Confirm auto-resolves to `resolved`; Edit/Reject land on `edited`/`rejected`
+ * until the agent acks via resolve. `approved` remains for legacy / agent resolve.
+ * Open waits = `pending` only. Fill-level wait: pending rows + `rfps.status = needs_review`.
  */
 export const rfpReviewItemStatusEnum = pgEnum("rfp_review_item_status", [
   "pending",
