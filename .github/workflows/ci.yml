@@ -168,17 +168,34 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       # Cache hit still needs OS libs every run (fresh VM). `install-deps` can
-      # hang on apt; bound it and fall back to a full --with-deps install.
+      # hang on apt; bound it, kill orphaned apt after timeout (otherwise the
+      # fallback races on /var/lib/dpkg/lock-frontend), then retry install-deps.
       - name: Install Playwright Chromium + OS deps
-        timeout-minutes: 5
+        timeout-minutes: 8
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
           set -euo pipefail
+
+          release_apt_lock() {
+            sudo killall -9 apt-get apt dpkg 2>/dev/null || true
+            for _ in $(seq 1 30); do
+              if ! sudo fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1 \
+                && ! sudo fuser /var/lib/dpkg/lock >/dev/null 2>&1; then
+                break
+              fi
+              sleep 2
+            done
+            sudo dpkg --configure -a >/dev/null 2>&1 || true
+          }
+
           pnpm --filter web exec playwright install chromium
-          if ! timeout 90 pnpm --filter web exec playwright install-deps chromium; then
-            echo "::warning::playwright install-deps timed out or failed; falling back to install --with-deps"
-            timeout 240 pnpm --filter web exec playwright install --with-deps chromium
+
+          # -k: SIGKILL after grace so grandchild apt-get does not keep the lock
+          if ! timeout -k 20s 150s pnpm --filter web exec playwright install-deps chromium; then
+            echo "::warning::playwright install-deps timed out or failed; clearing apt lock and retrying"
+            release_apt_lock
+            timeout -k 20s 300s pnpm --filter web exec playwright install-deps chromium
           fi
 
       - name: Build web + workspace deps
