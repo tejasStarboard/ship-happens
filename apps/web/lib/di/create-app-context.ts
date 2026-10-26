@@ -81,10 +81,10 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const templateRepo = new TemplateRepository(database)
   const pipeline = new FillPipelineManager(database)
   const reviewRepo = new ReviewItemRepository(database)
-  const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline)
   const fillReports = new FillReportRepository(database)
   const fillMappings = new FillMappingRepository(database)
-  const mapping = new FillMappingService(rfpRepo, fillMappings)
+  const mapping = new FillMappingService(rfpRepo, fillMappings, pipeline)
+  const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline, mapping)
   const overlayRulesRepo = new OverlayRuleRepository(database)
   const overlayRules = new OverlayRuleService(overlayRulesRepo)
   const marginFloorsRepo = new MarginFloorRuleRepository(database)
@@ -99,7 +99,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     pipeline,
     fillReports,
     mappingStore,
-    starboardRates
+    starboardRates,
+    reviewRepo
   )
   const overlays = new OverlayApplicationService(
     rfpRepo,

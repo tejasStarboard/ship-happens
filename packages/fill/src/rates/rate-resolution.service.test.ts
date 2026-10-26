@@ -41,6 +41,7 @@ function createService(opts: {
   lanes?: MappedLane[]
   resolve?: StarboardRatesPort["resolve"]
   mappingError?: Error
+  pendingMapReviews?: number
 }) {
   const rfps = {
     findByIdForOrganization: vi.fn().mockResolvedValue(fillRow()),
@@ -83,12 +84,20 @@ function createService(opts: {
       ]),
   }
 
+  const reviewItems =
+    opts.pendingMapReviews !== undefined
+      ? ({
+          countPending: vi.fn().mockResolvedValue(opts.pendingMapReviews),
+        } as never)
+      : undefined
+
   const service = new RateResolutionService(
     rfps,
     pipeline,
     reports,
     mapping,
     starboard,
+    reviewItems,
     2
   )
 
@@ -152,6 +161,21 @@ describe("RateResolutionService", () => {
       "fill_1",
       "rates",
       "No mapped lanes"
+    )
+    expect(pipeline.startStep).not.toHaveBeenCalled()
+  })
+
+  it("blocks resolve while map reviews are pending", async () => {
+    const { service, pipeline } = createService({ pendingMapReviews: 2 })
+    await expect(
+      service.resolveMappedLanes({ organizationId: "org_1", fillId: "fill_1" })
+    ).rejects.toMatchObject({
+      message: "Cannot resolve rates: 2 pending map reviews",
+    })
+    expect(pipeline.failStep).toHaveBeenCalledWith(
+      "fill_1",
+      "rates",
+      "Cannot resolve rates: 2 pending map reviews"
     )
     expect(pipeline.startStep).not.toHaveBeenCalled()
   })

@@ -143,9 +143,13 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
 
         <TabsContent value="map" className="mt-4 overflow-auto">
           <FillMapPanel
+            fillId={rfp.id}
             mappedLanes={rfp.mappedLanes}
             mappingError={rfp.mappingError}
             mapStep={rfp.progressSteps.find((step) => step.key === "map")}
+            pendingMapReviews={(rfp.pendingReviews ?? []).filter(
+              (item) => item.stepKey === "map"
+            )}
             onAskAgent={() => setTab("chat")}
           />
         </TabsContent>

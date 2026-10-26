@@ -26,6 +26,11 @@ export {
 } from "./rfp/rfp.types"
 
 export type { MappedLane, MappingDocument } from "./rates/mapped-lane"
+export {
+  isLowConfidenceMapping,
+  MAP_LOW_CONFIDENCE_THRESHOLD,
+  mappedLaneFromProposal,
+} from "./rates/proposal-to-mapped-lane"
 
 export {
   lanePriceAuditFromMetadata,

@@ -92,6 +92,7 @@ function pendingRow(overrides?: {
   stepKey?: string | null
   source?: string | null
   title?: string
+  proposal?: Record<string, unknown>
 }) {
   const now = new Date("2026-01-15T12:00:00.000Z")
   return {
@@ -101,7 +102,7 @@ function pendingRow(overrides?: {
     stepKey: overrides?.stepKey === undefined ? "map" : overrides.stepKey,
     title: overrides?.title ?? "Map column X",
     status: overrides?.status ?? ("pending" as ReviewItemStatus),
-    proposal: { col: "A" },
+    proposal: overrides?.proposal ?? { col: "A" },
     confidence: "0.4",
     source: overrides?.source === undefined ? "mapper" : overrides.source,
     sourceMetadata: {},
@@ -119,6 +120,7 @@ function createService(opts?: {
   fillStatus?: string
   pendingCount?: number
   stepPendingCount?: number
+  mapping?: { upsertLanes: ReturnType<typeof vi.fn> }
 }) {
   const row = opts?.row === undefined ? pendingRow() : opts.row
   const updateById = vi.fn(
@@ -189,8 +191,10 @@ function createService(opts?: {
     listSteps,
   } as unknown as FillPipelineManager
 
+  const mapping = opts?.mapping as never
+
   return {
-    service: new ReviewItemService(repo, rfps, pipeline),
+    service: new ReviewItemService(repo, rfps, pipeline, mapping),
     repo,
     updateById,
     insert,
@@ -200,6 +204,7 @@ function createService(opts?: {
     appendLog,
     completeStep,
     listSteps,
+    mapping: opts?.mapping,
   }
 }
 
@@ -282,6 +287,57 @@ describe("ReviewItemService.decide", () => {
         resolution: { decision: "approved" },
       })
     )
+  })
+
+  it("upserts a lane-shaped map proposal on Confirm", async () => {
+    const upsertLanes = vi
+      .fn()
+      .mockResolvedValue({ fillId: "fill_1", laneCount: 1 })
+    const { service } = createService({
+      pendingCount: 0,
+      mapping: { upsertLanes },
+      row: pendingRow({
+        proposal: {
+          laneId: "lane_1",
+          originLocode: "CNSHA",
+          destLocode: "USLAX",
+          equipmentType: "40HC",
+          columnKey: "ocean_freight",
+        },
+      }),
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+    expect(upsertLanes).toHaveBeenCalledWith("org_1", "fill_1", [
+      expect.objectContaining({
+        laneId: "lane_1",
+        originLocode: "CNSHA",
+        destLocode: "USLAX",
+        equipmentType: "40HC",
+        columnKey: "ocean_freight",
+      }),
+    ])
+  })
+
+  it("skips mapping upsert when map proposal lacks O-D-equipment", async () => {
+    const upsertLanes = vi.fn()
+    const { service } = createService({
+      pendingCount: 0,
+      mapping: { upsertLanes },
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+    expect(upsertLanes).not.toHaveBeenCalled()
   })
 
   it("export-signoff Confirm completes export + review steps", async () => {
