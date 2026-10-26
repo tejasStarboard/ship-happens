@@ -45,7 +45,10 @@ sh-client cells --lane lane_1   # filter one mapped lane id
 ## 1b. Mapping (Postgres)
 
 Confirmed lanes live in Postgres. Workspace `mapping.json` is import/export only.
-The fill **Map** tab is read-only against the DB store.
+Humans Confirm mapping on the Map tab (schema confirm UI). Low-confidence map
+proposals should use `reviews create` with `stepKey: map` — rates resolve blocks
+while those waits are pending. Lane-shaped proposals (origin/dest/equipment)
+upsert into Postgres when the analyst Confirms on Overview or Map.
 
 ```bash
 sh-client mapping get
@@ -56,9 +59,10 @@ sh-client mapping import
 
 ## 1c. Resolve rates (Progress `rates`)
 
-Requires confirmed lanes in Postgres (put/import first; empty DB auto-imports
-`mapping.json` on resolve when the file exists). Calls Starboard `rates.resolve`
-server-side, persists fill-report cells, advances Progress `rates`.
+Requires confirmed lanes in Postgres (put/import / Map Confirm first; empty DB
+auto-imports `mapping.json` on resolve when the file exists). Blocks if pending
+`stepKey: map` reviews remain. Calls Starboard `rates.resolve` server-side,
+persists fill-report cells, advances Progress `rates`.
 
 ```bash
 sh-client rates resolve

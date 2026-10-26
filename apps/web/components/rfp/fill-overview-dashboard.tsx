@@ -122,7 +122,7 @@ export function FillOverviewDashboard({
             <p className="text-xs text-muted-foreground">
               {rfp.mappingError
                 ? rfp.mappingError
-                : "No mapped lanes yet — open Map or write workspace mapping.json in Agent before rates."}
+                : "No confirmed lanes yet — open Map to review and confirm O-D / equipment before rates."}
             </p>
           </div>
           {onOpenMap ? (

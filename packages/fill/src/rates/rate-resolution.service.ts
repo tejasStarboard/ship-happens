@@ -10,10 +10,12 @@ import {
   mappedLaneToSearchInput,
   pickResolvedCandidate,
 } from "./lane-to-search-input"
+import type { ReviewItemRepository } from "../review/review-item.repository"
 import type { MappedLane } from "./mapped-lane"
 import type { MappingStore, StarboardRatesPort } from "./rate-ports"
 
 const DEFAULT_CONCURRENCY = 3
+const MAP_STEP_KEY = "map"
 
 export type ResolveMappedLanesResult = {
   fillId: string
@@ -51,6 +53,7 @@ export class RateResolutionService {
     private readonly reports: FillReportRepository,
     private readonly mapping: MappingStore,
     private readonly starboard: StarboardRatesPort,
+    private readonly reviewItems?: ReviewItemRepository,
     private readonly concurrency = DEFAULT_CONCURRENCY
   ) {}
 
@@ -64,6 +67,17 @@ export class RateResolutionService {
     )
     if (!fill) {
       throw new DomainError(`Fill not found: ${input.fillId}`, "NOT_FOUND")
+    }
+
+    if (this.reviewItems) {
+      const pendingMap = await this.reviewItems.countPending(input.fillId, {
+        stepKey: MAP_STEP_KEY,
+      })
+      if (pendingMap > 0) {
+        const message = `Cannot resolve rates: ${pendingMap} pending map review${pendingMap === 1 ? "" : "s"}`
+        await this.pipeline.failStep(input.fillId, "rates", message)
+        throw new DomainError(message, "VALIDATION")
+      }
     }
 
     let lanes: MappedLane[]

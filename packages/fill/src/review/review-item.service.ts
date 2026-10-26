@@ -11,6 +11,8 @@ import {
   type ProgressStepKey,
   type RfpRunStatus,
 } from "../pipeline/fill-pipeline.manager"
+import type { FillMappingService } from "../rates/fill-mapping.service"
+import { mappedLaneFromProposal } from "../rates/proposal-to-mapped-lane"
 import type { RfpRepository } from "../rfp/rfp.repository"
 import { ReviewItemRepository } from "./review-item.repository"
 import {
@@ -137,7 +139,8 @@ export class ReviewItemService {
   constructor(
     private readonly repo: ReviewItemRepository,
     private readonly rfps: RfpRepository,
-    private readonly pipeline: FillPipelineManager
+    private readonly pipeline: FillPipelineManager,
+    private readonly mapping?: FillMappingService
   ) {}
 
   private async requireFill(organizationId: string, fillId: string) {
@@ -395,6 +398,22 @@ export class ReviewItemService {
 
     const normalized = normalizeDecideInput(input)
     const isExportSignoff = existing.source === EXPORT_SIGNOFF_REVIEW_SOURCE
+
+    // Persist lane-shaped map proposals before leaving `pending`, so a failed
+    // upsert does not clear the HITL wait without a confirmed lane.
+    if (
+      !isExportSignoff &&
+      existing.stepKey === "map" &&
+      (normalized.status === "approved" || normalized.status === "edited")
+    ) {
+      await this.applyMapLaneDecision(
+        organizationId,
+        fillId,
+        existing.proposal,
+        normalized.status === "edited" ? (normalized.resolution ?? null) : null
+      )
+    }
+
     // Confirm (approved) auto-resolves: no agent follow-up needed.
     // Edit/Reject stay intermediate until the agent acks via resolve().
     const patch: Parameters<ReviewItemRepository["updateById"]>[1] = {
@@ -431,6 +450,22 @@ export class ReviewItemService {
     }
 
     return toView(updated)
+  }
+
+  /**
+   * Persist a lane-shaped map proposal into Postgres confirmed mapping.
+   * Incomplete proposals skip upsert (Map UI can still confirm manually).
+   */
+  private async applyMapLaneDecision(
+    organizationId: string,
+    fillId: string,
+    proposal: Record<string, unknown>,
+    resolution: Record<string, unknown> | null
+  ) {
+    if (!this.mapping) return
+    const lane = mappedLaneFromProposal(proposal, resolution)
+    if (!lane) return
+    await this.mapping.upsertLanes(organizationId, fillId, [lane])
   }
 
   /**

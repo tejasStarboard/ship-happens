@@ -101,6 +101,11 @@ export {
   type MappingDocument,
 } from "./rates/mapped-lane"
 export {
+  isLowConfidenceMapping,
+  MAP_LOW_CONFIDENCE_THRESHOLD,
+  mappedLaneFromProposal,
+} from "./rates/proposal-to-mapped-lane"
+export {
   mappedLaneToSearchInput,
   pickResolvedCandidate,
 } from "./rates/lane-to-search-input"
