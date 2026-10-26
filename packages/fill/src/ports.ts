@@ -46,3 +46,27 @@ export type WorkspaceHost = {
     content: Buffer | string
   ): Promise<void>
 }
+
+/** One designated response cell for cell-compliant write-back. */
+export type WorkbookCellWrite = {
+  sheetName: string
+  cellRef: string
+  value: string
+}
+
+/**
+ * Host-injected workbook writer — prefer `uvx agent-xlsx write` (openpyxl)
+ * so locks, validation, formulas, and formats survive round-trip.
+ */
+export type WorkbookWritePort = {
+  writeCells(input: {
+    source: Buffer
+    fileName: string
+    cells: WorkbookCellWrite[]
+  }): Promise<Buffer>
+}
+
+/** Fetch intake source bytes (typically HTTP GET of public Blob URL). */
+export type SourceBytesFetcher = {
+  fetch(url: string): Promise<Buffer>
+}

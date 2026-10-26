@@ -8,6 +8,7 @@
  *   sh-client cells [--fill id] [--lane id]
  *   sh-client reviews list|get|create|update|resolve …
  *   sh-client rates resolve [--fill id]
+ *   sh-client export [--fill id]
  *
  * Env: SH_APP_URL, SH_API_KEY, SH_FILL_ID
  */
@@ -17,7 +18,7 @@ import { createClient } from "./createClient.js"
 import { ShClientError } from "./errors.js"
 import { readJsonInput } from "./cli/parseBody.js"
 
-const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, reviews, rates)
+const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, reviews, rates, export)
 
 Usage:
   sh-client <command> [subcommand] [options]
@@ -40,6 +41,9 @@ Reviews:
 
 Rates:
   rates resolve [--fill id]         Starboard resolve for mapping.json lanes; advances Progress rates
+
+Export:
+  export [--fill id]                Write sells into original BCO template (agent-xlsx); advances Progress export
 
 Options:
   --fill <id>       Fill / workspace id (default: SH_FILL_ID)
@@ -188,6 +192,11 @@ async function main(): Promise<void> {
       throw new Error(
         `Unknown rates subcommand: ${sub ?? "(none)"}. Try resolve`
       )
+    }
+
+    if (cmd === "export") {
+      printJson(await client.exportWorkbook(fill))
+      return
     }
 
     throw new Error(`Unknown command: ${cmd}. Run sh-client --help`)

@@ -222,3 +222,13 @@ export async function resolveFillRates(ctx: ShApiKeyContext, fillId: string) {
     })),
   }
 }
+
+/** Write sell values into the original BCO template via agent-xlsx. */
+export async function exportFillWorkbook(ctx: ShApiKeyContext, fillId: string) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  return app.exportWorkbook.exportForFill({
+    organizationId: ctx.organizationId,
+    fillId,
+  })
+}

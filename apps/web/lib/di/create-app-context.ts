@@ -12,12 +12,19 @@ import {
   ReviewItemRepository,
   ReviewItemService,
   RfpRepository,
+  WorkbookExportService,
   type AppDb,
   type BlobStore,
   type MappingStore,
+  type SourceBytesFetcher,
   type StarboardRatesPort,
+  type WorkbookWritePort,
   type WorkspaceHost,
 } from "@ship-happens/fill"
+import {
+  createAgentXlsxWorkbookWriter,
+  createHttpSourceBytesFetcher,
+} from "@/lib/domain/export/agent-xlsx-workbook-writer"
 import { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"
 import { createWorkspaceMappingStore } from "@/lib/domain/rates/workspace-mapping-store"
 import { RfpService } from "@/lib/domain/rfp/rfp.service"
@@ -39,6 +46,8 @@ export type AppDeps = {
   workspace?: WorkspaceHost
   mappingStore?: MappingStore
   starboardRates?: StarboardRatesPort
+  workbookWriter?: WorkbookWritePort
+  sourceFetcher?: SourceBytesFetcher
 }
 
 function asBlobStore(blob: VercelBlobStorage): BlobStore {
@@ -93,6 +102,19 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     marginFloorsRepo,
     reviews
   )
+  const blobStore = asBlobStore(blob)
+  const workbookWriter = deps?.workbookWriter ?? createAgentXlsxWorkbookWriter()
+  const sourceFetcher = deps?.sourceFetcher ?? createHttpSourceBytesFetcher()
+  const exportWorkbook = new WorkbookExportService(
+    rfpRepo,
+    pipeline,
+    fillReports,
+    reviewRepo,
+    blobStore,
+    workbookWriter,
+    sourceFetcher,
+    workspace
+  )
 
   return {
     db: database,
@@ -104,7 +126,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       database,
       rfpRepo,
       pipeline,
-      asBlobStore(blob),
+      blobStore,
       workspace
     ),
     pipeline,
@@ -113,6 +135,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     overlayRules,
     marginFloors,
     overlays,
+    exportWorkbook,
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,

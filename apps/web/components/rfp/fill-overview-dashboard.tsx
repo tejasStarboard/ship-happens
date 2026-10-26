@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
 import { WaitingOnYouPanel } from "@/components/rfp/waiting-on-you-panel"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
@@ -243,18 +244,36 @@ export function FillOverviewDashboard({
                     >
                       Open source
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!rfp.filledFileUrl}
-                    >
-                      Download filled
-                    </Button>
+                    <ExportWorkbookButton
+                      fillId={rfp.id}
+                      pendingReviewCount={rfp.pendingReviews?.length ?? 0}
+                    />
+                    {rfp.filledFileUrl ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        render={
+                          <a
+                            href={rfp.filledFileUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            download
+                          />
+                        }
+                        nativeButton={false}
+                      >
+                        Download filled
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        Download filled
+                      </Button>
+                    )}
                   </div>
                   <p className="text-muted-foreground">
                     {rfp.filledFileUrl
                       ? "Filled workbook is ready."
-                      : "Filled export appears after the export phase."}
+                      : "Run Export filled to write sells into the original template."}
                   </p>
                 </>
               ) : (

@@ -76,6 +76,20 @@ export class RfpRepository {
       .orderBy(desc(rfpSourceFiles.createdAt))
   }
 
+  async updateFilledArtifact(
+    rfpId: string,
+    input: { filledFileUrl: string; filledBlobPathname: string }
+  ) {
+    await this.db
+      .update(rfps)
+      .set({
+        filledFileUrl: input.filledFileUrl,
+        filledBlobPathname: input.filledBlobPathname,
+        updatedAt: new Date(),
+      })
+      .where(eq(rfps.id, rfpId))
+  }
+
   findTemplateIdForOrganization(organizationId: string, templateId: string) {
     return this.db
       .select({ id: templates.id })
