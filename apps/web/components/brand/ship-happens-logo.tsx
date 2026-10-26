@@ -1,5 +1,5 @@
 import { useId, type ComponentProps } from "react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 import { APP_NAME } from "@/lib/seo"
 
 const SIZE = {

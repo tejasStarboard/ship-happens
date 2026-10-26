@@ -1,13 +1,13 @@
 import { IconChevronDown, IconSearch } from "@tabler/icons-react"
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuTrigger,
-} from "@workspace/ui/components/dropdown-menu"
-import { Input } from "@workspace/ui/components/input"
+} from "@ship-happens/ui/components/dropdown-menu"
+import { Input } from "@ship-happens/ui/components/input"
 import {
   columnFilteringFeature,
   columnVisibilityFeature,

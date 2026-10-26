@@ -1,17 +1,17 @@
 "use client"
 
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   ButtonGroup,
   ButtonGroupText,
-} from "@workspace/ui/components/button-group"
+} from "@ship-happens/ui/components/button-group"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@workspace/ui/components/tooltip"
-import { cn } from "@workspace/ui/lib/utils"
+} from "@ship-happens/ui/components/tooltip"
+import { cn } from "@ship-happens/ui/lib/utils"
 import { cjk } from "@streamdown/cjk"
 import { code } from "@streamdown/code"
 import { math } from "@streamdown/math"

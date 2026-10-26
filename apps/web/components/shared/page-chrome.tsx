@@ -1,5 +1,5 @@
 import type { ReactNode } from "react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 
 /** Shared list/settings page header — title 26/700, muted subtitle, actions right. */
 export function PageChrome({

@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { and, desc, eq } from "drizzle-orm"
-import { marginFloorRules } from "@workspace/db"
+import { marginFloorRules } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
 import { DomainError } from "../errors"
 import type {

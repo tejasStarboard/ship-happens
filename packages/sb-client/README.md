@@ -36,7 +36,7 @@ sb-client / library
 ## Library
 
 ```ts
-import { createClient } from "@starboard/sb-client"
+import { createClient } from "@ship-happens/sb-client"
 
 const client = await createClient() // reads env
 const { rates } = await client.rates.resolve({
@@ -52,7 +52,7 @@ const { rates } = await client.rates.resolve({
 After env is pointed at Starboard **dev**, run the web smoke (contract + spot, CNSHA→USLAX 40HC):
 
 ```bash
-pnpm --filter @starboard/sb-client build
+pnpm --filter @ship-happens/sb-client build
 pnpm --filter web starboard:smoke-rates
 ```
 
@@ -64,14 +64,14 @@ Published bin: `bin/sb-client.js` → runs the built `dist/cli.js`.
 
 ```bash
 # from repo root
-pnpm --filter @starboard/sb-client build
-pnpm --filter @starboard/sb-client start -- auth test
+pnpm --filter @ship-happens/sb-client build
+pnpm --filter @ship-happens/sb-client start -- auth test
 
 # via apps/web (workspace dependency)
 pnpm --filter web sb-client -- auth test
 
 # after publish
-npx @starboard/sb-client auth test
+npx @ship-happens/sb-client auth test
 ```
 
 JSON always on **stdout**; errors are JSON on stdout with non-zero exit.
@@ -105,7 +105,7 @@ Keys are issued from Starboard admin → company → **Public API keys**.
 ## Build
 
 ```bash
-pnpm --filter @starboard/sb-client build   # tsup → dist/
-pnpm --filter @starboard/sb-client test
-pnpm --filter @starboard/sb-client typecheck
+pnpm --filter @ship-happens/sb-client build   # tsup → dist/
+pnpm --filter @ship-happens/sb-client test
+pnpm --filter @ship-happens/sb-client typecheck
 ```

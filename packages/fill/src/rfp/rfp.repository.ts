@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm"
-import type { Database } from "@workspace/db"
-import { rfpSourceFiles, rfps, templates } from "@workspace/db"
+import type { Database } from "@ship-happens/db"
+import { rfpSourceFiles, rfps, templates } from "@ship-happens/db"
 
 export type AppDb = Database
 

@@ -1,5 +1,5 @@
 /**
- * Buy → sell markup + floor helpers (mirrors `@starboard/sb-client` margins).
+ * Buy → sell markup + floor helpers (mirrors `@ship-happens/sb-client` margins).
  * Kept local so `@ship-happens/fill` stays free of the Starboard client package.
  */
 

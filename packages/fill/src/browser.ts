@@ -1,5 +1,5 @@
 /**
- * Client-safe surface — no Node builtins, no `@workspace/db` / `pg`.
+ * Client-safe surface — no Node builtins, no `@ship-happens/db` / `pg`.
  * Use from Next.js Client Components. Server code may use `@ship-happens/fill`.
  */
 
@@ -40,10 +40,17 @@ export {
   type FillReportCellView,
   type LaneOverlayAudit,
   type LaneOverlayMode,
+  type LanePickConfidenceAudit,
   type LanePriceAudit,
   type LaneStarboardAudit,
   type StarboardRateChannel,
 } from "./rates/lane-price-audit"
+export {
+  isLowConfidenceRatePick,
+  RATE_PICK_LOW_CONFIDENCE_THRESHOLD,
+  RATE_PICK_REVIEW_SOURCE,
+  type RatePickConfidenceReason,
+} from "./rates/rate-pick-confidence"
 
 export {
   ALLOWED_SPREADSHEET_MIME_TYPES,
@@ -75,3 +82,20 @@ export {
   resolveExportDownloadGate,
   type ExportDownloadGate,
 } from "./export/export-signoff"
+
+export {
+  FILL_PIPELINE_EVENT_TYPES,
+  type FillPipelineEventType,
+} from "./analytics/fill-pipeline-events"
+export {
+  OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
+  type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMappingQuality,
+  type OpsAnalyticsMarginImpact,
+  type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsNamedCount,
+  type OpsAnalyticsRateCoverage,
+  type OpsAnalyticsStatusBucket,
+  type OpsAnalyticsView,
+} from "./analytics/ops-analytics.types"

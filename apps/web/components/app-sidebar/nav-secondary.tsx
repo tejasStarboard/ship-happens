@@ -1,7 +1,7 @@
 import * as React from "react"
 import { type Icon } from "@tabler/icons-react"
 import { useRouter } from "next/navigation"
-import { Kbd } from "@workspace/ui/components/kbd"
+import { Kbd } from "@ship-happens/ui/components/kbd"
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -9,7 +9,7 @@ import {
   SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@workspace/ui/components/sidebar"
+} from "@ship-happens/ui/components/sidebar"
 
 export type NavSecondaryItem = {
   title: string

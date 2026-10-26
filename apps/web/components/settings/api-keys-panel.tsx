@@ -4,8 +4,8 @@ import { useCallback, useState, useTransition } from "react"
 import Link from "next/link"
 import { IconCopy, IconKey, IconPlus, IconTrash } from "@tabler/icons-react"
 import { toast } from "sonner"
-import { Badge } from "@workspace/ui/components/badge"
-import { Button } from "@workspace/ui/components/button"
+import { Badge } from "@ship-happens/ui/components/badge"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Dialog,
   DialogContent,
@@ -14,9 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@workspace/ui/components/dialog"
-import { Input } from "@workspace/ui/components/input"
-import { Label } from "@workspace/ui/components/label"
+} from "@ship-happens/ui/components/dialog"
+import { Input } from "@ship-happens/ui/components/input"
+import { Label } from "@ship-happens/ui/components/label"
 import {
   Table,
   TableBody,
@@ -24,7 +24,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import {
   createShAgentApiKey,
   deleteShAgentApiKey,

@@ -98,6 +98,7 @@ function createService(opts: {
     mapping,
     starboard,
     reviewItems,
+    undefined,
     2
   )
 
@@ -128,13 +129,81 @@ describe("RateResolutionService", () => {
     expect(starboard.resolve).toHaveBeenCalled()
     expect(result.cells[0]?.outcome).toBe("filled")
     expect(result.cells[0]?.value).toBe("1500")
+    expect(result.weakPickCount).toBe(0)
     expect(result.cells[0]?.metadata).toMatchObject({
       channel: "contract",
       starboardHitId: "hit_1",
       carrier: "MSC",
       resolvedBuyTotal: 1500,
       laneId: "lane_1",
+      pickConfidence: 0.95,
+      pickConfidenceReason: "only_option",
+      pickCandidateCount: 1,
     })
+  })
+
+  it("opens a rate-pick review for near-tie picks and holds rates step", async () => {
+    const create = vi.fn().mockResolvedValue({
+      id: "rev_1",
+      source: "rate-pick",
+      status: "pending",
+      sourceMetadata: { laneKey: "lane_1" },
+    })
+    const list = vi.fn().mockResolvedValue([])
+    const reviews = {
+      list,
+      create,
+      update: vi.fn(),
+    } as never
+
+    const { pipeline, reports, mapping, starboard, rfps } = createService({
+      resolve: vi.fn().mockResolvedValue([
+        {
+          id: "hit_a",
+          carrier_name: "MSC",
+          resolved_buy_total: 1000,
+          resolved_currency: "USD",
+        },
+        {
+          id: "hit_b",
+          carrier_name: "MAE",
+          resolved_buy_total: 1010,
+          resolved_currency: "USD",
+        },
+      ]),
+    })
+
+    const service = new RateResolutionService(
+      rfps,
+      pipeline,
+      reports,
+      mapping,
+      starboard,
+      undefined,
+      reviews
+    )
+
+    const result = await service.resolveMappedLanes({
+      organizationId: "org_1",
+      fillId: "fill_1",
+    })
+
+    expect(result.weakPickCount).toBe(1)
+    expect(result.cells[0]?.metadata).toMatchObject({
+      pickConfidence: 0.7,
+      pickConfidenceReason: "near_tie",
+      pickCandidateCount: 2,
+    })
+    expect(create).toHaveBeenCalledWith(
+      "org_1",
+      "fill_1",
+      expect.objectContaining({
+        stepKey: "rates",
+        source: "rate-pick",
+        confidence: 0.7,
+      })
+    )
+    expect(pipeline.completeStep).not.toHaveBeenCalled()
   })
 
   it("treats empty Starboard results as no-hit and still completes", async () => {

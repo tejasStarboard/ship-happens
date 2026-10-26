@@ -1,6 +1,16 @@
 import { randomUUID } from "node:crypto"
 import { and, asc, eq } from "drizzle-orm"
-import { rfpLogs, rfpProgressSteps, rfpReviewItems, rfps } from "@workspace/db"
+import {
+  fillPipelineEvents,
+  rfpLogs,
+  rfpProgressSteps,
+  rfpReviewItems,
+  rfps,
+} from "@ship-happens/db"
+import {
+  pipelineEventForStepDone,
+  type FillPipelineEventType,
+} from "../analytics/fill-pipeline-events"
 import { DomainError } from "../errors"
 import type { AppDb } from "../rfp/rfp.repository"
 
@@ -35,8 +45,12 @@ function logId() {
   return `log_${randomUUID().replaceAll("-", "").slice(0, 16)}`
 }
 
+function eventId() {
+  return `fpe_${randomUUID().replaceAll("-", "").slice(0, 16)}`
+}
+
 /**
- * Sole writer for fill progress steps, logs, and RFP run status.
+ * Sole writer for fill progress steps, logs, lifecycle events, and RFP run status.
  * Agent tools and intake must go through this manager.
  */
 export class FillPipelineManager {
@@ -66,6 +80,19 @@ export class FillPipelineManager {
         }
       })
     )
+
+    if (ingestStatus === "done") {
+      await this.appendPipelineEvent(
+        {
+          rfpId,
+          type: "intake.completed",
+          stepKey: "ingest",
+          payload: { detail: options?.ingestDetail ?? null },
+          occurredAt: now,
+        },
+        tx
+      )
+    }
   }
 
   async appendLog(
@@ -87,6 +114,47 @@ export class FillPipelineManager {
       stepKey: input.stepKey ?? null,
       source: input.source ?? "intake",
       metadata: input.metadata ?? {},
+    })
+  }
+
+  /**
+   * Append a durable lifecycle event. Resolves `organizationId` from the fill.
+   */
+  async appendPipelineEvent(
+    input: {
+      rfpId: string
+      type: FillPipelineEventType
+      stepKey?: string | null
+      reviewItemId?: string | null
+      payload?: Record<string, unknown>
+      occurredAt?: Date
+      organizationId?: string
+    },
+    tx: AppDb = this.db
+  ) {
+    let organizationId = input.organizationId
+    if (!organizationId) {
+      const row = await tx
+        .select({ organizationId: rfps.organizationId })
+        .from(rfps)
+        .where(eq(rfps.id, input.rfpId))
+        .limit(1)
+        .then((rows) => rows[0] ?? null)
+      if (!row) {
+        throw new DomainError(`Fill not found: ${input.rfpId}`, "NOT_FOUND")
+      }
+      organizationId = row.organizationId
+    }
+
+    await tx.insert(fillPipelineEvents).values({
+      id: eventId(),
+      organizationId,
+      rfpId: input.rfpId,
+      type: input.type,
+      stepKey: input.stepKey ?? null,
+      reviewItemId: input.reviewItemId ?? null,
+      payload: input.payload ?? {},
+      occurredAt: input.occurredAt ?? new Date(),
     })
   }
 
@@ -198,6 +266,19 @@ export class FillPipelineManager {
       .update(rfpProgressSteps)
       .set(patch)
       .where(eq(rfpProgressSteps.id, existing.id))
+
+    if (status === "done") {
+      const eventType = pipelineEventForStepDone(key)
+      if (eventType) {
+        await this.appendPipelineEvent({
+          rfpId,
+          type: eventType,
+          stepKey: key,
+          payload: { detail: detail ?? null },
+          occurredAt: now,
+        })
+      }
+    }
   }
 
   async hasOpenWaitsForStep(rfpId: string, key: ProgressStepKey) {

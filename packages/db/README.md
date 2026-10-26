@@ -1,11 +1,11 @@
-# `@workspace/db`
+# `@ship-happens/db`
 
 Shared Drizzle schema + `createDb()` factory for Ship Happens.
 
-Built with **tsup** → `dist/` (`pnpm --filter @workspace/db build`).
+Built with **tsup** → `dist/` (`pnpm --filter @ship-happens/db build`).
 
 ```ts
-import { createDb, rfps } from "@workspace/db"
+import { createDb, rfps } from "@ship-happens/db"
 
 const { db, pool } = createDb(process.env.POSTGRES_URL!)
 const rows = await db.select().from(rfps).limit(10)

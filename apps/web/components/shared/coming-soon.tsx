@@ -3,7 +3,7 @@ import {
   EmptyDescription,
   EmptyHeader,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 
 /** Honest stub / placeholder for unwired product surfaces. */
 export function ComingSoonEmpty({

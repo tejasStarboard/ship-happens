@@ -1,8 +1,8 @@
 "use client"
 
-import { Button } from "@workspace/ui/components/button"
-import { Spinner } from "@workspace/ui/components/spinner"
-import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@ship-happens/ui/components/button"
+import { Spinner } from "@ship-happens/ui/components/spinner"
+import { cn } from "@ship-happens/ui/lib/utils"
 import { MicIcon, SquareIcon } from "lucide-react"
 import type { ComponentProps } from "react"
 import { useCallback, useEffect, useRef, useState } from "react"

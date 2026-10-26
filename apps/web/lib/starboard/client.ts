@@ -4,7 +4,7 @@ import {
   StarboardApiError,
   type CreateClientOptions,
   type StarboardClient,
-} from "@starboard/sb-client"
+} from "@ship-happens/sb-client"
 import { env } from "@/env"
 
 export { AuthError, StarboardApiError, type StarboardClient }
@@ -29,7 +29,7 @@ export type StarboardEnvStatus = {
 }
 
 /**
- * Whether Starboard env is complete enough to instantiate `@starboard/sb-client`.
+ * Whether Starboard env is complete enough to instantiate `@ship-happens/sb-client`.
  * Does not call the network.
  */
 export function getStarboardEnvStatus(): StarboardEnvStatus {

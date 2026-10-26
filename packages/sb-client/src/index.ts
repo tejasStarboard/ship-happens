@@ -1,7 +1,7 @@
 /**
- * @starboard/sb-client — library entry.
+ * @ship-happens/sb-client — library entry.
  *
- *   import { createClient } from '@starboard/sb-client'
+ *   import { createClient } from '@ship-happens/sb-client'
  *   const client = await createClient()
  *   const resolved = await client.rates.resolve({ service_type: 'ocean_fcl', ... })
  */

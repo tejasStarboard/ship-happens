@@ -205,7 +205,7 @@ jobs:
           fi
 
       - name: Build web + workspace deps
-        # Builds @workspace/db, @ship-happens/fill, @starboard/sb-client, then web
+        # Builds @ship-happens/db, @ship-happens/fill, @ship-happens/sb-client, then web
         run: pnpm exec turbo build --filter=web...
 
       - name: Push database schema

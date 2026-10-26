@@ -1,5 +1,5 @@
 {
-  "name": "@starboard/sb-client",
+  "name": "@ship-happens/sb-client",
   "version": "0.1.0",
   "private": true,
   "description": "Starboard client library + CLI — rates, globals, locations, margins (client id/secret)",

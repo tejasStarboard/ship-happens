@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@workspace/ui/components/table"
+} from "@ship-happens/ui/components/table"
 import { DataTableShell } from "@/components/shared/page-chrome"
 import type {
   FillReportCellView,
@@ -78,10 +78,19 @@ function overlaySummary(cell: FillReportCellView) {
   return `${overlay.ruleName} (projected ${money(overlay.projectedSell ?? overlay.sellTotal, overlay.currency)})`
 }
 
+function confidenceLabel(cell: FillReportCellView) {
+  const { confidence, reason } = cell.audit.pick
+  if (confidence == null) {
+    return reason === "n/a" || reason == null ? "n/a" : reason
+  }
+  const pct = `${Math.round(confidence * 100)}%`
+  return reason ? `${pct} · ${reason.replaceAll("_", " ")}` : pct
+}
+
 function AuditDetail({ cell }: { cell: FillReportCellView }) {
-  const { starboard, overlay } = cell.audit
+  const { starboard, overlay, pick } = cell.audit
   return (
-    <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-2">
+    <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-3">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Starboard source
@@ -174,6 +183,33 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
           <p className="text-muted-foreground">No overlay applied.</p>
         )}
       </div>
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Pick confidence
+        </p>
+        <dl className="grid gap-1.5">
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Score</dt>
+            <dd className="tabular font-medium">
+              {pick.confidence == null
+                ? "n/a"
+                : `${Math.round(pick.confidence * 100)}%`}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Reason</dt>
+            <dd className="font-medium">
+              {pick.reason?.replaceAll("_", " ") ?? "—"}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Candidates</dt>
+            <dd className="tabular font-medium">
+              {pick.candidateCount ?? "—"}
+            </dd>
+          </div>
+        </dl>
+      </div>
     </div>
   )
 }
@@ -261,6 +297,9 @@ export function FillReviewPanel({
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                 Overlay
               </TableHead>
+              <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                Confidence
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -297,10 +336,13 @@ export function FillReviewPanel({
                     <TableCell className="align-top text-sm text-muted-foreground">
                       {overlaySummary(cell)}
                     </TableCell>
+                    <TableCell className="align-top text-sm text-muted-foreground">
+                      {confidenceLabel(cell)}
+                    </TableCell>
                   </TableRow>
                   {open ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={5} className="p-0">
+                      <TableCell colSpan={6} className="p-0">
                         <AuditDetail cell={cell} />
                       </TableCell>
                     </TableRow>
@@ -312,8 +354,9 @@ export function FillReviewPanel({
         </Table>
       </DataTableShell>
       <p className="text-xs text-muted-foreground">
-        Click a row for Starboard source + overlay/markup detail. Same audit is
-        available via <code className="text-xs">sh-client cells</code>.
+        Click a row for Starboard source, overlay/markup, and pick confidence.
+        Weak picks open Waiting on you alongside floor-margin reviews. Same
+        audit via <code className="text-xs">sh-client cells</code>.
       </p>
     </div>
   )

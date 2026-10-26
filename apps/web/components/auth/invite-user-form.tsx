@@ -3,8 +3,8 @@
 import { useState } from "react"
 import { useForm } from "@tanstack/react-form"
 import { z } from "zod"
-import { Alert, AlertDescription } from "@workspace/ui/components/alert"
-import { Button } from "@workspace/ui/components/button"
+import { Alert, AlertDescription } from "@ship-happens/ui/components/alert"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Card,
   CardContent,
@@ -12,14 +12,14 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@workspace/ui/components/card"
+} from "@ship-happens/ui/components/card"
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@workspace/ui/components/field"
-import { Input } from "@workspace/ui/components/input"
+} from "@ship-happens/ui/components/field"
+import { Input } from "@ship-happens/ui/components/input"
 import {
   Select,
   SelectContent,
@@ -27,8 +27,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@workspace/ui/components/select"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/select"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import { authClient } from "@/lib/auth/client"
 
 const roleItems = [

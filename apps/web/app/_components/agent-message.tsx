@@ -29,12 +29,12 @@ import {
   ConfirmationTitle,
   ConfirmationAccepted,
   ConfirmationRejected,
-} from "@workspace/ui/ai-elements/confirmation"
+} from "@ship-happens/ui/ai-elements/confirmation"
 import {
   Message,
   MessageContent,
   MessageResponse,
-} from "@workspace/ui/ai-elements/message"
+} from "@ship-happens/ui/ai-elements/message"
 import {
   Question,
   QuestionInput,
@@ -44,18 +44,18 @@ import {
   type QuestionResponse,
   QuestionSubmit,
   type QuestionValue,
-} from "@workspace/ui/ai-elements/question"
+} from "@ship-happens/ui/ai-elements/question"
 import {
   Reasoning,
   ReasoningContent,
   ReasoningTrigger,
-} from "@workspace/ui/ai-elements/reasoning"
+} from "@ship-happens/ui/ai-elements/reasoning"
 import {
   Task,
   TaskContent,
   TaskItem,
   TaskTrigger,
-} from "@workspace/ui/ai-elements/task"
+} from "@ship-happens/ui/ai-elements/task"
 import {
   BashToolContent,
   Tool,
@@ -63,8 +63,8 @@ import {
   ToolHeader,
   ToolInput,
   ToolOutput,
-} from "@workspace/ui/ai-elements/tool"
-import { Button } from "@workspace/ui/components/button"
+} from "@ship-happens/ui/ai-elements/tool"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   parseReviewCreatedFromBash,
   type ReviewCreatedNotify,

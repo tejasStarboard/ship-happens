@@ -8,6 +8,7 @@ import {
   IntakeService,
   MarginFloorRuleRepository,
   MarginFloorRuleService,
+  OpsAnalyticsService,
   OverlayApplicationService,
   OverlayRuleRepository,
   OverlayRuleService,
@@ -80,7 +81,7 @@ function defaultWorkspaceHost(): WorkspaceHost {
 
 /**
  * Request-scoped (or test) dependency graph.
- * Fill/intake come from `@ship-happens/fill`; DB schema from `@workspace/db`.
+ * Fill/intake come from `@ship-happens/fill`; DB schema from `@ship-happens/db`.
  */
 export function createAppContext(deps?: Partial<AppDeps>) {
   const database = deps?.db ?? db
@@ -121,7 +122,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     fillReports,
     mappingStore,
     starboardRates,
-    reviewRepo
+    reviewRepo,
+    reviews
   )
   const overlays = new OverlayApplicationService(
     rfpRepo,
@@ -175,6 +177,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     marginFloors,
     overlays,
     exportWorkbook,
+    analytics: new OpsAnalyticsService(database),
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,

@@ -1,5 +1,5 @@
 /**
- * Per-row pricing provenance (SB-6668).
+ * Per-row pricing provenance (SB-6668 + SB-7084 pick confidence).
  *
  * Writers persist these keys on `rfp_fill_report_cells.metadata`.
  * Readers normalize via {@link lanePriceAuditFromMetadata} for UI / CLI.
@@ -9,6 +9,7 @@
 
 import type { MappedLane } from "./mapped-lane"
 import type { ResolvedRateCandidate } from "./rate-ports"
+import type { RatePickConfidenceReason } from "./rate-pick-confidence"
 
 /** Mirrors `fill_cell_outcome` — kept local so this module stays browser-safe. */
 export type FillAuditCellOutcome =
@@ -42,6 +43,13 @@ export type LaneOverlayAudit = {
   marginPct: number | null
 }
 
+/** Documented pick confidence (or explicit n/a via null). */
+export type LanePickConfidenceAudit = {
+  confidence: number | null
+  reason: RatePickConfidenceReason | null
+  candidateCount: number | null
+}
+
 export type LanePriceAudit = {
   laneId: string | null
   originLocode: string | null
@@ -49,6 +57,7 @@ export type LanePriceAudit = {
   equipmentType: string | null
   starboard: LaneStarboardAudit
   overlay: LaneOverlayAudit | null
+  pick: LanePickConfidenceAudit
 }
 
 export type FillReportCellView = {
@@ -89,13 +98,49 @@ function asOverlayMode(value: unknown): LaneOverlayMode | null {
   return value === "projected" || value === "markup" ? value : null
 }
 
+function asConfidenceReason(value: unknown): RatePickConfidenceReason | null {
+  switch (value) {
+    case "only_option":
+    case "cheapest_of_many":
+    case "near_tie":
+    case "projected_overlay":
+    case "markup_overlay":
+    case "n/a":
+      return value
+    default:
+      return null
+  }
+}
+
+/** Merge pick-confidence keys onto a metadata bag. */
+export function withPickConfidenceMetadata(
+  metadata: Record<string, unknown>,
+  pick: {
+    confidence: number | null
+    reason: RatePickConfidenceReason
+    candidateCount: number
+  }
+): Record<string, unknown> {
+  return {
+    ...metadata,
+    pickConfidence: pick.confidence,
+    pickConfidenceReason: pick.reason,
+    pickCandidateCount: pick.candidateCount,
+  }
+}
+
 /** Metadata written by rate resolve (Starboard source or miss). */
 export function buildRateAuditMetadata(
   lane: MappedLane,
   chosen: ResolvedRateCandidate | null,
-  reason: string | null
+  reason: string | null,
+  pick?: {
+    confidence: number | null
+    reason: RatePickConfidenceReason
+    candidateCount: number
+  }
 ): Record<string, unknown> {
-  return {
+  const base: Record<string, unknown> = {
     laneId: lane.laneId,
     channel: "contract" satisfies StarboardRateChannel,
     originLocode: lane.originLocode,
@@ -109,6 +154,14 @@ export function buildRateAuditMetadata(
     resolvedSurcharges: chosen?.resolved_surcharges ?? [],
     reason,
   }
+  if (!pick) {
+    return withPickConfidenceMetadata(base, {
+      confidence: null,
+      reason: "n/a",
+      candidateCount: 0,
+    })
+  }
+  return withPickConfidenceMetadata(base, pick)
 }
 
 /** Merge overlay / markup provenance onto an existing cell metadata bag. */
@@ -125,9 +178,14 @@ export function withOverlayAuditMetadata(
     sellTotal: number
     margin?: number | null
     marginPct?: number | null
+    pick?: {
+      confidence: number | null
+      reason: RatePickConfidenceReason
+      candidateCount: number
+    }
   }
 ): Record<string, unknown> {
-  return {
+  const next: Record<string, unknown> = {
     ...metadata,
     overlayRuleId: input.ruleId,
     overlayRuleName: input.ruleName,
@@ -140,6 +198,8 @@ export function withOverlayAuditMetadata(
     margin: input.margin ?? null,
     marginPct: input.marginPct ?? null,
   }
+  if (!input.pick) return next
+  return withPickConfidenceMetadata(next, input.pick)
 }
 
 /** Normalize persisted cell metadata into a stable audit view. */
@@ -167,6 +227,8 @@ export function lanePriceAuditFromMetadata(
         }
       : null
 
+  const candidateCount = asNumber(meta.pickCandidateCount)
+
   return {
     laneId: asString(meta.laneId),
     originLocode: asString(meta.originLocode),
@@ -184,6 +246,11 @@ export function lanePriceAuditFromMetadata(
       missReason: asString(meta.reason),
     },
     overlay,
+    pick: {
+      confidence: asNumber(meta.pickConfidence),
+      reason: asConfidenceReason(meta.pickConfidenceReason),
+      candidateCount,
+    },
   }
 }
 

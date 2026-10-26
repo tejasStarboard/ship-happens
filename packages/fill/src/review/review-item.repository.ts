@@ -1,5 +1,5 @@
 import { and, asc, count, desc, eq, isNull } from "drizzle-orm"
-import { rfpReviewItems } from "@workspace/db"
+import { rfpReviewItems } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
 import type { ReviewItemStatus } from "./review-item.types"
 

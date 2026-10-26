@@ -5,7 +5,7 @@ import { cn } from "cn"
 import { DayPicker, getDefaultClassNames } from "react-day-picker"
 import type { DayButton, Locale } from "react-day-picker"
 
-import { Button, buttonVariants } from "@workspace/ui/components/button"
+import { Button, buttonVariants } from "@ship-happens/ui/components/button"
 import {
   ChevronLeftIcon,
   ChevronRightIcon,

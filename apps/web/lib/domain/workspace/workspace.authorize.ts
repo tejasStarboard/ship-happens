@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm"
-import { rfps } from "@workspace/db"
+import { rfps } from "@ship-happens/db"
 import { DomainError } from "@ship-happens/fill"
 import { db } from "@/lib/db"
 import { isValidSessionId } from "@/lib/workspace-fs"

@@ -7,13 +7,13 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "@workspace/ui/components/avatar"
-import { Button } from "@workspace/ui/components/button"
+} from "@ship-happens/ui/components/avatar"
+import { Button } from "@ship-happens/ui/components/button"
 import {
   Empty,
   EmptyDescription,
   EmptyHeader,
-} from "@workspace/ui/components/empty"
+} from "@ship-happens/ui/components/empty"
 import {
   Item,
   ItemContent,
@@ -21,9 +21,9 @@ import {
   ItemGroup,
   ItemMedia,
   ItemTitle,
-} from "@workspace/ui/components/item"
-import { Separator } from "@workspace/ui/components/separator"
-import { Spinner } from "@workspace/ui/components/spinner"
+} from "@ship-happens/ui/components/item"
+import { Separator } from "@ship-happens/ui/components/separator"
+import { Spinner } from "@ship-happens/ui/components/spinner"
 import {
   AuthBody,
   AuthCard,

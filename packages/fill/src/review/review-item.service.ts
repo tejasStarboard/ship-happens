@@ -440,6 +440,20 @@ export class ReviewItemService {
     // Leaving `pending` clears the open wait — unblock Progress when appropriate.
     await this.releaseProgressHold(fillId, existing.stepKey, fill.status)
 
+    if (updated.status === "resolved") {
+      await this.pipeline.appendPipelineEvent({
+        rfpId: fillId,
+        organizationId,
+        type: "review.resolved",
+        stepKey: existing.stepKey,
+        reviewItemId: updated.id,
+        payload: {
+          decision: normalized.status,
+          source: existing.source,
+        },
+      })
+    }
+
     if (isExportSignoff) {
       await this.applyExportSignoffDecision(
         organizationId,
@@ -602,6 +616,20 @@ export class ReviewItemService {
         "NOT_FOUND"
       )
     }
+
+    await this.pipeline.appendPipelineEvent({
+      rfpId: fillId,
+      organizationId,
+      type: "review.resolved",
+      stepKey: existing.stepKey,
+      reviewItemId: updated.id,
+      payload: {
+        decision: existing.status,
+        source: existing.source,
+        via: "agent_resolve",
+      },
+    })
+
     return toView(updated)
   }
 }

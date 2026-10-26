@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto"
 import { and, eq } from "drizzle-orm"
 import { z } from "zod"
-import { rfps, rfpSourceFiles, templates } from "@workspace/db"
+import { rfps, rfpSourceFiles, templates } from "@ship-happens/db"
 import { DomainError } from "../errors"
 import type { BlobStore, WorkspaceHost } from "../ports"
 import { FillPipelineManager } from "../pipeline/fill-pipeline.manager"

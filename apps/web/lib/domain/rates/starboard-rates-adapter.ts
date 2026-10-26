@@ -3,11 +3,11 @@ import type {
   ResolvedRateCandidate,
   StarboardRatesPort,
 } from "@ship-happens/fill"
-import type { ContractSearchInput } from "@starboard/sb-client"
+import type { ContractSearchInput } from "@ship-happens/sb-client"
 import type { StarboardClient } from "@/lib/starboard/client"
 
 /**
- * Adapts `@starboard/sb-client` `rates.resolve` into the fill StarboardRatesPort.
+ * Adapts `@ship-happens/sb-client` `rates.resolve` into the fill StarboardRatesPort.
  * Zod inside `resolve` validates equipment / locodes at runtime.
  */
 export function createStarboardRatesPort(

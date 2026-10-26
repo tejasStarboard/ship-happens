@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm"
-import { templates } from "@workspace/db"
+import { templates } from "@ship-happens/db"
 import type { AppDb } from "@ship-happens/fill"
 
 export class TemplateRepository {

@@ -1,6 +1,6 @@
 "use client"
 
-import { Button } from "@workspace/ui/components/button"
+import { Button } from "@ship-happens/ui/components/button"
 
 const NO_EXPORT_HINT =
   "Run Export filled to write sells into the original template. Download unlocks after final export sign-off."

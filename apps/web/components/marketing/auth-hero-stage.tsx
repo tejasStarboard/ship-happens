@@ -12,7 +12,7 @@ import {
   IconRobot,
   IconDownload,
 } from "@tabler/icons-react"
-import { cn } from "@workspace/ui/lib/utils"
+import { cn } from "@ship-happens/ui/lib/utils"
 
 const LANES = [
   {

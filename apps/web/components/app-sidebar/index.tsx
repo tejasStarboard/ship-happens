@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  IconChartBar,
   IconCurrencyDollar,
   IconFileSpreadsheet,
   IconHelp,
@@ -20,7 +21,7 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-} from "@workspace/ui/components/sidebar"
+} from "@ship-happens/ui/components/sidebar"
 
 const navMain = [
   {
@@ -42,6 +43,11 @@ const navMain = [
     title: "Starboard rates",
     url: "/rates",
     icon: IconCurrencyDollar,
+  },
+  {
+    title: "Analytics",
+    url: "/analytics",
+    icon: IconChartBar,
   },
   {
     title: "Integrations",

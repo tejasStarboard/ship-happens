@@ -43,6 +43,26 @@ export {
   type RfpRunStatus,
 } from "./pipeline/fill-pipeline.manager"
 
+export {
+  FILL_PIPELINE_EVENT_TYPES,
+  STEP_DONE_PIPELINE_EVENT,
+  pipelineEventForStepDone,
+  type FillPipelineEventType,
+} from "./analytics/fill-pipeline-events"
+export { OpsAnalyticsService } from "./analytics/ops-analytics.service"
+export {
+  OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
+  type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMappingQuality,
+  type OpsAnalyticsMarginImpact,
+  type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsNamedCount,
+  type OpsAnalyticsRateCoverage,
+  type OpsAnalyticsStatusBucket,
+  type OpsAnalyticsView,
+} from "./analytics/ops-analytics.types"
+
 export { RfpRepository, type AppDb } from "./rfp/rfp.repository"
 export {
   asRfpStatus,
@@ -149,15 +169,27 @@ export {
   lanePriceAuditFromMetadata,
   toFillReportCellView,
   withOverlayAuditMetadata,
+  withPickConfidenceMetadata,
   type FillAuditCellOutcome,
   type FillReportCellView,
   type FillReportView,
   type LaneOverlayAudit,
   type LaneOverlayMode,
+  type LanePickConfidenceAudit,
   type LanePriceAudit,
   type LaneStarboardAudit,
   type StarboardRateChannel,
 } from "./rates/lane-price-audit"
+export {
+  isLowConfidenceRatePick,
+  rankPricedBuys,
+  RATE_PICK_LOW_CONFIDENCE_THRESHOLD,
+  RATE_PICK_REVIEW_SOURCE,
+  scoreContractPick,
+  scoreOverlayPick,
+  type RatePickConfidence,
+  type RatePickConfidenceReason,
+} from "./rates/rate-pick-confidence"
 export {
   RateResolutionService,
   type ResolveMappedLanesResult,

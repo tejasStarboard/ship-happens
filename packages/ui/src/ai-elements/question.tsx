@@ -10,9 +10,9 @@ import type {
   ReactNode,
 } from "react"
 
-import { Button } from "@workspace/ui/components/button"
-import { Textarea } from "@workspace/ui/components/textarea"
-import { cn } from "@workspace/ui/lib/utils"
+import { Button } from "@ship-happens/ui/components/button"
+import { Textarea } from "@ship-happens/ui/components/textarea"
+import { cn } from "@ship-happens/ui/lib/utils"
 import {
   createContext,
   useCallback,

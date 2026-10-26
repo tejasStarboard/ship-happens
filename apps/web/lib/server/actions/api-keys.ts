@@ -1,7 +1,7 @@
 "use server"
 
 import { and, desc, eq, sql } from "drizzle-orm"
-import { apikey } from "@workspace/db"
+import { apikey } from "@ship-happens/db"
 import {
   createFillAgentApiKey,
   SH_AGENT_API_KEY_CONFIG_ID,
