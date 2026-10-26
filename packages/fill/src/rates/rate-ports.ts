@@ -34,6 +34,10 @@ export type ResolvedRateCandidate = {
   resolved_buy_total: number | null
   resolved_currency: string | null
   resolved_surcharges?: ResolvedSurchargeCandidate[]
+  /** Starboard vendor_rate_doc id for source sheet / email (SB-7089). */
+  vendor_rate_doc_id?: string | null
+  /** Short-lived signed vendor email URL when the hit carried one. */
+  vendor_email_url?: string | null
 }
 
 export type StarboardRatesPort = {

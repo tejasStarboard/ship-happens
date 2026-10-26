@@ -9,6 +9,10 @@ export type SearchRateHit = {
   carrier_name?: string | null
   total_amount?: number | null
   currency?: string | null
+  /** Source vendor_rate_doc id when the hit came from a contract sheet/email. */
+  vendor_rate_doc_id?: string | null
+  /** Short-lived signed .eml URL when Public API attached it (v3 quotes). */
+  vendor_email_url?: string | null
   surcharges?: unknown[]
   rate?: { container_type?: string; [key: string]: unknown } | null
   [key: string]: unknown

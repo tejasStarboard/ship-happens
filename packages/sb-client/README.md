@@ -28,7 +28,7 @@ sb-client / library
 
 | Module      | Purpose                                                                   |
 | ----------- | ------------------------------------------------------------------------- |
-| `rates`     | Contract search, spot search, **`resolve`** (search + globals), recommend |
+| `rates`     | Contract search, spot search, **`resolve`**, recommend, **rate-doc signed URL** |
 | `margins`   | Apply %/$ markup, floor guardrails (`min_amount` / `min_pct`)             |
 | `globals`   | List / match company rate items; classify & rollup for BCO columns        |
 | `locations` | Name → UN/LOCODE; resolve lane (+ via split)                              |

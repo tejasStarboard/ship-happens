@@ -26,6 +26,10 @@ export type LaneStarboardAudit = {
   surcharges: unknown[]
   /** Present on miss / error when Starboard did not yield a priced buy. */
   missReason: string | null
+  /** Durable id for lazy signed rate-doc URL (SB-7089). */
+  vendorRateDocId: string | null
+  /** Optional signed vendor-email URL from the hit (may expire). */
+  vendorEmailUrl: string | null
 }
 
 export type LaneOverlayMode = "projected" | "markup"
@@ -152,6 +156,8 @@ export function buildRateAuditMetadata(
     resolvedBuyTotal: chosen?.resolved_buy_total ?? null,
     resolvedCurrency: chosen?.resolved_currency ?? null,
     resolvedSurcharges: chosen?.resolved_surcharges ?? [],
+    vendorRateDocId: chosen?.vendor_rate_doc_id ?? null,
+    vendorEmailUrl: chosen?.vendor_email_url ?? null,
     reason,
   }
   if (!pick) {
@@ -244,6 +250,8 @@ export function lanePriceAuditFromMetadata(
         ? meta.resolvedSurcharges
         : [],
       missReason: asString(meta.reason),
+      vendorRateDocId: asString(meta.vendorRateDocId),
+      vendorEmailUrl: asString(meta.vendorEmailUrl),
     },
     overlay,
     pick: {

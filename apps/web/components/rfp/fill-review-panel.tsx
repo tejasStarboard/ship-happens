@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { IconChartBar } from "@tabler/icons-react"
 import {
   Empty,
@@ -22,6 +22,10 @@ import type {
   FillReportCellView,
   RfpFillReportView,
 } from "@/lib/domain/rfp/rfp.types"
+import {
+  resolveRateProvenanceLinks,
+  type RateProvenanceLinks,
+} from "@/lib/server/actions/rate-provenance"
 
 function money(value: number | null | undefined, currency?: string | null) {
   if (value == null) return "—"
@@ -87,8 +91,91 @@ function confidenceLabel(cell: FillReportCellView) {
   return reason ? `${pct} · ${reason.replaceAll("_", " ")}` : pct
 }
 
+function ProvenanceLinks({
+  links,
+  loading,
+}: {
+  links: RateProvenanceLinks | null
+  loading: boolean
+}) {
+  if (loading) {
+    return <dd className="text-muted-foreground">Loading…</dd>
+  }
+  const rateDocUrl = links?.rateDocUrl ?? null
+  const vendorEmailUrl = links?.vendorEmailUrl ?? null
+  if (!rateDocUrl && !vendorEmailUrl) {
+    return <dd className="font-medium">—</dd>
+  }
+  return (
+    <dd className="flex flex-col items-end gap-1 text-right">
+      {rateDocUrl ? (
+        <a
+          href={rateDocUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          View rate doc
+        </a>
+      ) : null}
+      {vendorEmailUrl ? (
+        <a
+          href={vendorEmailUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-foreground underline-offset-4 hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          View vendor email
+        </a>
+      ) : null}
+    </dd>
+  )
+}
+
 function AuditDetail({ cell }: { cell: FillReportCellView }) {
   const { starboard, overlay, pick } = cell.audit
+  const [links, setLinks] = useState<RateProvenanceLinks | null>(null)
+  const [loadingLinks, setLoadingLinks] = useState(
+    Boolean(starboard.vendorRateDocId || starboard.vendorEmailUrl)
+  )
+
+  useEffect(() => {
+    const docId = starboard.vendorRateDocId
+    const emailUrl = starboard.vendorEmailUrl
+    if (!docId && !emailUrl) {
+      setLinks(null)
+      setLoadingLinks(false)
+      return
+    }
+    if (!docId && emailUrl) {
+      setLinks({ rateDocUrl: null, vendorEmailUrl: emailUrl })
+      setLoadingLinks(false)
+      return
+    }
+    let cancelled = false
+    setLoadingLinks(true)
+    void resolveRateProvenanceLinks({
+      vendorRateDocId: docId,
+      vendorEmailUrl: emailUrl,
+    })
+      .then((next) => {
+        if (!cancelled) setLinks(next)
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setLinks({ rateDocUrl: null, vendorEmailUrl: emailUrl })
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingLinks(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [starboard.vendorRateDocId, starboard.vendorEmailUrl])
+
   return (
     <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-3">
       <div className="flex flex-col gap-2">
@@ -115,6 +202,10 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
             <dd className="tabular font-medium">
               {money(starboard.buyTotal, starboard.currency)}
             </dd>
+          </div>
+          <div className="flex justify-between gap-3">
+            <dt className="text-muted-foreground">Source</dt>
+            <ProvenanceLinks links={links} loading={loadingLinks} />
           </div>
           {starboard.missReason ? (
             <div className="flex justify-between gap-3">
