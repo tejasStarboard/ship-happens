@@ -11,8 +11,12 @@ import {
 import { toast } from "sonner"
 import { Button } from "@workspace/ui/components/button"
 import { PageChrome } from "@/components/shared/page-chrome"
-import { disconnectEmailIntegration } from "@/lib/server/actions/email-integrations"
+import {
+  disconnectEmailIntegration,
+  registerGmailWatch,
+} from "@/lib/server/actions/email-integrations"
 import type { IntegrationPublicView } from "@/lib/domain/email-intake/email-intake.types"
+import { formatDateTime } from "@/lib/shared/string"
 
 const PROVIDERS = [
   {
@@ -38,7 +42,8 @@ const PROVIDERS = [
   },
 ] as const
 
-function statusLabel(status: string) {
+function statusLabel(status: string, lastError?: string | null) {
+  if (status === "active" && lastError) return "Connected — watch pending"
   switch (status) {
     case "active":
       return "Connected"
@@ -91,6 +96,24 @@ export function IntegrationsPage({
         toast.error(
           error instanceof Error ? error.message : "Disconnect failed"
         )
+      } finally {
+        setBusyProvider(null)
+      }
+    })
+  }
+
+  const onRegisterGmailWatch = () => {
+    setBusyProvider("gmail-watch")
+    startTransition(async () => {
+      try {
+        await registerGmailWatch()
+        toast.success("Gmail watch registered")
+        router.refresh()
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Could not register watch"
+        )
+        router.refresh()
       } finally {
         setBusyProvider(null)
       }
@@ -151,7 +174,7 @@ export function IntegrationsPage({
                   <>
                     <p>
                       <span className="text-muted-foreground">Status: </span>
-                      {statusLabel(row.status)}
+                      {statusLabel(row.status, row.lastError)}
                     </p>
                     <p className="truncate" title={row.accountEmail}>
                       <span className="text-muted-foreground">Account: </span>
@@ -162,7 +185,7 @@ export function IntegrationsPage({
                         <span className="text-muted-foreground">
                           Watch until:{" "}
                         </span>
-                        {new Date(row.watchExpiresAt).toLocaleString()}
+                        {formatDateTime(row.watchExpiresAt)}
                       </p>
                     ) : null}
                     {row.lastError ? (
@@ -173,18 +196,40 @@ export function IntegrationsPage({
                   <p className="text-muted-foreground">Not connected</p>
                 )}
                 {uiEnabled && provider.id === "gmail" ? (
-                  <div className="space-y-1 pt-1">
-                    <p className="text-muted-foreground">
-                      Google Cloud → Credentials → your OAuth client →{" "}
-                      <span className="text-foreground">
-                        Authorized redirect URIs
-                      </span>{" "}
-                      must include (exact match; this is not the Better Auth
-                      sign-in callback):
-                    </p>
-                    <code className="block rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[11px] break-all text-foreground">
-                      {gmailRedirectUri}
-                    </code>
+                  <div className="space-y-2 pt-1">
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">
+                        Google Cloud → Credentials → OAuth client →{" "}
+                        <span className="text-foreground">
+                          Authorized redirect URIs
+                        </span>
+                        :
+                      </p>
+                      <code className="block rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[11px] break-all text-foreground">
+                        {gmailRedirectUri}
+                      </code>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-muted-foreground">
+                        For inbox watch, set{" "}
+                        <span className="text-foreground">
+                          GMAIL_PUBSUB_TOPIC
+                        </span>{" "}
+                        in <code className="font-mono text-[11px]">.env</code>{" "}
+                        to a Pub/Sub topic (
+                        <code className="font-mono text-[11px]">
+                          projects/PROJECT_ID/topics/TOPIC_ID
+                        </code>
+                        ), push-subscribe it to{" "}
+                        <code className="font-mono text-[11px] break-all">
+                          {gmailRedirectUri.replace(
+                            "/api/integrations/gmail/callback",
+                            "/api/webhooks/gmail"
+                          )}
+                        </code>
+                        , restart the app, then click Register watch.
+                      </p>
+                    </div>
                   </div>
                 ) : null}
               </div>
@@ -192,16 +237,29 @@ export function IntegrationsPage({
               {uiEnabled ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {connected ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      disabled={pending && busyProvider === provider.id}
-                      onClick={() => onDisconnect(provider.id)}
-                    >
-                      <IconLinkOff className="size-3.5" />
-                      Disconnect
-                    </Button>
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={pending && busyProvider === provider.id}
+                        onClick={() => onDisconnect(provider.id)}
+                      >
+                        <IconLinkOff className="size-3.5" />
+                        Disconnect
+                      </Button>
+                      {provider.id === "gmail" && row?.lastError ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          disabled={pending && busyProvider === "gmail-watch"}
+                          onClick={() => onRegisterGmailWatch()}
+                        >
+                          Register watch
+                        </Button>
+                      ) : null}
+                    </>
                   ) : (
                     <Button
                       type="button"

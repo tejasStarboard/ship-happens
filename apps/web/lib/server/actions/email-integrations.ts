@@ -21,3 +21,10 @@ export async function disconnectEmailIntegration(
   await ctx.emailIntake.disconnect(organizationId, provider)
   return { ok: true as const }
 }
+
+export async function registerGmailWatch() {
+  const { organizationId } = await requireOrgSession()
+  const ctx = createAppContext()
+  await ctx.emailIntake.registerGmailWatch(organizationId)
+  return { ok: true as const }
+}

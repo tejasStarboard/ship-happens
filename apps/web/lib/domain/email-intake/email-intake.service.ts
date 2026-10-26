@@ -66,56 +66,67 @@ export class EmailIntakeService {
     expiresIn: number
     email: string
   }) {
-    let historyId: string | null = null
-    let watchExpiresAt: Date | null = null
-    try {
-      const watch = await startGmailWatch(input.accessToken)
-      historyId = watch.historyId
-      watchExpiresAt = watch.expiration
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Gmail watch failed"
-      // Still save tokens so reconnect/watch can be retried
-      const id = await this.repo.upsert({
-        id: integrationId(),
-        organizationId: input.organizationId,
-        provider: "gmail",
-        accountEmail: input.email,
-        accessTokenEnc: encryptSecret(input.accessToken),
-        refreshTokenEnc: input.refreshToken
-          ? encryptSecret(input.refreshToken)
-          : null,
-        tokenExpiresAt: new Date(Date.now() + input.expiresIn * 1000),
-        scopes: GMAIL_SCOPES,
-        status: "error",
-        connectedByUserId: input.userId,
-        lastError: message,
-        historyId: null,
-        watchExpiresAt: null,
-        externalSubscriptionId: null,
-      })
-      void id
-      throw new DomainError(message, "VALIDATION")
-    }
-
-    await this.repo.upsert({
-      id: integrationId(),
-      organizationId: input.organizationId,
-      provider: "gmail",
-      accountEmail: input.email,
+    const tokenFields = {
       accessTokenEnc: encryptSecret(input.accessToken),
       refreshTokenEnc: input.refreshToken
         ? encryptSecret(input.refreshToken)
         : null,
       tokenExpiresAt: new Date(Date.now() + input.expiresIn * 1000),
       scopes: GMAIL_SCOPES,
-      status: "active",
       connectedByUserId: input.userId,
-      lastError: null,
+      accountEmail: input.email,
+    }
+
+    let historyId: string | null = null
+    let watchExpiresAt: Date | null = null
+    let watchError: string | null = null
+    try {
+      const watch = await startGmailWatch(input.accessToken)
+      historyId = watch.historyId
+      watchExpiresAt = watch.expiration
+    } catch (error) {
+      watchError = error instanceof Error ? error.message : "Gmail watch failed"
+    }
+
+    // Always persist OAuth tokens. Missing Pub/Sub is a setup gap, not a failed login.
+    await this.repo.upsert({
+      id: integrationId(),
+      organizationId: input.organizationId,
+      provider: "gmail",
+      ...tokenFields,
+      status: "active",
+      lastError: watchError,
       historyId,
       watchExpiresAt,
       externalSubscriptionId: historyId,
     })
+  }
+
+  /** Retry Gmail users.watch after `GMAIL_PUBSUB_TOPIC` is configured. */
+  async registerGmailWatch(organizationId: string) {
+    const row = await this.repo.findByOrgAndProvider(organizationId, "gmail")
+    if (!row || row.status === "disconnected") {
+      throw new DomainError("Gmail is not connected", "NOT_FOUND")
+    }
+    const { accessToken } = await this.ensureAccessToken(row.id)
+    try {
+      const watch = await startGmailWatch(accessToken)
+      await this.repo.updateTokens(row.id, {
+        historyId: watch.historyId,
+        watchExpiresAt: watch.expiration,
+        externalSubscriptionId: watch.historyId,
+        status: "active",
+        lastError: null,
+      })
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Gmail watch failed"
+      await this.repo.updateTokens(row.id, {
+        status: "active",
+        lastError: message,
+      })
+      throw new DomainError(message, "VALIDATION")
+    }
   }
 
   async completeOutlookConnect(input: {
