@@ -58,11 +58,13 @@ export function FillOverviewDashboard({
   initialReviewId,
   onAskAgent,
   onOpenReview,
+  onOpenMap,
 }: {
   rfp: RfpDetailView
   initialReviewId?: string | null
   onAskAgent?: (reviewId: string) => void
   onOpenReview?: () => void
+  onOpenMap?: () => void
 }) {
   const source = rfp.sourceFiles[0] ?? null
   const counts = stepCounts(rfp.progressSteps)
@@ -112,6 +114,24 @@ export function FillOverviewDashboard({
           </motion.div>
         ))}
       </div>
+
+      {rfp.mappingError || rfp.mappedLanes.length === 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-border bg-card px-4 py-3">
+          <div>
+            <p className="text-sm font-medium tracking-tight">Mapping</p>
+            <p className="text-xs text-muted-foreground">
+              {rfp.mappingError
+                ? rfp.mappingError
+                : "No mapped lanes yet — open Map or write workspace mapping.json in Agent before rates."}
+            </p>
+          </div>
+          {onOpenMap ? (
+            <Button variant="outline" size="sm" onClick={onOpenMap}>
+              Open Map
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       {rfp.fillReport && rfp.fillReport.cells.length > 0 ? (
         <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3">
@@ -266,8 +286,10 @@ export function FillOverviewDashboard({
                   </p>
                 </>
               ) : (
-                <p className="text-muted-foreground">
-                  No source file on record for this fill.
+                <p className="text-sm text-muted-foreground">
+                  No source workbook on this fill yet. Create the fill with an
+                  uploaded BCO sheet, then the Office preview and export path
+                  unlock.
                 </p>
               )}
             </CardContent>

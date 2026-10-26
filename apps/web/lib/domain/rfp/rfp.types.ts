@@ -8,6 +8,7 @@ export {
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
+  type RfpMappedLaneView,
   type RfpPendingReviewView,
   type RfpProgressStepView,
   type RfpSourceFileView,

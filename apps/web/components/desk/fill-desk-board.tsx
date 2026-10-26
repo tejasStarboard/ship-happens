@@ -270,7 +270,8 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
             </EmptyMedia>
             <EmptyTitle>Your fill desk is empty</EmptyTitle>
             <EmptyDescription>
-              Drop a BCO workbook to open the first lane on the board.
+              Start a fill with a BCO workbook to open the first lane on the
+              board.
             </EmptyDescription>
           </EmptyHeader>
           <div className="relative">
