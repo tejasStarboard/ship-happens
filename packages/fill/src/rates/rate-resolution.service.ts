@@ -5,16 +5,13 @@ import type {
   FillReportRepository,
   UpsertLaneCellInput,
 } from "./fill-report.repository"
+import { buildRateAuditMetadata } from "./lane-price-audit"
 import {
   mappedLaneToSearchInput,
   pickResolvedCandidate,
 } from "./lane-to-search-input"
 import type { MappedLane } from "./mapped-lane"
-import type {
-  MappingStore,
-  ResolvedRateCandidate,
-  StarboardRatesPort,
-} from "./rate-ports"
+import type { MappingStore, StarboardRatesPort } from "./rate-ports"
 
 const DEFAULT_CONCURRENCY = 3
 
@@ -45,27 +42,6 @@ async function mapPool<T, R>(
   )
   await Promise.all(runners)
   return results
-}
-
-function candidateMetadata(
-  lane: MappedLane,
-  chosen: ResolvedRateCandidate | null,
-  reason: string | null
-): Record<string, unknown> {
-  return {
-    laneId: lane.laneId,
-    channel: "contract",
-    originLocode: lane.originLocode,
-    destLocode: lane.destLocode,
-    equipmentType: lane.equipmentType,
-    surchargeSlots: lane.surchargeSlots ?? [],
-    starboardHitId: chosen?.id ?? null,
-    carrier: chosen?.carrier_name ?? null,
-    resolvedBuyTotal: chosen?.resolved_buy_total ?? null,
-    resolvedCurrency: chosen?.resolved_currency ?? null,
-    resolvedSurcharges: chosen?.resolved_surcharges ?? [],
-    reason,
-  }
 }
 
 export class RateResolutionService {
@@ -144,7 +120,7 @@ export class RateResolutionService {
               outcome: "skipped",
               value: null,
               reason,
-              metadata: candidateMetadata(lane, null, reason),
+              metadata: buildRateAuditMetadata(lane, null, reason),
             }
           }
 
@@ -170,7 +146,7 @@ export class RateResolutionService {
             outcome: "filled",
             value,
             reason: null,
-            metadata: candidateMetadata(lane, chosen, null),
+            metadata: buildRateAuditMetadata(lane, chosen, null),
           }
         } catch (error) {
           const reason =
@@ -191,7 +167,7 @@ export class RateResolutionService {
             outcome: "error",
             value: null,
             reason,
-            metadata: candidateMetadata(lane, null, reason),
+            metadata: buildRateAuditMetadata(lane, null, reason),
           }
         }
       }

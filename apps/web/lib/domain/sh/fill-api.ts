@@ -1,5 +1,6 @@
 import {
   DomainError,
+  toFillReportCellView,
   type LogLevel,
   type CreateReviewItemInput,
   type UpdateReviewItemInput,
@@ -88,6 +89,49 @@ export async function getFillLogs(
     level: asLogLevel(options?.level ?? null),
   })
   return { fillId, logs }
+}
+
+/** Per-row fill-report cells with Starboard + overlay + markup audit. */
+export async function getFillCells(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  options?: { laneId?: string | null }
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  const fill = await app.repos.rfps.findByIdForOrganization(
+    ctx.organizationId,
+    fillId
+  )
+  if (!fill) {
+    throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
+  }
+  const report = await app.repos.fillReports.getReport(fillId)
+  if (!report) {
+    return {
+      fillId,
+      summary: null,
+      filledCount: 0,
+      skippedCount: 0,
+      needsHumanCount: 0,
+      errorCount: 0,
+      cells: [] as ReturnType<typeof toFillReportCellView>[],
+    }
+  }
+  let cells = report.cells.map(toFillReportCellView)
+  const laneId = options?.laneId?.trim()
+  if (laneId) {
+    cells = cells.filter((cell) => cell.audit.laneId === laneId)
+  }
+  return {
+    fillId,
+    summary: report.summary,
+    filledCount: report.filledCount,
+    skippedCount: report.skippedCount,
+    needsHumanCount: report.needsHumanCount,
+    errorCount: report.errorCount,
+    cells,
+  }
 }
 
 export async function listReviews(

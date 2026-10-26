@@ -51,6 +51,14 @@ export class ShipHappensClient {
     })
   }
 
+  /** Per-row fill report with Starboard source + overlay + markup audit. */
+  cells(fillId?: string, options?: { laneId?: string }) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>("GET", `/api/sh/v1/fills/${id}/cells`, {
+      query: { laneId: options?.laneId },
+    })
+  }
+
   reviewsList(fillId?: string, options?: { status?: string }) {
     const id = this.resolveFillId(fillId)
     return this.http.request<unknown>("GET", `/api/sh/v1/fills/${id}/reviews`, {

@@ -29,6 +29,7 @@ export {
   asRfpStatus,
   RFP_STATUS_LABEL,
   type RfpDetailView,
+  type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
   type RfpPendingReviewView,
@@ -89,6 +90,20 @@ export {
   type LaneCellRow,
   type UpsertLaneCellInput,
 } from "./rates/fill-report.repository"
+export {
+  buildRateAuditMetadata,
+  lanePriceAuditFromMetadata,
+  toFillReportCellView,
+  withOverlayAuditMetadata,
+  type FillAuditCellOutcome,
+  type FillReportCellView,
+  type FillReportView,
+  type LaneOverlayAudit,
+  type LaneOverlayMode,
+  type LanePriceAudit,
+  type LaneStarboardAudit,
+  type StarboardRateChannel,
+} from "./rates/lane-price-audit"
 export {
   RateResolutionService,
   type ResolveMappedLanesResult,

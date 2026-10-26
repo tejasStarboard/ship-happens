@@ -5,13 +5,18 @@ import {
 } from "@/lib/domain/rfp/rfp.types"
 import type { RfpRepository } from "@/lib/domain/rfp/rfp.repository"
 import type { FillPipelineManager } from "@/lib/domain/pipeline/fill-pipeline.manager"
-import type { ReviewItemService } from "@ship-happens/fill"
+import type {
+  FillReportRepository,
+  ReviewItemService,
+} from "@ship-happens/fill"
+import { toFillReportCellView } from "@ship-happens/fill"
 
 export class RfpService {
   constructor(
     private readonly repo: RfpRepository,
     private readonly pipeline: FillPipelineManager,
-    private readonly reviews: ReviewItemService
+    private readonly reviews: ReviewItemService,
+    private readonly fillReports: FillReportRepository
   ) {}
 
   async list(
@@ -42,12 +47,13 @@ export class RfpService {
     if (!row) return null
 
     const meta = (row.metadata ?? {}) as { templateName?: string }
-    const [progressSteps, logs, sourceFileRows, pendingReviews] =
+    const [progressSteps, logs, sourceFileRows, pendingReviews, report] =
       await Promise.all([
         this.pipeline.listSteps(row.id),
         this.pipeline.listLogs(row.id),
         this.repo.listSourceFiles(row.id),
         this.reviews.list(organizationId, row.id, { status: "pending" }),
+        this.fillReports.getReport(row.id),
       ])
 
     const blockedKeys = new Set(
@@ -104,6 +110,16 @@ export class RfpService {
         createdAt: item.createdAt.toISOString(),
         updatedAt: item.updatedAt.toISOString(),
       })),
+      fillReport: report
+        ? {
+            summary: report.summary,
+            filledCount: report.filledCount,
+            skippedCount: report.skippedCount,
+            needsHumanCount: report.needsHumanCount,
+            errorCount: report.errorCount,
+            cells: report.cells.map(toFillReportCellView),
+          }
+        : null,
     }
   }
 }

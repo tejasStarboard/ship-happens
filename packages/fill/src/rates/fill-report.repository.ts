@@ -64,14 +64,34 @@ export class FillReportRepository {
   }
 
   async listLaneCells(rfpId: string): Promise<LaneCellRow[]> {
+    const report = await this.getReport(rfpId)
+    return report?.cells ?? []
+  }
+
+  async getReport(rfpId: string): Promise<{
+    id: string
+    summary: string | null
+    filledCount: number
+    skippedCount: number
+    needsHumanCount: number
+    errorCount: number
+    cells: LaneCellRow[]
+  } | null> {
     const report = await this.db
-      .select({ id: rfpFillReports.id })
+      .select({
+        id: rfpFillReports.id,
+        summary: rfpFillReports.summary,
+        filledCount: rfpFillReports.filledCount,
+        skippedCount: rfpFillReports.skippedCount,
+        needsHumanCount: rfpFillReports.needsHumanCount,
+        errorCount: rfpFillReports.errorCount,
+      })
       .from(rfpFillReports)
       .where(eq(rfpFillReports.rfpId, rfpId))
       .limit(1)
       .then((rows) => rows[0] ?? null)
 
-    if (!report) return []
+    if (!report) return null
 
     const rows = await this.db
       .select({
@@ -88,17 +108,25 @@ export class FillReportRepository {
       .from(rfpFillReportCells)
       .where(eq(rfpFillReportCells.reportId, report.id))
 
-    return rows.map((row) => ({
-      id: row.id,
-      sheetName: row.sheetName,
-      cellRef: row.cellRef,
-      rowIndex: row.rowIndex,
-      columnKey: row.columnKey,
-      outcome: row.outcome,
-      value: row.value,
-      reason: row.reason,
-      metadata: (row.metadata ?? {}) as Record<string, unknown>,
-    }))
+    return {
+      id: report.id,
+      summary: report.summary,
+      filledCount: report.filledCount,
+      skippedCount: report.skippedCount,
+      needsHumanCount: report.needsHumanCount,
+      errorCount: report.errorCount,
+      cells: rows.map((row) => ({
+        id: row.id,
+        sheetName: row.sheetName,
+        cellRef: row.cellRef,
+        rowIndex: row.rowIndex,
+        columnKey: row.columnKey,
+        outcome: row.outcome,
+        value: row.value,
+        reason: row.reason,
+        metadata: (row.metadata ?? {}) as Record<string, unknown>,
+      })),
+    }
   }
 
   async replaceLaneCells(

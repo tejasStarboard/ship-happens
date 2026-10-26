@@ -1,3 +1,5 @@
+import type { FillReportCellView } from "../rates/lane-price-audit"
+
 export type RfpStatus =
   "queued" | "running" | "needs_review" | "done" | "failed"
 
@@ -64,12 +66,23 @@ export type RfpPendingReviewView = {
   updatedAt: string
 }
 
+/** Aggregate fill-report counts + per-row pricing audit (Review / CLI). */
+export type RfpFillReportView = {
+  summary: string | null
+  filledCount: number
+  skippedCount: number
+  needsHumanCount: number
+  errorCount: number
+  cells: FillReportCellView[]
+}
+
 export type RfpDetailView = RfpListItem & {
   progressSteps: RfpProgressStepView[]
   logs: RfpLogView[]
   sourceFiles: RfpSourceFileView[]
   filledFileUrl: string | null
   pendingReviews: RfpPendingReviewView[]
+  fillReport: RfpFillReportView | null
 }
 
 export function asRfpStatus(value: string): RfpStatus {
