@@ -9,6 +9,7 @@ sh-client progress
 sh-client logs --limit 50
 sh-client cells                 # per-row Starboard + overlay + markup audit
 sh-client cells --lane lane_1
+sh-client mapping propose --body '{"lanes":[{"laneId":"lane_1","originLabel":"Shanghai","destLabel":"LA","equipmentType":"40HC"}]}'
 sh-client reviews list
 sh-client reviews create --body '{"title":"Map column X","proposal":{}}'
 sh-client reviews resolve --id rev_… --body '{"resolution":{}}'

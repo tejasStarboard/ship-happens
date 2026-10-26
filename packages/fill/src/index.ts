@@ -142,6 +142,29 @@ export {
 } from "./rates/fill-mapping.service"
 export { createDbMappingStore } from "./rates/db-mapping-store"
 export {
+  decidePlaceFromChoice,
+  decidePlaceWithoutJev,
+  GEO_MAX_CHIPS,
+  GEO_NONE_KEY,
+  type JevPlaceChoice,
+} from "./mapping/decide-place"
+export type {
+  CrmMatchPort,
+  CrmMatchResult,
+  GeoCandidate,
+  GeoResolvePort,
+  PlaceCandidateChip,
+  PlaceResolveResult,
+} from "./mapping/geo-ports"
+export { PlaceMappingService } from "./mapping/place-mapping.service"
+export type {
+  LanePlaceInput,
+  LanePlaceProposal,
+  MapReviewProposal,
+  ProposeLanesInput,
+  ProposeLanesResult,
+} from "./mapping/place-mapping.types"
+export {
   buildRateAuditMetadata,
   lanePriceAuditFromMetadata,
   toFillReportCellView,

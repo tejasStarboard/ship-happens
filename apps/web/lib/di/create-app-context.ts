@@ -12,6 +12,7 @@ import {
   OverlayApplicationService,
   OverlayRuleRepository,
   OverlayRuleService,
+  PlaceMappingService,
   RateResolutionService,
   ReviewItemRepository,
   ReviewItemService,
@@ -19,6 +20,8 @@ import {
   WorkbookExportService,
   type AppDb,
   type BlobStore,
+  type CrmMatchPort,
+  type GeoResolvePort,
   type MappingStore,
   type SourceBytesFetcher,
   type StarboardRatesPort,
@@ -29,6 +32,10 @@ import {
   createAgentXlsxWorkbookWriter,
   createHttpSourceBytesFetcher,
 } from "@/lib/domain/export/agent-xlsx-workbook-writer"
+import {
+  createCrmMatchPort,
+  createGeoResolvePort,
+} from "@/lib/domain/rates/geo-resolve-adapter"
 import { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"
 import { createWorkspaceMappingFileReader } from "@/lib/domain/rates/workspace-mapping-store"
 import { RfpService } from "@/lib/domain/rfp/rfp.service"
@@ -52,6 +59,8 @@ export type AppDeps = {
   workspace?: WorkspaceHost
   mappingStore?: MappingStore
   starboardRates?: StarboardRatesPort
+  geoResolve?: GeoResolvePort
+  crmMatch?: CrmMatchPort
   workbookWriter?: WorkbookWritePort
   sourceFetcher?: SourceBytesFetcher
 }
@@ -97,6 +106,16 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     createDbMappingStore(fillMappings, createWorkspaceMappingFileReader())
   const starboardRates =
     deps?.starboardRates ?? createStarboardRatesPort(starboardFactory)
+  const geoResolve = deps?.geoResolve ?? createGeoResolvePort(starboardFactory)
+  const crmMatch = deps?.crmMatch ?? createCrmMatchPort()
+  const placeMapping = new PlaceMappingService(
+    rfpRepo,
+    mapping,
+    reviews,
+    geoResolve,
+    crmMatch,
+    pipeline
+  )
   const rates = new RateResolutionService(
     rfpRepo,
     pipeline,
@@ -152,6 +171,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     pipeline,
     reviews,
     mapping,
+    placeMapping,
     rates,
     overlayRules,
     marginFloors,

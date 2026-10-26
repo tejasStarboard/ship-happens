@@ -51,9 +51,10 @@ Verified local workbooks for live demos (not committed — live under repo `tmp/
 1. `tmp/sb-tournament/Auto Zone Bid Sheet clean.xlsx`
 2. `tmp/fwdfwbidexamples/Vivint - Sun Chief Express - 4.7.25.xlsx`
 
-Happy path: upload → write workspace `mapping.json` (Map tab is read-only) →
-`sh-client rates resolve` → clear reviews → `sh-client export` → Confirm export
-sign-off on Overview → Download. Download stays blocked until Confirm.
+Happy path: upload → `sh-client mapping propose` with O-D labels (Jev geo;
+low-confidence opens Map reviews) → Confirm Map waits → `sh-client rates resolve`
+→ clear remaining reviews → `sh-client export` → Confirm export sign-off on
+Overview → Download. Download stays blocked until Confirm.
 
 ## Not this skill
 
