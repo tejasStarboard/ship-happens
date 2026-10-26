@@ -51,6 +51,16 @@ sh-client reviews list --status pending
 sh-client reviews get --id rev_…
 ```
 
+After a successful `reviews create`, post a **short chat notification** with the
+title and a deep-link into Overview for that item (use `id` and `rfpId` from the
+JSON stdout):
+
+`[Open in Overview](/rfp/{rfpId}?review={id})`
+
+Chat is a discussion surface only — Confirm / Edit / Reject still happen on
+Overview (or via an explicit decision write). Do not treat free-form chat as a
+decision.
+
 ## 3. Read user decisions
 
 After the human Confirm / Edit / Reject path on Overview, status becomes
@@ -82,7 +92,7 @@ write). Never set `resolved` based on free-text agreement in the conversation.
 
 ## Lifecycle (do not invent)
 
-1. Agent **`reviews create`** → `pending` (“Waiting on you”)
+1. Agent **`reviews create`** → `pending` (“Waiting on you”) + short chat notify with Overview deep-link
 2. Human on Overview → `approved` / `edited` / `rejected`
 3. Agent **reads** decision via `list` / `get`
 4. Agent **`reviews resolve`** → `resolved`

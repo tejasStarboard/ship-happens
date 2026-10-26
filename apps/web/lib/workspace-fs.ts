@@ -61,6 +61,26 @@ const SKIP_DIR_NAMES = new Set([
   ".mypy_cache",
 ])
 
+/**
+ * Agent-private tooling under `.eve` must not round-trip through the host
+ * mirror. Host FS drops `+x`, and a stale `sh-client.env` would pin an old
+ * `SH_APP_URL` forever (inject only runs when the file is missing).
+ * Keep `.eve/attachments/` syncable for chat uploads.
+ */
+export function isAgentPrivateEvePath(relative: string): boolean {
+  const normalized = relative.replace(/^\.\//, "")
+  if (normalized === ".eve/bin" || normalized.startsWith(".eve/bin/")) {
+    return true
+  }
+  if (
+    normalized === ".eve/sh-client.env" ||
+    normalized === ".eve/sb-client.env"
+  ) {
+    return true
+  }
+  return false
+}
+
 const MAX_TEXT_BYTES = 2 * 1024 * 1024
 const MAX_SYNC_FILE_BYTES = 5 * 1024 * 1024
 
@@ -381,6 +401,7 @@ async function collectFiles(
       .relative(/*turbopackIgnore: true*/ root, absolute)
       .split(path.sep)
       .join("/")
+    if (isAgentPrivateEvePath(relative)) continue
     out.push({
       path: relative,
       bytes: await readFile(/*turbopackIgnore: true*/ absolute),
