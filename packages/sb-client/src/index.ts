@@ -17,6 +17,7 @@ export { StarboardApiError } from "./http/starboardHttp.js"
 export { applyMargin, checkFloor } from "./modules/margins/index.js"
 export { recommendRate } from "./lib/recommendRate.js"
 export {
+  allocateChargesToHeadings,
   classifySurchargeName,
   rollupCharges,
   DEFAULT_HEADING_BUCKETS,

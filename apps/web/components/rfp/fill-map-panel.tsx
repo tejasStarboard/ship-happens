@@ -11,6 +11,8 @@ import {
 import {
   isLowConfidenceMapping,
   mappedLaneFromProposal,
+  proposeFeeBindingsFromLabels,
+  type FeeBinding,
   type MappedLane,
 } from "@ship-happens/fill/browser"
 import { toast } from "sonner"
@@ -54,7 +56,10 @@ type LaneDraft = {
   columnKey: string
   cellRef: string
   rowIndex: string
-  surchargeSlots: string
+  /** Comma-separated fee headings / codes (editable). */
+  feeSlots: string
+  /** Optional column keys aligned to feeSlots by index (comma-separated). */
+  feeColumnKeys: string
 }
 
 function mapStepLabel(step: RfpProgressStepView | undefined) {
@@ -64,7 +69,39 @@ function mapStepLabel(step: RfpProgressStepView | undefined) {
   return status
 }
 
+function bindingsToDraftFields(lane: RfpMappedLaneView): {
+  feeSlots: string
+  feeColumnKeys: string
+} {
+  const bindings =
+    lane.feeBindings.length > 0
+      ? lane.feeBindings
+      : lane.surchargeSlots.map((heading) => ({
+          heading,
+          columnKey: null as string | null,
+        }))
+  return {
+    feeSlots: bindings.map((b) => b.heading).join(", "),
+    feeColumnKeys: bindings.map((b) => b.columnKey ?? "").join(", "),
+  }
+}
+
+function draftFeeBindings(draft: LaneDraft): FeeBinding[] {
+  const headings = draft.feeSlots
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const columns = draft.feeColumnKeys.split(",").map((s) => s.trim())
+  return headings.map((heading, i) => {
+    const binding: FeeBinding = { heading }
+    const columnKey = columns[i]
+    if (columnKey) binding.columnKey = columnKey
+    return binding
+  })
+}
+
 function viewToDraft(lane: RfpMappedLaneView, index: number): LaneDraft {
+  const fees = bindingsToDraftFields(lane)
   return {
     key: `existing-${lane.laneId}-${index}`,
     laneId: lane.laneId,
@@ -76,7 +113,8 @@ function viewToDraft(lane: RfpMappedLaneView, index: number): LaneDraft {
     columnKey: lane.columnKey ?? "",
     cellRef: lane.cellRef ?? "",
     rowIndex: lane.rowIndex != null ? String(lane.rowIndex) : "",
-    surchargeSlots: lane.surchargeSlots.join(", "),
+    feeSlots: fees.feeSlots,
+    feeColumnKeys: fees.feeColumnKeys,
   }
 }
 
@@ -92,7 +130,8 @@ function emptyDraft(index: number): LaneDraft {
     columnKey: "",
     cellRef: "",
     rowIndex: "",
-    surchargeSlots: "",
+    feeSlots: "",
+    feeColumnKeys: "",
   }
 }
 
@@ -128,11 +167,11 @@ function draftsToMappedLanes(drafts: LaneDraft[]): MappedLane[] {
       }
       lane.rowIndex = rowIndex
     }
-    const slots = draft.surchargeSlots
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean)
-    if (slots.length > 0) lane.surchargeSlots = slots
+    const feeBindings = draftFeeBindings(draft)
+    if (feeBindings.length > 0) {
+      lane.feeBindings = feeBindings
+      lane.surchargeSlots = feeBindings.map((b) => b.heading)
+    }
     return lane
   })
 }
@@ -270,8 +309,9 @@ export function FillMapPanel({
             Schema confirm
           </h2>
           <p className="text-sm text-muted-foreground">
-            Review and confirm O-D / equipment lanes. Rates resolve reads only
-            this confirmed store; pending map reviews block resolve.
+            Review and confirm O-D / equipment lanes and fee columns (BAF, THC,
+            …). Rates resolve reads only this confirmed store; pending map
+            reviews block resolve.
           </p>
           {stepHint ? (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -398,6 +438,9 @@ export function FillMapPanel({
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                 Sheet / column
               </TableHead>
+              <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                Fee columns
+              </TableHead>
               <TableHead className="h-[38px] w-10 text-xs font-medium text-muted-foreground">
                 <span className="sr-only">Remove</span>
               </TableHead>
@@ -463,12 +506,38 @@ export function FillMapPanel({
                     />
                     <Input
                       value={draft.columnKey}
-                      placeholder="Column key"
+                      placeholder="Base column key"
                       disabled={pending}
                       onChange={(e) =>
                         updateDraft(draft.key, { columnKey: e.target.value })
                       }
                       className="h-8 text-sm"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="align-top">
+                  <div className="flex min-w-[140px] flex-col gap-1">
+                    <Input
+                      value={draft.feeSlots}
+                      placeholder="BAF, THC, AMS"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, { feeSlots: e.target.value })
+                      }
+                      className="h-8 font-mono text-xs"
+                      aria-label="Fee charge codes"
+                    />
+                    <Input
+                      value={draft.feeColumnKeys}
+                      placeholder="Fee column keys (optional)"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, {
+                          feeColumnKeys: e.target.value,
+                        })
+                      }
+                      className="h-8 text-xs"
+                      aria-label="Fee column keys"
                     />
                   </div>
                 </TableCell>
@@ -500,6 +569,37 @@ export function FillMapPanel({
         >
           <IconPlus data-icon="inline-start" />
           Add lane
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={pending}
+          onClick={() => {
+            setDrafts((prev) =>
+              prev.map((draft) => {
+                const labels = [
+                  draft.columnKey,
+                  ...draft.feeSlots.split(","),
+                  ...draft.feeColumnKeys.split(","),
+                ]
+                const proposed = proposeFeeBindingsFromLabels(labels)
+                if (proposed.length === 0) return draft
+                return {
+                  ...draft,
+                  feeSlots: proposed.map((b) => b.heading).join(", "),
+                  feeColumnKeys: proposed
+                    .map((b) => b.columnKey ?? "")
+                    .join(", "),
+                }
+              })
+            )
+            toast.message(
+              "Proposed fee bindings from column labels — review and Confirm mapping"
+            )
+          }}
+        >
+          Propose fee slots
         </Button>
         <Button
           type="button"

@@ -2,6 +2,7 @@ import Link from "next/link"
 import {
   IconAdjustmentsHorizontal,
   IconChevronRight,
+  IconFileExport,
   IconKey,
   IconPercentage,
   IconUser,
@@ -22,6 +23,12 @@ const generalLinks = [
     title: "Floor margins",
     description: "Min $/FEU and gross % guardrails for fill overlays.",
     icon: IconPercentage,
+  },
+  {
+    href: "/settings/fill-export",
+    title: "Fill export",
+    description: "Soft warn or hard block unexpected fees on export.",
+    icon: IconFileExport,
   },
   {
     href: "/settings/profile",

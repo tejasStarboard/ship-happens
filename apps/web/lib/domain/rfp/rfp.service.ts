@@ -171,6 +171,13 @@ export class RfpService {
           columnKey: lane.columnKey ?? null,
           cellRef: lane.cellRef ?? null,
           surchargeSlots: lane.surchargeSlots ?? [],
+          feeBindings: (lane.feeBindings ?? []).map((b) => ({
+            heading: b.heading,
+            columnKey: b.columnKey ?? null,
+            cellRef: b.cellRef ?? null,
+            sheetName: b.sheetName ?? null,
+            confidence: b.confidence ?? null,
+          })),
         })),
         error: null,
       }

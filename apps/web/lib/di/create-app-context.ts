@@ -3,6 +3,8 @@ import {
   createDbMappingStore,
   FillMappingRepository,
   FillMappingService,
+  FillOrgSettingsRepository,
+  FillOrgSettingsService,
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
@@ -101,6 +103,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const overlayRules = new OverlayRuleService(overlayRulesRepo)
   const marginFloorsRepo = new MarginFloorRuleRepository(database)
   const marginFloors = new MarginFloorRuleService(marginFloorsRepo)
+  const fillOrgSettingsRepo = new FillOrgSettingsRepository(database)
+  const fillOrgSettings = new FillOrgSettingsService(fillOrgSettingsRepo)
   const mappingStore =
     deps?.mappingStore ??
     createDbMappingStore(fillMappings, createWorkspaceMappingFileReader())
@@ -144,7 +148,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     blobStore,
     workbookWriter,
     sourceFetcher,
-    workspace
+    workspace,
+    fillOrgSettings
   )
   const intake = new IntakeService(
     database,
@@ -175,6 +180,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     rates,
     overlayRules,
     marginFloors,
+    fillOrgSettings,
     overlays,
     exportWorkbook,
     analytics: new OpsAnalyticsService(database),

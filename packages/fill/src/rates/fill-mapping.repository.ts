@@ -2,10 +2,48 @@ import { randomUUID } from "node:crypto"
 import { eq } from "drizzle-orm"
 import { rfpMappedLanes, rfps } from "@ship-happens/db"
 import type { AppDb } from "../rfp/rfp.repository"
+import {
+  feeBindingsForPersist,
+  normalizeFeeBindings,
+  type FeeBinding,
+} from "./fee-bindings"
 import type { MappedLane } from "./mapped-lane"
 
 function mappingRowId() {
   return `mlane_${randomUUID().replaceAll("-", "").slice(0, 16)}`
+}
+
+function parseStoredSlots(
+  raw: Array<string | Record<string, unknown>> | null | undefined
+): { surchargeSlots: string[]; feeBindings: FeeBinding[] } {
+  const laneStub = {
+    laneId: "_",
+    originLocode: "XX",
+    destLocode: "YY",
+    equipmentType: "40HC",
+    surchargeSlots: [] as string[],
+    feeBindings: [] as FeeBinding[],
+  } satisfies MappedLane
+
+  if (!raw || raw.length === 0) {
+    return { surchargeSlots: [], feeBindings: [] }
+  }
+
+  const strings: string[] = []
+  const objects: FeeBinding[] = []
+  for (const item of raw) {
+    if (typeof item === "string") {
+      if (item.trim()) strings.push(item.trim())
+      continue
+    }
+    if (item && typeof item === "object" && "heading" in item) {
+      objects.push(item as FeeBinding)
+    }
+  }
+  laneStub.surchargeSlots = strings
+  laneStub.feeBindings = objects
+  const bindings = normalizeFeeBindings(laneStub)
+  return feeBindingsForPersist(bindings)
 }
 
 function toMappedLane(row: typeof rfpMappedLanes.$inferSelect): MappedLane {
@@ -24,9 +62,24 @@ function toMappedLane(row: typeof rfpMappedLanes.$inferSelect): MappedLane {
   if (row.rowIndex != null) lane.rowIndex = row.rowIndex
   if (row.columnKey) lane.columnKey = row.columnKey
   if (row.cellRef) lane.cellRef = row.cellRef
-  const slots = row.surchargeSlots ?? []
-  if (slots.length > 0) lane.surchargeSlots = slots
+  const parsed = parseStoredSlots(row.surchargeSlots ?? [])
+  if (parsed.feeBindings.length > 0) {
+    lane.feeBindings = parsed.feeBindings
+    lane.surchargeSlots = parsed.surchargeSlots
+  }
   return lane
+}
+
+function slotsForDb(lane: MappedLane): Array<Record<string, unknown>> {
+  const bindings = normalizeFeeBindings(lane)
+  return bindings.map((b) => {
+    const row: Record<string, unknown> = { heading: b.heading }
+    if (b.columnKey) row.columnKey = b.columnKey
+    if (b.cellRef) row.cellRef = b.cellRef
+    if (b.sheetName) row.sheetName = b.sheetName
+    if (b.confidence != null) row.confidence = b.confidence
+    return row
+  })
 }
 
 export class FillMappingRepository {
@@ -91,7 +144,7 @@ export class FillMappingRepository {
         rowIndex: lane.rowIndex ?? null,
         columnKey: lane.columnKey ?? null,
         cellRef: lane.cellRef ?? null,
-        surchargeSlots: lane.surchargeSlots ?? [],
+        surchargeSlots: slotsForDb(lane),
       }))
     )
 
