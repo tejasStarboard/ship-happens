@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { motion, useReducedMotion } from "motion/react"
 import { Button } from "@workspace/ui/components/button"
 import {
@@ -343,18 +344,44 @@ export function WaitingOnYouPanel({
   pendingReviews,
   progressSteps,
   status,
+  initialReviewId,
   onAskAgent,
 }: {
   fillId: string
   pendingReviews: RfpPendingReviewView[]
   progressSteps: RfpProgressStepView[]
   status: RfpStatus
+  initialReviewId?: string | null
   onAskAgent: (reviewId: string) => void
 }) {
   const reduce = useReducedMotion()
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [activeId, setActiveId] = useState<string | null>(null)
   const active = pendingReviews.find((item) => item.id === activeId) ?? null
   const agentWorking = isAgentWorking(status, progressSteps)
+
+  useEffect(() => {
+    if (!initialReviewId) return
+    if (!pendingReviews.some((item) => item.id === initialReviewId)) return
+    setActiveId(initialReviewId)
+  }, [initialReviewId, pendingReviews])
+
+  function clearReviewQuery() {
+    if (!searchParams.has("review")) return
+    const next = new URLSearchParams(searchParams.toString())
+    next.delete("review")
+    const query = next.toString()
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false })
+  }
+
+  function openReview(id: string) {
+    setActiveId(id)
+    const next = new URLSearchParams(searchParams.toString())
+    next.set("review", id)
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+  }
 
   return (
     <section className="rounded-xl border border-border bg-card p-4">
@@ -425,7 +452,7 @@ export function WaitingOnYouPanel({
                     <Button
                       type="button"
                       size="sm"
-                      onClick={() => setActiveId(item.id)}
+                      onClick={() => openReview(item.id)}
                     >
                       Confirm
                     </Button>
@@ -433,7 +460,7 @@ export function WaitingOnYouPanel({
                       type="button"
                       size="sm"
                       variant="outline"
-                      onClick={() => setActiveId(item.id)}
+                      onClick={() => openReview(item.id)}
                     >
                       Details
                     </Button>
@@ -459,7 +486,10 @@ export function WaitingOnYouPanel({
         step={stepLabel(active?.stepKey ?? null, progressSteps)}
         open={activeId != null}
         onOpenChange={(nextOpen) => {
-          if (!nextOpen) setActiveId(null)
+          if (!nextOpen) {
+            setActiveId(null)
+            clearReviewQuery()
+          }
         }}
         onAskAgent={onAskAgent}
       />

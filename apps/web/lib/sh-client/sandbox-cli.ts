@@ -94,6 +94,53 @@ exec node ${SH_CLIENT_SANDBOX_JS} "$@"
 `
 
 /**
+ * Ensure sandbox has an executable sh-client and env matching current APP_URL.
+ * Re-injects when missing or when SH_APP_URL is stale (e.g. localhost → ngrok).
+ */
+export async function ensureShClientCli(
+  sandbox: SandboxHandle,
+  options: { fillId: string }
+): Promise<void> {
+  const appUrl = env.APP_URL.replace(/\/$/, "")
+  const probe = await sandbox.run({
+    command: [
+      "set +e",
+      "if [[ ! -f /workspace/.eve/sh-client.env ]]; then",
+      "  echo __SH_ENV_MISSING__",
+      `elif grep -F ${shellSingleQuote(appUrl)} /workspace/.eve/sh-client.env >/dev/null 2>&1; then`,
+      "  echo __SH_ENV_CURRENT__",
+      "else",
+      "  echo __SH_ENV_STALE__",
+      "fi",
+      `if [[ -x ${SH_CLIENT_SANDBOX_BIN} ]] && command -v sh-client >/dev/null 2>&1; then`,
+      "  echo __SH_BIN_OK__",
+      "else",
+      "  echo __SH_BIN_BAD__",
+      "fi",
+    ].join("\n"),
+  })
+  const out = probe.stdout
+  const needsInject =
+    out.includes("__SH_ENV_MISSING__") || out.includes("__SH_ENV_STALE__")
+  if (needsInject) {
+    await injectShClientCli(sandbox, options)
+    return
+  }
+  if (out.includes("__SH_BIN_BAD__")) {
+    const fix = await sandbox.run({
+      command: [
+        `chmod +x ${SH_CLIENT_SANDBOX_BIN} ${SH_CLIENT_SANDBOX_JS} 2>/dev/null || true`,
+        `if [[ -f ${SH_CLIENT_SANDBOX_BIN} ]]; then sudo cp ${SH_CLIENT_SANDBOX_BIN} /usr/local/bin/sh-client && sudo chmod +x /usr/local/bin/sh-client; fi`,
+        "command -v sh-client",
+      ].join(" && "),
+    })
+    if (fix.exitCode !== 0) {
+      await injectShClientCli(sandbox, options)
+    }
+  }
+}
+
+/**
  * Install sh-client on PATH and write fill-scoped API key env for the sandbox.
  */
 export async function injectShClientCli(

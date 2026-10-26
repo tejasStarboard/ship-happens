@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { Button } from "@workspace/ui/components/button"
 import {
   Tabs,
@@ -17,6 +18,7 @@ import {
   type RfpDetailView,
   type RfpStatus,
 } from "@/lib/domain/rfp/rfp.types"
+
 type FillTab = "overview" | "map" | "review" | "chat"
 
 function primaryAction(status: RfpStatus): {
@@ -53,8 +55,14 @@ function statusPillClass(status: RfpStatus) {
 }
 
 export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
+  const searchParams = useSearchParams()
+  const reviewParam = searchParams.get("review")
   const [tab, setTab] = useState<FillTab>("overview")
   const action = primaryAction(rfp.status)
+
+  useEffect(() => {
+    if (reviewParam) setTab("overview")
+  }, [reviewParam])
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
@@ -119,7 +127,11 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
         </TabsList>
 
         <TabsContent value="overview" className="mt-4 overflow-auto">
-          <FillOverviewDashboard rfp={rfp} onAskAgent={() => setTab("chat")} />
+          <FillOverviewDashboard
+            rfp={rfp}
+            initialReviewId={reviewParam}
+            onAskAgent={() => setTab("chat")}
+          />
         </TabsContent>
 
         <TabsContent value="map" className="mt-4 overflow-auto">

@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { notFound } from "next/navigation"
 import { RfpDetail } from "@/components/rfp/rfp-detail"
 import { requireOrgSession } from "@/lib/server/session"
@@ -25,5 +26,9 @@ export default async function RfpDetailPage({
     },
   })
 
-  return <RfpDetail rfp={rfp} />
+  return (
+    <Suspense fallback={null}>
+      <RfpDetail rfp={rfp} />
+    </Suspense>
+  )
 }

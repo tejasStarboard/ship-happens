@@ -9,6 +9,7 @@ import type {
   EveMessagePart,
 } from "eve/react"
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import {
   IconArrowRight as ArrowRightIcon,
   IconCircleCheck as CheckCircleIcon,
@@ -17,6 +18,7 @@ import {
   IconFile as FileIcon,
   IconPhoto as ImageIcon,
   IconKey as KeyRoundIcon,
+  IconClipboardList as ClipboardListIcon,
   IconCircleX as XCircleIcon,
 } from "@tabler/icons-react"
 import {
@@ -63,6 +65,10 @@ import {
   ToolOutput,
 } from "@workspace/ui/ai-elements/tool"
 import { Button } from "@workspace/ui/components/button"
+import {
+  parseReviewCreatedFromBash,
+  type ReviewCreatedNotify,
+} from "@/lib/agent/parse-review-created"
 import { redactSecrets, redactSecretsDeep } from "@/lib/secret-redaction"
 import { cn } from "@/lib/utils"
 
@@ -204,6 +210,11 @@ function AgentMessagePart({
         )
       }
 
+      const reviewCreated =
+        part.toolName === "bash"
+          ? parseReviewCreatedFromBash(part.input, part.output, part.errorText)
+          : null
+
       return (
         <>
           <Tool>
@@ -228,6 +239,7 @@ function AgentMessagePart({
               )}
             </ToolContent>
           </Tool>
+          {reviewCreated ? <ReviewCreatedCard review={reviewCreated} /> : null}
           {/* Kept outside the collapsed card so a pending approval is always visible. */}
           <InputRequestActions
             canRespond={canRespond}
@@ -238,6 +250,40 @@ function AgentMessagePart({
       )
     }
   }
+}
+
+function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
+  const router = useRouter()
+  const href = `/rfp/${review.rfpId}?review=${encodeURIComponent(review.id)}`
+
+  return (
+    <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300">
+          <ClipboardListIcon className="size-4" />
+        </span>
+        <div className="min-w-0 flex-1 space-y-2">
+          <p className="text-sm font-medium">Review waiting on you</p>
+          <p className="text-sm text-muted-foreground">{review.title}</p>
+          <p className="text-xs text-muted-foreground">
+            Open Overview to Confirm, Edit, or Reject. Chat alone does not
+            decide this item.
+          </p>
+          <Button
+            size="sm"
+            type="button"
+            onClick={() => {
+              router.push(href)
+              router.refresh()
+            }}
+          >
+            Open in Overview
+            <ExternalLinkIcon className="size-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function QuestionRequest({
