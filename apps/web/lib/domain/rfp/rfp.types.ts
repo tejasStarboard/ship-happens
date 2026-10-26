@@ -6,6 +6,7 @@ export {
   type LanePriceAudit,
   type MappedLane,
   type RfpDetailView,
+  type RfpEmailRef,
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,

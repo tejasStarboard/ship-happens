@@ -15,6 +15,7 @@ export {
   asRfpStatus,
   RFP_STATUS_LABEL,
   type RfpDetailView,
+  type RfpEmailRef,
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,

@@ -32,7 +32,11 @@ export class RfpService {
   ): Promise<RfpListItem[]> {
     const rows = await this.repo.listByOrganization(organizationId)
     return rows.map((row) => {
-      const meta = (row.metadata ?? {}) as { templateName?: string }
+      const meta = (row.metadata ?? {}) as {
+        templateName?: string
+        intakeSource?: string
+        email?: RfpListItem["emailRef"]
+      }
       return {
         id: row.id,
         name: row.name,
@@ -41,6 +45,8 @@ export class RfpService {
         templateName: row.templateName ?? meta.templateName ?? "—",
         updatedAt: row.updatedAt.toISOString(),
         owner: ownerDisplayName || row.ownerName,
+        emailRef:
+          meta.intakeSource === "email" && meta.email ? meta.email : null,
       }
     })
   }
@@ -53,7 +59,11 @@ export class RfpService {
     const row = await this.repo.findByIdForOrganization(organizationId, id)
     if (!row) return null
 
-    const meta = (row.metadata ?? {}) as { templateName?: string }
+    const meta = (row.metadata ?? {}) as {
+      templateName?: string
+      intakeSource?: string
+      email?: RfpListItem["emailRef"]
+    }
     const [progressSteps, logs, sourceFileRows, allReviews, report, mapping] =
       await Promise.all([
         this.pipeline.listSteps(row.id),
@@ -86,6 +96,7 @@ export class RfpService {
       templateName: row.templateName ?? meta.templateName ?? "—",
       updatedAt: row.updatedAt.toISOString(),
       owner: ownerDisplayName || row.ownerName,
+      emailRef: meta.intakeSource === "email" && meta.email ? meta.email : null,
       filledFileUrl: downloadGate.filledFileUrl,
       exportDownloadBlockedReason: downloadGate.blockedReason,
       progressSteps: progressSteps.map((step) => ({

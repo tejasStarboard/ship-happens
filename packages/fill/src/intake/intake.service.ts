@@ -14,6 +14,15 @@ import {
 } from "../spreadsheet-constants"
 import { checksumSha256, discoverWorkbookSheets } from "../workbook-parse"
 
+const emailProvenanceSchema = z.object({
+  provider: z.enum(["gmail", "outlook"]),
+  messageId: z.string().min(1),
+  threadId: z.string().optional(),
+  from: z.string().optional(),
+  subject: z.string().optional(),
+  receivedAt: z.string().optional(),
+})
+
 const spreadsheetUploadSchema = z.object({
   fileName: z.string().min(1).max(255),
   contentType: z.enum(ALLOWED_SPREADSHEET_MIME_TYPES),
@@ -21,6 +30,9 @@ const spreadsheetUploadSchema = z.object({
   name: z.string().min(1).max(200),
   customer: z.string().max(200).optional(),
   templateId: z.string().min(1).optional(),
+  /** Extra metadata merged onto `rfps.metadata` (e.g. email intake provenance). */
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  email: emailProvenanceSchema.optional(),
 })
 
 const templateUploadSchema = z.object({
@@ -129,6 +141,21 @@ export class IntakeService {
         ? `${sheetNames.length} sheet(s): ${sheetNames.slice(0, 6).join(", ")}${sheetNames.length > 6 ? "…" : ""}`
         : "Workbook stored (sheet list unavailable)"
 
+    const rfpMetadata: Record<string, unknown> = {
+      templateName: parsed.fileName,
+      sourceFileName: parsed.fileName,
+      ...(parsed.metadata ?? {}),
+    }
+    if (parsed.email) {
+      rfpMetadata.intakeSource = "email"
+      rfpMetadata.email = parsed.email
+    }
+
+    const sourceParseMetadata: Record<string, unknown> = {
+      ...parseMetadata,
+      ...(parsed.email ? { intakeSource: "email", email: parsed.email } : {}),
+    }
+
     try {
       await this.db.transaction(async (tx) => {
         const txDb = tx as unknown as AppDb
@@ -141,10 +168,7 @@ export class IntakeService {
           status: "queued",
           ownerUserId,
           startedAt: new Date(),
-          metadata: {
-            templateName: parsed.fileName,
-            sourceFileName: parsed.fileName,
-          },
+          metadata: rfpMetadata,
         })
 
         await tx.insert(rfpSourceFiles).values({
@@ -158,7 +182,7 @@ export class IntakeService {
           blobPathname: blob.pathname,
           checksumSha256: checksum,
           sheetNames,
-          parseMetadata,
+          parseMetadata: sourceParseMetadata,
         })
 
         const pipelineTx = new FillPipelineManager(txDb)

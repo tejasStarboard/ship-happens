@@ -28,6 +28,20 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: z.string().optional(),
     GOOGLE_CLIENT_SECRET: z.string().optional(),
 
+    /** TypeSafe / Jev System One (email intake classification). */
+    JEV_API_KEY: z.string().optional(),
+
+    /** Microsoft mailbox OAuth (Outlook intake). */
+    MICROSOFT_CLIENT_ID: z.string().optional(),
+    MICROSOFT_CLIENT_SECRET: z.string().optional(),
+    /** Graph webhook clientState shared secret. */
+    OUTLOOK_WEBHOOK_CLIENT_STATE: z.string().optional(),
+
+    /** Gmail users.watch → Pub/Sub topic (projects/.../topics/...). */
+    GMAIL_PUBSUB_TOPIC: z.string().optional(),
+    /** Optional query `?token=` on `/api/webhooks/gmail`. */
+    GMAIL_PUBSUB_VERIFICATION_TOKEN: z.string().optional(),
+
     APP_URL: z.url(),
     BLOB_STORE_ID: z.string().default("local"),
     BLOB_READ_WRITE_TOKEN: z.string().default("vercel_blob_local_placeholder"),
@@ -64,6 +78,14 @@ export const env = createEnv({
     BETTER_AUTH_DOMAIN: process.env.BETTER_AUTH_DOMAIN,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
+
+    JEV_API_KEY: process.env.JEV_API_KEY,
+    MICROSOFT_CLIENT_ID: process.env.MICROSOFT_CLIENT_ID,
+    MICROSOFT_CLIENT_SECRET: process.env.MICROSOFT_CLIENT_SECRET,
+    OUTLOOK_WEBHOOK_CLIENT_STATE: process.env.OUTLOOK_WEBHOOK_CLIENT_STATE,
+    GMAIL_PUBSUB_TOPIC: process.env.GMAIL_PUBSUB_TOPIC,
+    GMAIL_PUBSUB_VERIFICATION_TOKEN:
+      process.env.GMAIL_PUBSUB_VERIFICATION_TOKEN,
 
     APP_URL: process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL,
     BLOB_STORE_ID: process.env.BLOB_STORE_ID,

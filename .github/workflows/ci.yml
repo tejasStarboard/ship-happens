@@ -23,6 +23,12 @@ env:
   EMAIL_SENDER_ADDRESS: noreply@example.com
   BLOB_STORE_ID: local
   BLOB_READ_WRITE_TOKEN: vercel_blob_local_placeholder
+  JEV_API_KEY: jev_ci_placeholder
+  MICROSOFT_CLIENT_ID: ""
+  MICROSOFT_CLIENT_SECRET: ""
+  OUTLOOK_WEBHOOK_CLIENT_STATE: ship-happens-ci
+  GMAIL_PUBSUB_TOPIC: ""
+  GMAIL_PUBSUB_VERIFICATION_TOKEN: ""
   # Turbo local cache dir (also restored via actions/cache)
   TURBO_CACHE_DIR: .turbo
 
