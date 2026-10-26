@@ -19,6 +19,7 @@ export {
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
+  type RfpFeeBindingView,
   type RfpMappedLaneView,
   type RfpPendingReviewView,
   type RfpProgressStepView,
@@ -26,12 +27,33 @@ export {
   type RfpStatus,
 } from "./rfp/rfp.types"
 
-export type { MappedLane, MappingDocument } from "./rates/mapped-lane"
+export type {
+  FeeBindingDoc,
+  MappedLane,
+  MappingDocument,
+} from "./rates/mapped-lane"
 export {
   isLowConfidenceMapping,
   MAP_LOW_CONFIDENCE_THRESHOLD,
   mappedLaneFromProposal,
 } from "./rates/proposal-to-mapped-lane"
+export {
+  DEFAULT_UNEXPECTED_FEE_MODE,
+  isUnexpectedFeeMode,
+  proposeFeeBindingsFromLabels,
+  UNEXPECTED_FEE_REVIEW_SOURCE,
+  UNEXPECTED_FEE_SETTINGS_PATH,
+  type FeeBinding,
+  type UnexpectedFeeMode,
+} from "./rates/fee-bindings"
+export {
+  parseUnexpectedFeeSoftWarn,
+  type UnexpectedFeeWarningPayload,
+} from "./rates/unexpected-fee-gate"
+export type {
+  FillOrgSettingsView,
+  UpdateFillOrgSettingsInput,
+} from "./settings/fill-org-settings.types"
 
 export {
   lanePriceAuditFromMetadata,

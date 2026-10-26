@@ -71,6 +71,7 @@ export {
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
+  type RfpFeeBindingView,
   type RfpMappedLaneView,
   type RfpPendingReviewView,
   type RfpProgressStepView,
@@ -112,14 +113,48 @@ export {
 export { checksumSha256, discoverWorkbookSheets } from "./workbook-parse"
 
 export {
+  FeeBindingSchema,
   MappedLaneSchema,
   MappingDocumentSchema,
   parseMappingDocument,
   parseMappingJson,
   SMOKE_MAPPING_FIXTURE,
+  type FeeBindingDoc,
   type MappedLane,
   type MappingDocument,
 } from "./rates/mapped-lane"
+export {
+  allocateLaneFees,
+  DEFAULT_UNEXPECTED_FEE_MODE,
+  feeBindingsForPersist,
+  isUnexpectedFeeMode,
+  normalizeFeeBindings,
+  proposeFeeBindingsFromLabels,
+  UNEXPECTED_FEE_REVIEW_SOURCE,
+  UNEXPECTED_FEE_SETTINGS_PATH,
+  type FeeBinding,
+  type FeeCellAllocation,
+  type LaneFeeAllocation,
+  type UnexpectedFeeLine,
+  type UnexpectedFeeMode,
+} from "./rates/fee-bindings"
+export {
+  encodeUnexpectedFeeSoftWarn,
+  parseUnexpectedFeeSoftWarn,
+  type UnexpectedFeeWarningPayload,
+} from "./rates/unexpected-fee-gate"
+export {
+  classifySurchargeName,
+  DEFAULT_HEADING_BUCKETS,
+  normalizeChargeToken,
+  rollupCharges,
+} from "./rates/charge-ontology"
+export { FillOrgSettingsRepository } from "./settings/fill-org-settings.repository"
+export { FillOrgSettingsService } from "./settings/fill-org-settings.service"
+export type {
+  FillOrgSettingsView,
+  UpdateFillOrgSettingsInput,
+} from "./settings/fill-org-settings.types"
 export {
   isLowConfidenceMapping,
   MAP_LOW_CONFIDENCE_THRESHOLD,

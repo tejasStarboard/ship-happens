@@ -176,8 +176,9 @@ jobs:
       # Cache hit still needs OS libs every run (fresh VM). `install-deps` can
       # hang on apt; bound it, kill orphaned apt after timeout (otherwise the
       # fallback races on /var/lib/dpkg/lock-frontend), then retry install-deps.
+      # Step budget must cover first attempt + kill grace + full retry (~8+ min).
       - name: Install Playwright Chromium + OS deps
-        timeout-minutes: 8
+        timeout-minutes: 12
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
@@ -197,11 +198,12 @@ jobs:
 
           pnpm --filter web exec playwright install chromium
 
+          # Slow Azure apt mirrors: allow longer first try; retry gets 5 min.
           # -k: SIGKILL after grace so grandchild apt-get does not keep the lock
-          if ! timeout -k 20s 150s pnpm --filter web exec playwright install-deps chromium; then
+          if ! timeout -k 20s 180s pnpm --filter web exec playwright install-deps chromium; then
             echo "::warning::playwright install-deps timed out or failed; clearing apt lock and retrying"
             release_apt_lock
-            timeout -k 20s 300s pnpm --filter web exec playwright install-deps chromium
+            timeout -k 20s 360s pnpm --filter web exec playwright install-deps chromium
           fi
 
       - name: Build web + workspace deps

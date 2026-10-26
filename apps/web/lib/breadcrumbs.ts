@@ -35,6 +35,9 @@ export function buildBreadcrumbs(matches: MatchLike[]): AppBreadcrumb[] {
     return [{ label: "Settings", to: "/settings" }, { label: "Preferences" }]
   }
 
+  if (routeId.includes("/settings/fill-export")) {
+    return [{ label: "Settings", to: "/settings" }, { label: "Fill export" }]
+  }
   if (routeId.includes("/settings/floor-margins")) {
     return [{ label: "Settings", to: "/settings" }, { label: "Floor margins" }]
   }

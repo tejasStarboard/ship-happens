@@ -92,6 +92,14 @@ export type RfpFillReportView = {
  * Read-only confirmed lane for Map tab (Postgres `rfp_mapped_lanes`).
  * `mapping.json` remains import/export only.
  */
+export type RfpFeeBindingView = {
+  heading: string
+  columnKey: string | null
+  cellRef: string | null
+  sheetName: string | null
+  confidence: number | null
+}
+
 export type RfpMappedLaneView = {
   laneId: string
   originLocode: string
@@ -103,6 +111,7 @@ export type RfpMappedLaneView = {
   columnKey: string | null
   cellRef: string | null
   surchargeSlots: string[]
+  feeBindings: RfpFeeBindingView[]
 }
 
 export type RfpDetailView = RfpListItem & {

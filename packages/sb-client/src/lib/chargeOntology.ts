@@ -191,3 +191,27 @@ export function rollupCharges(params: {
   const unassigned = classified.filter((_, i) => !used.has(i))
   return { headings, unassigned }
 }
+
+/**
+ * Thin BCO helper (SB-7088): roll resolved surcharges / globals into
+ * requested sheet fee headings. Does not invent amounts.
+ */
+export function allocateChargesToHeadings(params: {
+  charges: RollupInputCharge[]
+  headings: string[]
+  heading_buckets?: Record<string, ChargeBucket[]>
+}): {
+  headings: RollupHeading[]
+  unexpected: RollupInputCharge[]
+} {
+  const { headings, unassigned } = rollupCharges({
+    charges: params.charges,
+    headings: params.headings,
+    heading_buckets: params.heading_buckets,
+  })
+  const unexpected = unassigned.filter((c) => {
+    const bucket = c.bucket ?? classifySurchargeName(c.name).bucket
+    return bucket !== "base_freight"
+  })
+  return { headings, unexpected }
+}
