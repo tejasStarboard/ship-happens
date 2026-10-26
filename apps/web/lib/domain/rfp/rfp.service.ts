@@ -16,7 +16,7 @@ import {
   isRfpBidOutcome,
   resolveEffectiveBidOutcome,
   resolveExportDownloadGate,
-  toFillReportCellView,
+  toFillReportCellViewsWithBidPriority,
   type MappingStore,
 } from "@ship-happens/fill"
 
@@ -176,7 +176,10 @@ export class RfpService {
             skippedCount: report.skippedCount,
             needsHumanCount: report.needsHumanCount,
             errorCount: report.errorCount,
-            cells: report.cells.map(toFillReportCellView),
+            cells: toFillReportCellViewsWithBidPriority(
+              report.cells,
+              pendingReviews
+            ),
           }
         : null,
       mappedLanes: mapping.lanes,

@@ -3,6 +3,12 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
 import { IconChartBar } from "@tabler/icons-react"
 import {
+  compareLaneBidPriorityDesc,
+  LANE_BID_PRIORITY_FACTOR_LABEL,
+  LANE_BID_PRIORITY_TIER_LABEL,
+  type LaneBidPriorityTier,
+} from "@ship-happens/fill/browser"
+import {
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -91,6 +97,24 @@ function confidenceLabel(cell: FillReportCellView) {
   return reason ? `${pct} · ${reason.replaceAll("_", " ")}` : pct
 }
 
+function priorityLabel(cell: FillReportCellView) {
+  const priority = cell.bidPriority
+  if (!priority) return "—"
+  const tier = LANE_BID_PRIORITY_TIER_LABEL[priority.tier]
+  return `${tier} · ${priority.score}`
+}
+
+function priorityTierClass(tier: LaneBidPriorityTier) {
+  switch (tier) {
+    case "critical":
+      return "text-destructive"
+    case "attention":
+      return "text-amber-700 dark:text-amber-400"
+    default:
+      return "text-muted-foreground"
+  }
+}
+
 function ProvenanceLinks({
   links,
   loading,
@@ -136,6 +160,7 @@ function ProvenanceLinks({
 
 function AuditDetail({ cell }: { cell: FillReportCellView }) {
   const { starboard, overlay, pick } = cell.audit
+  const priority = cell.bidPriority
   const [links, setLinks] = useState<RateProvenanceLinks | null>(null)
   const [loadingLinks, setLoadingLinks] = useState(
     Boolean(starboard.vendorRateDocId || starboard.vendorEmailUrl)
@@ -177,7 +202,40 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
   }, [starboard.vendorRateDocId, starboard.vendorEmailUrl])
 
   return (
-    <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-3">
+    <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Bid priority
+        </p>
+        {priority ? (
+          <dl className="grid gap-1.5">
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Tier</dt>
+              <dd className={`font-medium ${priorityTierClass(priority.tier)}`}>
+                {LANE_BID_PRIORITY_TIER_LABEL[priority.tier]}
+              </dd>
+            </div>
+            <div className="flex justify-between gap-3">
+              <dt className="text-muted-foreground">Score</dt>
+              <dd className="tabular font-medium">{priority.score}</dd>
+            </div>
+            <div className="flex flex-col gap-1">
+              <dt className="text-muted-foreground">Factors</dt>
+              <dd>
+                <ul className="list-inside list-disc text-right font-medium">
+                  {priority.factors.map((factor) => (
+                    <li key={factor}>
+                      {LANE_BID_PRIORITY_FACTOR_LABEL[factor]}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          </dl>
+        ) : (
+          <p className="text-muted-foreground">No priority computed.</p>
+        )}
+      </div>
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
           Starboard source
@@ -311,7 +369,18 @@ export function FillReviewPanel({
   fillReport: RfpFillReportView | null
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const cells = fillReport?.cells ?? []
+  const [tierFilter, setTierFilter] = useState<LaneBidPriorityTier | "all">(
+    "all"
+  )
+
+  const cells = useMemo(() => {
+    const list = [...(fillReport?.cells ?? [])]
+    list.sort((a, b) =>
+      compareLaneBidPriorityDesc(a.bidPriority, b.bidPriority)
+    )
+    if (tierFilter === "all") return list
+    return list.filter((cell) => cell.bidPriority?.tier === tierFilter)
+  }, [fillReport?.cells, tierFilter])
 
   const counts = useMemo(() => {
     if (!fillReport) {
@@ -369,10 +438,41 @@ export function FillReviewPanel({
         <p className="text-sm text-muted-foreground">{fillReport.summary}</p>
       ) : null}
 
+      <div className="flex flex-wrap items-center gap-2">
+        <p className="text-xs text-muted-foreground">Priority</p>
+        {(
+          [
+            ["all", "All"],
+            ["critical", LANE_BID_PRIORITY_TIER_LABEL.critical],
+            ["attention", LANE_BID_PRIORITY_TIER_LABEL.attention],
+            ["ok", LANE_BID_PRIORITY_TIER_LABEL.ok],
+          ] as const
+        ).map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            className={`rounded-[6px] border px-2.5 py-1 text-xs font-medium transition-colors ${
+              tierFilter === value
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-card text-muted-foreground hover:text-foreground"
+            }`}
+            onClick={() => setTierFilter(value)}
+          >
+            {label}
+          </button>
+        ))}
+        <p className="text-xs text-muted-foreground">
+          Sorted by bid priority (needs attention first)
+        </p>
+      </div>
+
       <DataTableShell>
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
+              <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                Priority
+              </TableHead>
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                 Lane
               </TableHead>
@@ -396,6 +496,7 @@ export function FillReviewPanel({
           <TableBody>
             {cells.map((cell) => {
               const open = selectedId === cell.id
+              const tier = cell.bidPriority?.tier
               return (
                 <Fragment key={cell.id}>
                   <TableRow
@@ -403,6 +504,13 @@ export function FillReviewPanel({
                     data-state={open ? "selected" : undefined}
                     onClick={() => setSelectedId(open ? null : cell.id)}
                   >
+                    <TableCell
+                      className={`align-top text-sm font-medium ${
+                        tier ? priorityTierClass(tier) : "text-muted-foreground"
+                      }`}
+                    >
+                      {priorityLabel(cell)}
+                    </TableCell>
                     <TableCell className="align-top font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span>{laneLabel(cell)}</span>
@@ -433,7 +541,7 @@ export function FillReviewPanel({
                   </TableRow>
                   {open ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={6} className="p-0">
+                      <TableCell colSpan={7} className="p-0">
                         <AuditDetail cell={cell} />
                       </TableCell>
                     </TableRow>
@@ -445,9 +553,9 @@ export function FillReviewPanel({
         </Table>
       </DataTableShell>
       <p className="text-xs text-muted-foreground">
-        Click a row for Starboard source, overlay/markup, and pick confidence.
-        Weak picks open Waiting on you alongside floor-margin reviews. Same
-        audit via <code className="text-xs">sh-client cells</code>.
+        Click a row for bid priority factors, Starboard source, overlay/markup,
+        and pick confidence. Weak / missing rates sort to the top. Same audit
+        via <code className="text-xs">sh-client cells</code>.
       </p>
     </div>
   )
