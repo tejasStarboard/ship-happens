@@ -56,7 +56,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const templateRepo = new TemplateRepository(database)
   const pipeline = new FillPipelineManager(database)
   const reviewRepo = new ReviewItemRepository(database)
-  const reviews = new ReviewItemService(reviewRepo, rfpRepo)
+  const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline)
 
   return {
     db: database,

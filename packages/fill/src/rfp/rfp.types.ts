@@ -28,6 +28,8 @@ export type RfpProgressStepView = {
   sortOrder: number
   startedAt: string | null
   completedAt: string | null
+  /** True when at least one `pending` review wait targets this step. */
+  blockedByReview?: boolean
 }
 
 export type RfpLogView = {

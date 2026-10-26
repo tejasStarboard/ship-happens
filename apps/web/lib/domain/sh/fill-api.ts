@@ -51,8 +51,22 @@ export async function getFillProgress(ctx: ShApiKeyContext, fillId: string) {
   if (!fill) {
     throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
   }
-  const steps = await app.pipeline.listSteps(fillId)
-  return { fillId, steps }
+  const [steps, pending] = await Promise.all([
+    app.pipeline.listSteps(fillId),
+    app.reviews.list(ctx.organizationId, fillId, { status: "pending" }),
+  ])
+  const blockedKeys = new Set(
+    pending
+      .map((item) => item.stepKey)
+      .filter((key): key is string => key != null && key.length > 0)
+  )
+  return {
+    fillId,
+    steps: steps.map((step) => ({
+      ...step,
+      blockedByReview: blockedKeys.has(step.key),
+    })),
+  }
 }
 
 export async function getFillLogs(

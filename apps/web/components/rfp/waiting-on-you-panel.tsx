@@ -113,8 +113,12 @@ function isAgentWorking(
   status: RfpStatus,
   steps: RfpProgressStepView[]
 ): boolean {
+  // Open waits set fill to needs_review — empty copy should not say agent working.
+  if (status === "needs_review") return false
   if (status === "running") return true
-  return steps.some((step) => step.status === "running")
+  return steps.some(
+    (step) => step.status === "running" && !step.blockedByReview
+  )
 }
 
 function ReviewDetailSheet({

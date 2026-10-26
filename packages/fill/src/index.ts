@@ -16,6 +16,8 @@ export type {
 export {
   FILL_PROGRESS_STEPS,
   FillPipelineManager,
+  isProgressStepKey,
+  PROGRESS_WAIT_DETAIL,
   type LogLevel,
   type ProgressStatus,
   type ProgressStepKey,

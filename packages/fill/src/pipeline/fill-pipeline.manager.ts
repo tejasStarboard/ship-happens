@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto"
 import { and, asc, eq } from "drizzle-orm"
-import { rfpLogs, rfpProgressSteps, rfps } from "@workspace/db"
+import { rfpLogs, rfpProgressSteps, rfpReviewItems, rfps } from "@workspace/db"
 import { DomainError } from "../errors"
 import type { AppDb } from "../rfp/rfp.repository"
 
@@ -19,6 +19,13 @@ export type ProgressStatus =
 export type LogLevel = "debug" | "info" | "warn" | "error"
 export type RfpRunStatus =
   "queued" | "running" | "needs_review" | "done" | "failed" | "cancelled"
+
+/** Detail written onto a step while open review waits block it. */
+export const PROGRESS_WAIT_DETAIL = "Waiting on human review"
+
+export function isProgressStepKey(value: string): value is ProgressStepKey {
+  return FILL_PROGRESS_STEPS.some((step) => step.key === value)
+}
 
 function stepId() {
   return `step_${randomUUID().replaceAll("-", "").slice(0, 16)}`
@@ -113,6 +120,13 @@ export class FillPipelineManager {
     options?: { errorMessage?: string | null }
   ) {
     const now = new Date()
+    const current = await this.db
+      .select({ startedAt: rfps.startedAt })
+      .from(rfps)
+      .where(eq(rfps.id, rfpId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+
     const patch: {
       status: RfpRunStatus
       updatedAt: Date
@@ -124,7 +138,8 @@ export class FillPipelineManager {
     if (options?.errorMessage !== undefined) {
       patch.errorMessage = options.errorMessage
     }
-    if (status === "running") {
+    // Only stamp startedAt the first time the fill becomes running.
+    if (status === "running" && !current?.startedAt) {
       patch.startedAt = now
     }
     if (status === "done" || status === "failed" || status === "cancelled") {
@@ -172,6 +187,9 @@ export class FillPipelineManager {
     if ((status === "running" || status === "done") && !existing.startedAt) {
       patch.startedAt = now
     }
+    if (status === "running") {
+      patch.completedAt = null
+    }
     if (status === "done" || status === "failed" || status === "skipped") {
       patch.completedAt = now
     }
@@ -180,6 +198,22 @@ export class FillPipelineManager {
       .update(rfpProgressSteps)
       .set(patch)
       .where(eq(rfpProgressSteps.id, existing.id))
+  }
+
+  async hasOpenWaitsForStep(rfpId: string, key: ProgressStepKey) {
+    const row = await this.db
+      .select({ id: rfpReviewItems.id })
+      .from(rfpReviewItems)
+      .where(
+        and(
+          eq(rfpReviewItems.rfpId, rfpId),
+          eq(rfpReviewItems.status, "pending"),
+          eq(rfpReviewItems.stepKey, key)
+        )
+      )
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+    return row != null
   }
 
   async startStep(rfpId: string, key: ProgressStepKey, detail?: string) {
@@ -194,6 +228,12 @@ export class FillPipelineManager {
   }
 
   async completeStep(rfpId: string, key: ProgressStepKey, detail?: string) {
+    if (await this.hasOpenWaitsForStep(rfpId, key)) {
+      throw new DomainError(
+        `Cannot complete step "${key}" while open review waits exist`,
+        "VALIDATION"
+      )
+    }
     await this.updateStep(rfpId, key, "done", detail ?? null)
     await this.appendLog({
       rfpId,

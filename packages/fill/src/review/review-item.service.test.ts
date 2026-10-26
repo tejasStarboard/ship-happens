@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest"
 import { DomainError } from "../errors"
+import type { FillPipelineManager } from "../pipeline/fill-pipeline.manager"
+import { PROGRESS_WAIT_DETAIL } from "../pipeline/fill-pipeline.manager"
 import type { RfpRepository } from "../rfp/rfp.repository"
 import type { ReviewItemRepository } from "./review-item.repository"
 import { normalizeDecideInput, ReviewItemService } from "./review-item.service"
@@ -87,13 +89,14 @@ describe("normalizeDecideInput", () => {
 function pendingRow(overrides?: {
   status?: ReviewItemStatus
   resolution?: Record<string, unknown>
+  stepKey?: string | null
 }) {
   const now = new Date("2026-01-15T12:00:00.000Z")
   return {
     id: "rev_test1",
     rfpId: "fill_1",
     organizationId: "org_1",
-    stepKey: "map",
+    stepKey: overrides?.stepKey === undefined ? "map" : overrides.stepKey,
     title: "Map column X",
     status: overrides?.status ?? ("pending" as ReviewItemStatus),
     proposal: { col: "A" },
@@ -109,7 +112,12 @@ function pendingRow(overrides?: {
   }
 }
 
-function createService(opts?: { row?: ReturnType<typeof pendingRow> | null }) {
+function createService(opts?: {
+  row?: ReturnType<typeof pendingRow> | null
+  fillStatus?: string
+  pendingCount?: number
+  stepPendingCount?: number
+}) {
   const row = opts?.row === undefined ? pendingRow() : opts.row
   const updateById = vi.fn(
     async (_id: string, patch: Record<string, unknown>) => {
@@ -117,9 +125,28 @@ function createService(opts?: { row?: ReturnType<typeof pendingRow> | null }) {
       return { ...row, ...patch, updatedAt: new Date() }
     }
   )
+  const insert = vi.fn(async (input: Record<string, unknown>) => ({
+    ...pendingRow({
+      stepKey: (input.stepKey as string | null | undefined) ?? null,
+    }),
+    id: (input.id as string) ?? "rev_new",
+    title: (input.title as string) ?? "Map column X",
+    status: "pending" as ReviewItemStatus,
+    proposal: (input.proposal as Record<string, unknown>) ?? {},
+  }))
+  const countPending = vi.fn(
+    async (_rfpId: string, options?: { stepKey?: string | null }) => {
+      if (options && "stepKey" in options) {
+        return opts?.stepPendingCount ?? 0
+      }
+      return opts?.pendingCount ?? 0
+    }
+  )
   const repo = {
     findByIdForFill: vi.fn(async () => row),
     updateById,
+    insert,
+    countPending,
   } as unknown as ReviewItemRepository
 
   const rfps = {
@@ -129,21 +156,106 @@ function createService(opts?: { row?: ReturnType<typeof pendingRow> | null }) {
             id: row.rfpId,
             organizationId: row.organizationId,
             name: "Test",
+            status: opts?.fillStatus ?? "running",
           }
-        : { id: "fill_1", organizationId: "org_1", name: "Test" }
+        : {
+            id: "fill_1",
+            organizationId: "org_1",
+            name: "Test",
+            status: opts?.fillStatus ?? "running",
+          }
     ),
   } as unknown as RfpRepository
 
+  const setRfpStatus = vi.fn(async () => undefined)
+  const updateStep = vi.fn(async () => undefined)
+  const appendLog = vi.fn(async () => undefined)
+  const listSteps = vi.fn(async () => [
+    {
+      id: "step_map",
+      key: "map",
+      status: "running",
+      detail: PROGRESS_WAIT_DETAIL,
+    },
+  ])
+  const pipeline = {
+    setRfpStatus,
+    updateStep,
+    appendLog,
+    listSteps,
+  } as unknown as FillPipelineManager
+
   return {
-    service: new ReviewItemService(repo, rfps),
+    service: new ReviewItemService(repo, rfps, pipeline),
     repo,
     updateById,
+    insert,
+    countPending,
+    setRfpStatus,
+    updateStep,
+    appendLog,
+    listSteps,
   }
 }
 
+describe("ReviewItemService.create progress hold", () => {
+  it("force-holds fill + known stepKey on create", async () => {
+    const { service, setRfpStatus, updateStep, appendLog } = createService()
+    await service.create("org_1", "fill_1", {
+      title: "Map column X",
+      stepKey: "map",
+      proposal: { col: "A" },
+    })
+
+    expect(setRfpStatus).toHaveBeenCalledWith("fill_1", "needs_review")
+    expect(updateStep).toHaveBeenCalledWith(
+      "fill_1",
+      "map",
+      "running",
+      PROGRESS_WAIT_DETAIL
+    )
+    expect(appendLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepKey: "map",
+        message: "Open review wait on step: map",
+      })
+    )
+  })
+
+  it("fill-level hold only when stepKey is null", async () => {
+    const { service, setRfpStatus, updateStep, appendLog } = createService()
+    await service.create("org_1", "fill_1", {
+      title: "General ask",
+      stepKey: null,
+    })
+
+    expect(setRfpStatus).toHaveBeenCalledWith("fill_1", "needs_review")
+    expect(updateStep).not.toHaveBeenCalled()
+    expect(appendLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stepKey: null,
+        message: "Open review wait (no progress step)",
+      })
+    )
+  })
+
+  it("does not override terminal fill status", async () => {
+    const { service, setRfpStatus, updateStep } = createService({
+      fillStatus: "done",
+    })
+    await service.create("org_1", "fill_1", {
+      title: "Late review",
+      stepKey: "map",
+    })
+
+    expect(setRfpStatus).not.toHaveBeenCalled()
+    expect(updateStep).toHaveBeenCalled()
+  })
+})
+
 describe("ReviewItemService.decide", () => {
   it("auto-resolves Confirm to resolved with decision fields", async () => {
-    const { service, updateById } = createService()
+    const { service, updateById } = createService({ pendingCount: 0 })
     const view = await service.decide(
       "org_1",
       "fill_1",
@@ -166,8 +278,58 @@ describe("ReviewItemService.decide", () => {
     )
   })
 
-  it("leaves Edit at edited (agent must resolve)", async () => {
-    const { service, updateById } = createService()
+  it("releases Progress when last pending Confirm clears", async () => {
+    const { service, setRfpStatus, updateStep, appendLog } = createService({
+      fillStatus: "needs_review",
+      pendingCount: 0,
+      stepPendingCount: 0,
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+
+    expect(setRfpStatus).toHaveBeenCalledWith("fill_1", "running")
+    expect(updateStep).toHaveBeenCalledWith(
+      "fill_1",
+      "map",
+      "running",
+      "Review cleared — continue step"
+    )
+    expect(appendLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Review waits cleared for step: map",
+      })
+    )
+  })
+
+  it("keeps needs_review when other pending waits remain", async () => {
+    const { service, setRfpStatus, updateStep } = createService({
+      fillStatus: "needs_review",
+      pendingCount: 1,
+      stepPendingCount: 1,
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+
+    expect(setRfpStatus).not.toHaveBeenCalled()
+    expect(updateStep).not.toHaveBeenCalled()
+  })
+
+  it("leaves Edit at edited (agent must resolve) and still releases wait", async () => {
+    const { service, updateById, setRfpStatus } = createService({
+      fillStatus: "needs_review",
+      pendingCount: 0,
+      stepPendingCount: 0,
+    })
     const view = await service.decide(
       "org_1",
       "fill_1",
@@ -185,10 +347,14 @@ describe("ReviewItemService.decide", () => {
         resolution: { col: "B" },
       })
     )
+    expect(setRfpStatus).toHaveBeenCalledWith("fill_1", "running")
   })
 
   it("leaves Reject at rejected (agent must resolve)", async () => {
-    const { service, updateById } = createService()
+    const { service, updateById } = createService({
+      pendingCount: 0,
+      stepPendingCount: 0,
+    })
     const view = await service.decide(
       "org_1",
       "fill_1",

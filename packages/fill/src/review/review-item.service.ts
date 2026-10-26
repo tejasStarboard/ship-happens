@@ -1,5 +1,12 @@
 import { randomBytes } from "node:crypto"
 import { DomainError } from "../errors"
+import {
+  isProgressStepKey,
+  PROGRESS_WAIT_DETAIL,
+  type FillPipelineManager,
+  type ProgressStepKey,
+  type RfpRunStatus,
+} from "../pipeline/fill-pipeline.manager"
 import type { RfpRepository } from "../rfp/rfp.repository"
 import { ReviewItemRepository } from "./review-item.repository"
 import {
@@ -70,6 +77,12 @@ function isResolvable(status: ReviewItemStatus): boolean {
   return (RESOLVABLE_REVIEW_STATUSES as readonly string[]).includes(status)
 }
 
+const TERMINAL_FILL_STATUSES = new Set<RfpRunStatus>([
+  "done",
+  "failed",
+  "cancelled",
+])
+
 /**
  * Validate and normalize a human Confirm / Edit / Reject payload.
  * Exported for unit tests without a DB.
@@ -112,11 +125,15 @@ export function normalizeDecideInput(
  * HITL review-item domain. Agent creates/lists/updates pending proposals and
  * resolves after Edit/Reject. Humans Confirm / Edit / Reject via UI; Confirm
  * auto-resolves (no agent ack). See REVIEW_ITEM_STATUSES transition docs.
+ *
+ * Open waits (`pending`) force Progress hold: fill → `needs_review`, and a
+ * known `stepKey` stays `running` with wait detail until pending clears.
  */
 export class ReviewItemService {
   constructor(
     private readonly repo: ReviewItemRepository,
-    private readonly rfps: RfpRepository
+    private readonly rfps: RfpRepository,
+    private readonly pipeline: FillPipelineManager
   ) {}
 
   private async requireFill(organizationId: string, fillId: string) {
@@ -125,6 +142,92 @@ export class ReviewItemService {
       throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
     }
     return fill
+  }
+
+  private asPipelineStep(
+    stepKey: string | null | undefined
+  ): ProgressStepKey | null {
+    if (!stepKey) return null
+    return isProgressStepKey(stepKey) ? stepKey : null
+  }
+
+  /**
+   * Force hold while a pending wait exists.
+   * Null / unknown stepKey → fill-level `needs_review` only (no invented step).
+   */
+  private async applyProgressHold(
+    fillId: string,
+    stepKey: string | null,
+    fillStatus: string
+  ) {
+    if (!TERMINAL_FILL_STATUSES.has(fillStatus as RfpRunStatus)) {
+      await this.pipeline.setRfpStatus(fillId, "needs_review")
+    }
+
+    const pipelineStep = this.asPipelineStep(stepKey)
+    if (pipelineStep) {
+      await this.pipeline.updateStep(
+        fillId,
+        pipelineStep,
+        "running",
+        PROGRESS_WAIT_DETAIL
+      )
+      await this.pipeline.appendLog({
+        rfpId: fillId,
+        stepKey: pipelineStep,
+        message: `Open review wait on step: ${pipelineStep}`,
+        source: "review",
+      })
+      return
+    }
+
+    await this.pipeline.appendLog({
+      rfpId: fillId,
+      stepKey: null,
+      message: "Open review wait (no progress step)",
+      source: "review",
+    })
+  }
+
+  /**
+   * After a pending wait leaves the inbox: unblock fill status if none remain;
+   * clear step wait detail when that step has no pending waits left.
+   * Does not auto-complete the step — agent owns `completeStep`.
+   */
+  private async releaseProgressHold(
+    fillId: string,
+    stepKey: string | null,
+    fillStatus: string
+  ) {
+    const pendingLeft = await this.repo.countPending(fillId)
+    if (pendingLeft === 0 && fillStatus === "needs_review") {
+      await this.pipeline.setRfpStatus(fillId, "running")
+    }
+
+    const pipelineStep = this.asPipelineStep(stepKey)
+    if (!pipelineStep) return
+
+    const stepPending = await this.repo.countPending(fillId, {
+      stepKey: pipelineStep,
+    })
+    if (stepPending > 0) return
+
+    const steps = await this.pipeline.listSteps(fillId)
+    const step = steps.find((row) => row.key === pipelineStep)
+    if (step?.status === "running" && step.detail === PROGRESS_WAIT_DETAIL) {
+      await this.pipeline.updateStep(
+        fillId,
+        pipelineStep,
+        "running",
+        "Review cleared — continue step"
+      )
+      await this.pipeline.appendLog({
+        rfpId: fillId,
+        stepKey: pipelineStep,
+        message: `Review waits cleared for step: ${pipelineStep}`,
+        source: "review",
+      })
+    }
   }
 
   async list(
@@ -169,17 +272,18 @@ export class ReviewItemService {
     fillId: string,
     input: CreateReviewItemInput
   ): Promise<ReviewItemView> {
-    await this.requireFill(organizationId, fillId)
+    const fill = await this.requireFill(organizationId, fillId)
     const title = input.title?.trim()
     if (!title) {
       throw new DomainError("title is required", "VALIDATION")
     }
 
+    const stepKey = input.stepKey ?? null
     const row = await this.repo.insert({
       id: reviewId(),
       rfpId: fillId,
       organizationId,
-      stepKey: input.stepKey ?? null,
+      stepKey,
       title,
       status: "pending",
       proposal: input.proposal ?? {},
@@ -188,6 +292,8 @@ export class ReviewItemService {
       sourceMetadata: input.sourceMetadata ?? {},
       resolution: {},
     })
+
+    await this.applyProgressHold(fillId, stepKey, fill.status)
     return toView(row)
   }
 
@@ -197,7 +303,7 @@ export class ReviewItemService {
     reviewItemId: string,
     input: UpdateReviewItemInput
   ): Promise<ReviewItemView> {
-    await this.requireFill(organizationId, fillId)
+    const fill = await this.requireFill(organizationId, fillId)
     const existing = await this.repo.findByIdForFill(
       organizationId,
       fillId,
@@ -245,6 +351,12 @@ export class ReviewItemService {
         "NOT_FOUND"
       )
     }
+
+    if (input.stepKey !== undefined && input.stepKey !== existing.stepKey) {
+      await this.releaseProgressHold(fillId, existing.stepKey, fill.status)
+      await this.applyProgressHold(fillId, updated.stepKey, "needs_review")
+    }
+
     return toView(updated)
   }
 
@@ -255,7 +367,7 @@ export class ReviewItemService {
     input: DecideReviewItemInput,
     decidedByUserId: string
   ): Promise<ReviewItemView> {
-    await this.requireFill(organizationId, fillId)
+    const fill = await this.requireFill(organizationId, fillId)
     const existing = await this.repo.findByIdForFill(
       organizationId,
       fillId,
@@ -297,6 +409,9 @@ export class ReviewItemService {
         "NOT_FOUND"
       )
     }
+
+    // Leaving `pending` clears the open wait — unblock Progress when appropriate.
+    await this.releaseProgressHold(fillId, existing.stepKey, fill.status)
     return toView(updated)
   }
 

@@ -50,6 +50,12 @@ export class RfpService {
         this.reviews.list(organizationId, row.id, { status: "pending" }),
       ])
 
+    const blockedKeys = new Set(
+      pendingReviews
+        .map((item) => item.stepKey)
+        .filter((key): key is string => key != null && key.length > 0)
+    )
+
     return {
       id: row.id,
       name: row.name,
@@ -68,6 +74,7 @@ export class RfpService {
         sortOrder: step.sortOrder,
         startedAt: step.startedAt?.toISOString() ?? null,
         completedAt: step.completedAt?.toISOString() ?? null,
+        blockedByReview: blockedKeys.has(step.key),
       })),
       logs: logs.map((log) => ({
         id: log.id,

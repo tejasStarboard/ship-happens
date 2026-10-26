@@ -38,6 +38,13 @@ function formatDuration(startedAt: string | null, completedAt: string | null) {
 }
 
 function statusBadge(step: RfpProgressStepView) {
+  if (step.blockedByReview) {
+    return {
+      label: "Waiting on you",
+      className:
+        "bg-amber-500/15 text-amber-800 dark:bg-amber-500/20 dark:text-amber-200",
+    }
+  }
   switch (step.status) {
     case "done": {
       const duration = formatDuration(step.startedAt, step.completedAt)
@@ -105,6 +112,12 @@ function defaultDetail(step: RfpProgressStepView, logs: RfpLogView[]) {
     .filter((log) => log.stepKey === step.key)
     .map((log) => log.message)
   if (related.length > 0) return related[related.length - 1]!
+  if (step.blockedByReview) {
+    return (
+      step.detail ??
+      `${step.label} is blocked until open review waits are cleared.`
+    )
+  }
   switch (step.status) {
     case "done":
       return `${step.label} completed.`
@@ -134,7 +147,10 @@ function TimelineStep({
 }) {
   const [open, setOpen] = useState(defaultOpen)
   const badge = statusBadge(step)
-  const lineActive = step.status === "done" || step.status === "running"
+  const lineActive =
+    step.status === "done" ||
+    step.status === "running" ||
+    Boolean(step.blockedByReview)
 
   return (
     <li className="relative flex gap-4 pb-8 last:pb-0">
@@ -222,6 +238,7 @@ export function FillProgressTimeline({
         const defaultOpen =
           step.status === "running" ||
           step.status === "failed" ||
+          Boolean(step.blockedByReview) ||
           (step.status === "done" && Boolean(step.detail))
         return (
           <TimelineStep
