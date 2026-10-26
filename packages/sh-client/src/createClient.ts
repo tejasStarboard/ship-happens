@@ -118,6 +118,14 @@ export class ShipHappensClient {
       { body: {} }
     )
   }
+
+  /** Cell-compliant write-back into the original BCO template (Progress `export`). */
+  exportWorkbook(fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>("POST", `/api/sh/v1/fills/${id}/export`, {
+      body: {},
+    })
+  }
 }
 
 export function createClient(

@@ -10,8 +10,20 @@ export type {
   BlobStore,
   BlobUploadResult,
   EnsureRfpWorkspaceInput,
+  SourceBytesFetcher,
+  WorkbookCellWrite,
+  WorkbookWritePort,
   WorkspaceHost,
 } from "./ports"
+
+export {
+  selectExportCells,
+  type ExportCellPlan,
+} from "./export/select-export-cells"
+export {
+  WorkbookExportService,
+  type ExportWorkbookResult,
+} from "./export/workbook-export.service"
 
 export {
   FILL_PROGRESS_STEPS,

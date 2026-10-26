@@ -32,7 +32,8 @@ Typical flow:
 4. For **rates**: prefer `sh-client rates resolve` (server Starboard resolve + Progress `rates` + logs, then overlays + Progress `overlay`). Do not invent money cells. Manual `agentStartStep`/`agentCompleteStep` for `rates` / `overlay` only if debugging.
 5. Overlay rules are configured in the Overlays UI (org/customer). Resolve applies projected sells on no-buy lanes and markup on priced buys automatically.
 6. Floor-margin rules live under **Settings → Floor margins**. After overlay apply, buy+sell lanes that breach the matched floor open Phase 2b reviews (`source: margin-floor`, `stepKey: overlay`) and hold Progress until cleared. Projected-only (no buy) lanes are not floor-checked. Confirm keeps the proposed sell; then `agentCompleteStep` for `overlay` if still open.
-7. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
+7. For **export**: prefer `sh-client export` (writes sells into the original BCO template via `agent-xlsx`, stores Blob + workspace `filled/`, advances Progress `export`). Cells without `sheetName`/`cellRef` are skipped. Export may run while reviews are pending.
+8. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
 
 ## Open review waits
 
