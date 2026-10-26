@@ -43,6 +43,22 @@ export {
   type RfpRunStatus,
 } from "./pipeline/fill-pipeline.manager"
 
+export {
+  FILL_PIPELINE_EVENT_TYPES,
+  STEP_DONE_PIPELINE_EVENT,
+  pipelineEventForStepDone,
+  type FillPipelineEventType,
+} from "./analytics/fill-pipeline-events"
+export { OpsAnalyticsService } from "./analytics/ops-analytics.service"
+export {
+  OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
+  type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsStatusBucket,
+  type OpsAnalyticsView,
+} from "./analytics/ops-analytics.types"
+
 export { RfpRepository, type AppDb } from "./rfp/rfp.repository"
 export {
   asRfpStatus,

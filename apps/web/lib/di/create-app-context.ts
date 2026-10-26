@@ -8,6 +8,7 @@ import {
   IntakeService,
   MarginFloorRuleRepository,
   MarginFloorRuleService,
+  OpsAnalyticsService,
   OverlayApplicationService,
   OverlayRuleRepository,
   OverlayRuleService,
@@ -156,6 +157,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     marginFloors,
     overlays,
     exportWorkbook,
+    analytics: new OpsAnalyticsService(database),
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,

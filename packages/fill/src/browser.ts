@@ -82,3 +82,16 @@ export {
   resolveExportDownloadGate,
   type ExportDownloadGate,
 } from "./export/export-signoff"
+
+export {
+  FILL_PIPELINE_EVENT_TYPES,
+  type FillPipelineEventType,
+} from "./analytics/fill-pipeline-events"
+export {
+  OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
+  type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsFailureReason,
+  type OpsAnalyticsMilestoneCount,
+  type OpsAnalyticsStatusBucket,
+  type OpsAnalyticsView,
+} from "./analytics/ops-analytics.types"

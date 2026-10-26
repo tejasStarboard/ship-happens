@@ -233,6 +233,41 @@ export const rfpLogs = pgTable(
   ]
 )
 
+/**
+ * Durable fill lifecycle milestones for ops analytics (SB-7085).
+ * Emitted from FillPipelineManager / review resolve — not a second progress writer.
+ */
+export const fillPipelineEvents = pgTable(
+  "fill_pipeline_events",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    rfpId: text("rfp_id")
+      .notNull()
+      .references(() => rfps.id, { onDelete: "cascade" }),
+    /** e.g. intake.completed | mapping.confirmed | rates.completed | … */
+    type: text("type").notNull(),
+    stepKey: text("step_key"),
+    reviewItemId: text("review_item_id"),
+    payload: jsonb("payload").$type<Record<string, unknown>>().default({}),
+    occurredAt: timestamp("occurred_at").defaultNow().notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("fill_pipeline_events_org_occurred_idx").on(
+      table.organizationId,
+      table.occurredAt
+    ),
+    index("fill_pipeline_events_org_type_idx").on(
+      table.organizationId,
+      table.type
+    ),
+    index("fill_pipeline_events_rfp_id_idx").on(table.rfpId),
+  ]
+)
+
 /** Aggregate fill report for an RFP (1:1). */
 export const rfpFillReports = pgTable(
   "rfp_fill_reports",
