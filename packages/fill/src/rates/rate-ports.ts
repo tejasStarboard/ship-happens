@@ -41,9 +41,23 @@ export type StarboardRatesPort = {
 }
 
 /**
- * Read mapped lanes for a fill. Host implements via workspace `mapping.json`
- * until Phase 2c persists mapping in Postgres.
+ * Optional host reader for one-shot import of workspace `mapping.json`
+ * when Postgres has no lanes yet.
+ */
+export type MappingFileReader = {
+  readMappingJson(fillId: string): Promise<string | null>
+}
+
+/**
+ * Mapped lanes for a fill. Host default is Postgres (`rfp_mapped_lanes`);
+ * workspace `mapping.json` remains import/export only.
  */
 export type MappingStore = {
   readMappedLanes(fillId: string): Promise<MappedLane[]>
+  /** Confirm / replace all lanes for a fill. Optional for read-only fakes. */
+  replaceMappedLanes?(
+    fillId: string,
+    organizationId: string,
+    lanes: MappedLane[]
+  ): Promise<void>
 }

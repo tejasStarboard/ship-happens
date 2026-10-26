@@ -109,7 +109,34 @@ export class ShipHappensClient {
     )
   }
 
-  /** Resolve mapped lanes via Starboard (`mapping.json`) and advance Progress `rates`. */
+  /** List confirmed mapped lanes (Postgres). */
+  mappingGet(fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>("GET", `/api/sh/v1/fills/${id}/mapping`)
+  }
+
+  /** Replace confirmed mapped lanes (`{ version?, lanes }`). */
+  mappingPut(body: Record<string, unknown>, fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>("PUT", `/api/sh/v1/fills/${id}/mapping`, {
+      body,
+    })
+  }
+
+  /**
+   * Import mapping: body document, or empty body to pull workspace
+   * `mapping.json` into Postgres.
+   */
+  mappingImport(body?: Record<string, unknown>, fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "POST",
+      `/api/sh/v1/fills/${id}/mapping`,
+      { body: body ?? {} }
+    )
+  }
+
+  /** Resolve mapped lanes via Starboard (DB mapping) and advance Progress `rates`. */
   ratesResolve(fillId?: string) {
     const id = this.resolveFillId(fillId)
     return this.http.request<unknown>(

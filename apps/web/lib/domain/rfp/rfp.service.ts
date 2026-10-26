@@ -6,6 +6,7 @@ import {
 import type { RfpRepository } from "@/lib/domain/rfp/rfp.repository"
 import type { FillPipelineManager } from "@/lib/domain/pipeline/fill-pipeline.manager"
 import type {
+  FillMappingRepository,
   FillReportRepository,
   ReviewItemService,
 } from "@ship-happens/fill"
@@ -19,7 +20,8 @@ export class RfpService {
     private readonly repo: RfpRepository,
     private readonly pipeline: FillPipelineManager,
     private readonly reviews: ReviewItemService,
-    private readonly fillReports: FillReportRepository
+    private readonly fillReports: FillReportRepository,
+    private readonly fillMappings: FillMappingRepository
   ) {}
 
   async list(
@@ -50,14 +52,21 @@ export class RfpService {
     if (!row) return null
 
     const meta = (row.metadata ?? {}) as { templateName?: string }
-    const [progressSteps, logs, sourceFileRows, allReviews, report] =
-      await Promise.all([
-        this.pipeline.listSteps(row.id),
-        this.pipeline.listLogs(row.id),
-        this.repo.listSourceFiles(row.id),
-        this.reviews.list(organizationId, row.id),
-        this.fillReports.getReport(row.id),
-      ])
+    const [
+      progressSteps,
+      logs,
+      sourceFileRows,
+      allReviews,
+      report,
+      mappedLanes,
+    ] = await Promise.all([
+      this.pipeline.listSteps(row.id),
+      this.pipeline.listLogs(row.id),
+      this.repo.listSourceFiles(row.id),
+      this.reviews.list(organizationId, row.id),
+      this.fillReports.getReport(row.id),
+      this.fillMappings.listByRfpId(row.id),
+    ])
 
     const pendingReviews = allReviews.filter(
       (item) => item.status === "pending"
@@ -132,6 +141,7 @@ export class RfpService {
             cells: report.cells.map(toFillReportCellView),
           }
         : null,
+      mappedLanes,
     }
   }
 }

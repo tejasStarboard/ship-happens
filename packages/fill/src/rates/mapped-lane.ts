@@ -2,8 +2,9 @@ import { z } from "zod"
 import { DomainError } from "../errors"
 
 /**
- * Temporary Phase 2c stand-in: mapped O-D-equipment lanes for rate resolve.
- * Phase 2c will replace the workspace `mapping.json` loader; keep this shape stable.
+ * Mapped O-D-equipment lanes for rate resolve / Map.
+ * Durable store is Postgres (`rfp_mapped_lanes`); `mapping.json` is import/export.
+ * Keep this shape stable for resolve, CLI, and tests.
  */
 export const MappedLaneSchema = z.object({
   laneId: z.string().min(1),

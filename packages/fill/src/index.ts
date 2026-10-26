@@ -109,6 +109,12 @@ export {
   type LaneCellRow,
   type UpsertLaneCellInput,
 } from "./rates/fill-report.repository"
+export { FillMappingRepository } from "./rates/fill-mapping.repository"
+export {
+  FillMappingService,
+  type ReplaceMappedLanesResult,
+} from "./rates/fill-mapping.service"
+export { createDbMappingStore } from "./rates/db-mapping-store"
 export {
   buildRateAuditMetadata,
   lanePriceAuditFromMetadata,
@@ -128,6 +134,7 @@ export {
   type ResolveMappedLanesResult,
 } from "./rates/rate-resolution.service"
 export type {
+  MappingFileReader,
   MappingStore,
   RateResolveSearchInput,
   ResolvedRateCandidate,

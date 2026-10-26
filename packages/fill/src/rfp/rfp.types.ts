@@ -1,4 +1,5 @@
 import type { FillReportCellView } from "../rates/lane-price-audit"
+import type { MappedLane } from "../rates/mapped-lane"
 
 export type RfpStatus =
   "queued" | "running" | "needs_review" | "done" | "failed"
@@ -89,6 +90,8 @@ export type RfpDetailView = RfpListItem & {
   exportDownloadBlockedReason: string | null
   pendingReviews: RfpPendingReviewView[]
   fillReport: RfpFillReportView | null
+  /** Confirmed Map / rates lanes from Postgres. */
+  mappedLanes: MappedLane[]
 }
 
 export function asRfpStatus(value: string): RfpStatus {

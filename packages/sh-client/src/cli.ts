@@ -7,6 +7,7 @@
  *   sh-client logs [--fill id] [--limit N] [--level info]
  *   sh-client cells [--fill id] [--lane id]
  *   sh-client reviews list|get|create|update|resolve …
+ *   sh-client mapping get|put|import …
  *   sh-client rates resolve [--fill id]
  *   sh-client export [--fill id]
  *
@@ -18,7 +19,7 @@ import { createClient } from "./createClient.js"
 import { ShClientError } from "./errors.js"
 import { readJsonInput } from "./cli/parseBody.js"
 
-const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, reviews, rates, export)
+const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, mapping, reviews, rates, export)
 
 Usage:
   sh-client <command> [subcommand] [options]
@@ -32,6 +33,11 @@ Inspect:
   logs [--fill id] [--limit N] [--level info|warn|…]
   cells [--fill id] [--lane id]     Per-row audit (Starboard + overlay + markup)
 
+Mapping (Postgres; mapping.json is import/export only):
+  mapping get [--fill id]           List confirmed lanes
+  mapping put [--fill id] --body '{ "version": 1, "lanes": […] }'
+  mapping import [--fill id] [--body …]  Body or workspace mapping.json → DB
+
 Reviews:
   reviews list [--fill id] [--status pending|…]
   reviews get --id <reviewId> [--fill id]
@@ -40,7 +46,7 @@ Reviews:
   reviews resolve --id <reviewId> [--fill id] [--body '{ resolution? }']
 
 Rates:
-  rates resolve [--fill id]         Starboard resolve for mapping.json lanes; advances Progress rates
+  rates resolve [--fill id]         Starboard resolve for DB-mapped lanes; advances Progress rates
 
 Export:
   export [--fill id]                Write sells into original BCO template; opens final export sign-off (Confirm unlocks download)
@@ -181,6 +187,36 @@ async function main(): Promise<void> {
       }
       throw new Error(
         `Unknown reviews subcommand: ${sub ?? "(none)"}. Try list|get|create|update|resolve`
+      )
+    }
+
+    if (cmd === "mapping") {
+      if (sub === "get") {
+        printJson(await client.mappingGet(fill))
+        return
+      }
+      if (sub === "put") {
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.mappingPut(body, fill))
+        return
+      }
+      if (sub === "import") {
+        const hasInput =
+          strFlag(values.body) != null || strFlag(values.file) != null
+        const body = hasInput
+          ? await readJsonInput({
+              body: strFlag(values.body),
+              file: strFlag(values.file),
+            })
+          : undefined
+        printJson(await client.mappingImport(body, fill))
+        return
+      }
+      throw new Error(
+        `Unknown mapping subcommand: ${sub ?? "(none)"}. Try get|put|import`
       )
     }
 

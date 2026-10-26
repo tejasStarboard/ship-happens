@@ -1,7 +1,8 @@
 /**
  * Rates domain — re-exports the Starboard adapter (pure search + UI mapping).
  * Keep HTTP/env wiring in `@/lib/starboard/client`.
- * Fill resolve: `createAppContext().rates` + workspace `mapping.json`.
+ * Fill resolve: `createAppContext().rates` + Postgres mapped lanes
+ * (optional `mapping.json` import when DB empty).
  */
 export {
   buildContractSearchInput,
@@ -17,6 +18,7 @@ export {
 } from "@/lib/starboard/rate-search"
 export {
   FILL_MAPPING_RELATIVE_PATH,
+  createWorkspaceMappingFileReader,
   createWorkspaceMappingStore,
 } from "@/lib/domain/rates/workspace-mapping-store"
 export { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"

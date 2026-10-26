@@ -1,5 +1,8 @@
 import { db } from "@/lib/db"
 import {
+  createDbMappingStore,
+  FillMappingRepository,
+  FillMappingService,
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
@@ -26,7 +29,7 @@ import {
   createHttpSourceBytesFetcher,
 } from "@/lib/domain/export/agent-xlsx-workbook-writer"
 import { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"
-import { createWorkspaceMappingStore } from "@/lib/domain/rates/workspace-mapping-store"
+import { createWorkspaceMappingFileReader } from "@/lib/domain/rates/workspace-mapping-store"
 import { RfpService } from "@/lib/domain/rfp/rfp.service"
 import { TemplateRepository } from "@/lib/domain/templates/template.repository"
 import { TemplateService } from "@/lib/domain/templates/template.service"
@@ -80,11 +83,15 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const reviewRepo = new ReviewItemRepository(database)
   const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline)
   const fillReports = new FillReportRepository(database)
+  const fillMappings = new FillMappingRepository(database)
+  const mapping = new FillMappingService(rfpRepo, fillMappings)
   const overlayRulesRepo = new OverlayRuleRepository(database)
   const overlayRules = new OverlayRuleService(overlayRulesRepo)
   const marginFloorsRepo = new MarginFloorRuleRepository(database)
   const marginFloors = new MarginFloorRuleService(marginFloorsRepo)
-  const mappingStore = deps?.mappingStore ?? createWorkspaceMappingStore()
+  const mappingStore =
+    deps?.mappingStore ??
+    createDbMappingStore(fillMappings, createWorkspaceMappingFileReader())
   const starboardRates =
     deps?.starboardRates ?? createStarboardRatesPort(starboardFactory)
   const rates = new RateResolutionService(
@@ -120,7 +127,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     db: database,
     blob,
     createStarboardClient: starboardFactory,
-    rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports),
+    rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports, fillMappings),
     templates: new TemplateService(templateRepo),
     intake: new IntakeService(
       database,
@@ -131,6 +138,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     ),
     pipeline,
     reviews,
+    mapping,
     rates,
     overlayRules,
     marginFloors,
@@ -142,6 +150,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       templates: templateRepo,
       reviews: reviewRepo,
       fillReports,
+      fillMappings,
       overlayRules: overlayRulesRepo,
       marginFloors: marginFloorsRepo,
     },

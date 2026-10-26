@@ -3,6 +3,7 @@
  */
 
 export type {
+  MappingFileReader,
   MappingStore,
   RateResolveSearchInput,
   ResolvedRateCandidate,

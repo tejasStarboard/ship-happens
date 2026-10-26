@@ -14,8 +14,8 @@ import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
 import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
+import { FillMapPanel } from "@/components/rfp/fill-map-panel"
 import { FillReviewPanel } from "@/components/rfp/fill-review-panel"
-import { ComingSoonEmpty } from "@/components/shared/coming-soon"
 import {
   RFP_STATUS_LABEL,
   type RfpDetailView,
@@ -144,10 +144,7 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
         </TabsContent>
 
         <TabsContent value="map" className="mt-4 overflow-auto">
-          <ComingSoonEmpty
-            title="Map"
-            description="Confirm BCO columns and lanes against Starboard concepts before rates run. Schema mapping ships after the Starboard client and capability catalog. Low-confidence matches will require human confirm here."
-          />
+          <FillMapPanel lanes={rfp.mappedLanes} />
         </TabsContent>
 
         <TabsContent value="review" className="mt-4 overflow-auto">

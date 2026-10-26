@@ -69,4 +69,4 @@ Source of truth: `rfp_chats` (multiple rows per RFP). Session bind stores `{ eve
 
 ## Schema note (unused tables)
 
-`rfp_fill_reports`, `rfp_fill_report_cells`, and `rfp_messages` / votes are defined but not yet written by product flows. Implement via domain modules when needed — do not invent a second progress writer.
+`rfp_messages` / votes are defined but not yet written by product flows. Fill reports and `rfp_mapped_lanes` are written by rates / mapping domain modules — do not invent a second progress writer.
