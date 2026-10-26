@@ -1,6 +1,10 @@
 import { randomBytes } from "node:crypto"
 import { DomainError } from "../errors"
 import {
+  EXPORT_SIGNOFF_REVIEW_SOURCE,
+  EXPORT_SIGNOFF_TITLE,
+} from "../export/export-signoff"
+import {
   isProgressStepKey,
   PROGRESS_WAIT_DETAIL,
   type FillPipelineManager,
@@ -390,6 +394,7 @@ export class ReviewItemService {
     }
 
     const normalized = normalizeDecideInput(input)
+    const isExportSignoff = existing.source === EXPORT_SIGNOFF_REVIEW_SOURCE
     // Confirm (approved) auto-resolves: no agent follow-up needed.
     // Edit/Reject stay intermediate until the agent acks via resolve().
     const patch: Parameters<ReviewItemRepository["updateById"]>[1] = {
@@ -398,7 +403,10 @@ export class ReviewItemService {
       decidedAt: new Date(),
       decisionNote: normalized.decisionNote,
     }
-    if (normalized.resolution !== undefined) {
+    if (normalized.status === "approved") {
+      // Confirm-only download unlock key for export-signoff (and clear marker).
+      patch.resolution = { decision: "approved" }
+    } else if (normalized.resolution !== undefined) {
       patch.resolution = normalized.resolution
     }
 
@@ -412,7 +420,108 @@ export class ReviewItemService {
 
     // Leaving `pending` clears the open wait — unblock Progress when appropriate.
     await this.releaseProgressHold(fillId, existing.stepKey, fill.status)
+
+    if (isExportSignoff) {
+      await this.applyExportSignoffDecision(
+        organizationId,
+        fillId,
+        normalized.status,
+        updated
+      )
+    }
+
     return toView(updated)
+  }
+
+  /**
+   * Final export sign-off: Confirm completes export+review; Reject fails them
+   * with the reason; Edit opens a fresh pending Confirm card so download can
+   * still unlock after the analyst confirms.
+   */
+  private async applyExportSignoffDecision(
+    organizationId: string,
+    fillId: string,
+    decision: "approved" | "edited" | "rejected",
+    updated: {
+      id: string
+      decisionNote: string | null
+      resolution: Record<string, unknown> | null
+      proposal: Record<string, unknown>
+    }
+  ) {
+    if (decision === "approved") {
+      try {
+        await this.pipeline.completeStep(
+          fillId,
+          "export",
+          "Export signed off — download unlocked"
+        )
+      } catch {
+        await this.pipeline.updateStep(
+          fillId,
+          "export",
+          "done",
+          "Export signed off — download unlocked"
+        )
+      }
+      try {
+        await this.pipeline.completeStep(
+          fillId,
+          "review",
+          "Final export signed off"
+        )
+      } catch {
+        await this.pipeline.updateStep(
+          fillId,
+          "review",
+          "done",
+          "Final export signed off"
+        )
+      }
+      return
+    }
+
+    if (decision === "rejected") {
+      const detail = updated.decisionNote?.trim()
+        ? `Sign-off rejected: ${updated.decisionNote.trim()}`
+        : "Sign-off rejected"
+      await this.pipeline.updateStep(fillId, "export", "failed", detail)
+      await this.pipeline.updateStep(fillId, "review", "failed", detail)
+      await this.pipeline.setRfpStatus(fillId, "needs_review")
+      await this.pipeline.appendLog({
+        rfpId: fillId,
+        stepKey: "export",
+        source: "review",
+        level: "warn",
+        message: detail,
+      })
+      return
+    }
+
+    // Edit: open a new pending sign-off so Confirm remains available.
+    await this.create(organizationId, fillId, {
+      title: EXPORT_SIGNOFF_TITLE,
+      stepKey: "export",
+      source: EXPORT_SIGNOFF_REVIEW_SOURCE,
+      proposal: {
+        ...updated.proposal,
+        kind: EXPORT_SIGNOFF_REVIEW_SOURCE,
+        summary:
+          "Export sign-off edited — Confirm when ready to unlock download.",
+        priorReviewId: updated.id,
+        editResolution: updated.resolution ?? {},
+      },
+      sourceMetadata: {
+        kind: EXPORT_SIGNOFF_REVIEW_SOURCE,
+        priorReviewId: updated.id,
+      },
+    })
+    await this.pipeline.updateStep(
+      fillId,
+      "review",
+      "running",
+      PROGRESS_WAIT_DETAIL
+    )
   }
 
   async resolve(

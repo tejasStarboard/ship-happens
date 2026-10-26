@@ -1,5 +1,8 @@
 import { DomainError } from "../errors"
-import type { FillPipelineManager } from "../pipeline/fill-pipeline.manager"
+import {
+  PROGRESS_WAIT_DETAIL,
+  type FillPipelineManager,
+} from "../pipeline/fill-pipeline.manager"
 import type {
   BlobStore,
   SourceBytesFetcher,
@@ -7,9 +10,13 @@ import type {
   WorkspaceHost,
 } from "../ports"
 import type { FillReportRepository } from "../rates/fill-report.repository"
-import type { ReviewItemRepository } from "../review/review-item.repository"
+import type { ReviewItemService } from "../review/review-item.service"
 import type { RfpRepository } from "../rfp/rfp.repository"
 import { extensionForMime, sanitizeFileName } from "../spreadsheet-constants"
+import {
+  EXPORT_SIGNOFF_REVIEW_SOURCE,
+  EXPORT_SIGNOFF_TITLE,
+} from "./export-signoff"
 import { selectExportCells } from "./select-export-cells"
 
 export type ExportWorkbookResult = {
@@ -28,7 +35,7 @@ export class WorkbookExportService {
     private readonly rfps: RfpRepository,
     private readonly pipeline: FillPipelineManager,
     private readonly reports: FillReportRepository,
-    private readonly reviews: ReviewItemRepository,
+    private readonly reviews: ReviewItemService,
     private readonly blob: BlobStore,
     private readonly workbookWriter: WorkbookWritePort,
     private readonly sourceFetcher: SourceBytesFetcher,
@@ -117,7 +124,7 @@ export class WorkbookExportService {
         })
       }
 
-      const detail = [
+      const writeDetail = [
         `Wrote ${plan.writes.length} cell(s)`,
         plan.skippedMissingRef > 0
           ? `${plan.skippedMissingRef} skipped (missing sheet/cell ref)`
@@ -133,7 +140,7 @@ export class WorkbookExportService {
         rfpId: input.fillId,
         stepKey: "export",
         source: "export",
-        message: detail,
+        message: writeDetail,
         metadata: {
           writtenCount: plan.writes.length,
           skippedMissingRef: plan.skippedMissingRef,
@@ -142,12 +149,28 @@ export class WorkbookExportService {
         },
       })
 
-      await this.pipeline.completeStep(input.fillId, "export", detail)
+      await this.openOrRefreshSignoff({
+        organizationId: input.organizationId,
+        fillId: input.fillId,
+        writtenCount: plan.writes.length,
+        skippedMissingRef: plan.skippedMissingRef,
+        skippedOther: plan.skippedOther,
+        filledBlobPathname: uploaded.pathname,
+      })
 
-      const pendingReviewCount = await this.reviews.countPending(input.fillId)
-      if (pendingReviewCount > 0) {
-        await this.pipeline.setRfpStatus(input.fillId, "needs_review")
-      }
+      // Hold Progress export + review until Confirm; do not completeStep yet.
+      await this.pipeline.updateStep(
+        input.fillId,
+        "review",
+        "running",
+        PROGRESS_WAIT_DETAIL
+      )
+
+      const pendingReviewCount = await this.reviews
+        .list(input.organizationId, input.fillId, { status: "pending" })
+        .then((rows) => rows.length)
+
+      const detail = `${writeDetail}; awaiting final export sign-off`
 
       return {
         fillId: input.fillId,
@@ -167,5 +190,68 @@ export class WorkbookExportService {
         ? error
         : new DomainError(message, "VALIDATION")
     }
+  }
+
+  private async openOrRefreshSignoff(input: {
+    organizationId: string
+    fillId: string
+    writtenCount: number
+    skippedMissingRef: number
+    skippedOther: number
+    filledBlobPathname: string
+  }) {
+    const summary = [
+      `${input.writtenCount} lane(s) filled`,
+      input.skippedMissingRef > 0
+        ? `${input.skippedMissingRef} missing sheet/cell ref`
+        : null,
+      input.skippedOther > 0
+        ? `${input.skippedOther} skipped / needs human / error`
+        : null,
+    ]
+      .filter(Boolean)
+      .join("; ")
+
+    const proposal = {
+      kind: EXPORT_SIGNOFF_REVIEW_SOURCE,
+      summary: `Export readiness: ${summary}. Confirm to unlock download.`,
+      writtenCount: input.writtenCount,
+      skippedMissingRef: input.skippedMissingRef,
+      skippedOther: input.skippedOther,
+      filledBlobPathname: input.filledBlobPathname,
+    }
+    const sourceMetadata = {
+      kind: EXPORT_SIGNOFF_REVIEW_SOURCE,
+      filledBlobPathname: input.filledBlobPathname,
+    }
+
+    const pending = (
+      await this.reviews.list(input.organizationId, input.fillId, {
+        status: "pending",
+      })
+    ).find((row) => row.source === EXPORT_SIGNOFF_REVIEW_SOURCE)
+
+    if (pending) {
+      await this.reviews.update(
+        input.organizationId,
+        input.fillId,
+        pending.id,
+        {
+          title: EXPORT_SIGNOFF_TITLE,
+          stepKey: "export",
+          proposal,
+          sourceMetadata,
+        }
+      )
+      return
+    }
+
+    await this.reviews.create(input.organizationId, input.fillId, {
+      title: EXPORT_SIGNOFF_TITLE,
+      stepKey: "export",
+      source: EXPORT_SIGNOFF_REVIEW_SOURCE,
+      proposal,
+      sourceMetadata,
+    })
   }
 }

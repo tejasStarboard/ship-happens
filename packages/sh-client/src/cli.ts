@@ -43,7 +43,7 @@ Rates:
   rates resolve [--fill id]         Starboard resolve for mapping.json lanes; advances Progress rates
 
 Export:
-  export [--fill id]                Write sells into original BCO template (agent-xlsx); advances Progress export
+  export [--fill id]                Write sells into original BCO template; opens final export sign-off (Confirm unlocks download)
 
 Options:
   --fill <id>       Fill / workspace id (default: SH_FILL_ID)

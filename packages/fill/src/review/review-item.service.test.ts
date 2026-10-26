@@ -90,6 +90,8 @@ function pendingRow(overrides?: {
   status?: ReviewItemStatus
   resolution?: Record<string, unknown>
   stepKey?: string | null
+  source?: string | null
+  title?: string
 }) {
   const now = new Date("2026-01-15T12:00:00.000Z")
   return {
@@ -97,11 +99,11 @@ function pendingRow(overrides?: {
     rfpId: "fill_1",
     organizationId: "org_1",
     stepKey: overrides?.stepKey === undefined ? "map" : overrides.stepKey,
-    title: "Map column X",
+    title: overrides?.title ?? "Map column X",
     status: overrides?.status ?? ("pending" as ReviewItemStatus),
     proposal: { col: "A" },
     confidence: "0.4",
-    source: "mapper",
+    source: overrides?.source === undefined ? "mapper" : overrides.source,
     sourceMetadata: {},
     decidedByUserId: null,
     decidedAt: null,
@@ -170,6 +172,7 @@ function createService(opts?: {
   const setRfpStatus = vi.fn(async () => undefined)
   const updateStep = vi.fn(async () => undefined)
   const appendLog = vi.fn(async () => undefined)
+  const completeStep = vi.fn(async () => undefined)
   const listSteps = vi.fn(async () => [
     {
       id: "step_map",
@@ -182,6 +185,7 @@ function createService(opts?: {
     setRfpStatus,
     updateStep,
     appendLog,
+    completeStep,
     listSteps,
   } as unknown as FillPipelineManager
 
@@ -194,6 +198,7 @@ function createService(opts?: {
     setRfpStatus,
     updateStep,
     appendLog,
+    completeStep,
     listSteps,
   }
 }
@@ -274,8 +279,70 @@ describe("ReviewItemService.decide", () => {
         status: "resolved",
         decidedByUserId: "user_1",
         decisionNote: null,
+        resolution: { decision: "approved" },
       })
     )
+  })
+
+  it("export-signoff Confirm completes export + review steps", async () => {
+    const { service, completeStep } = createService({
+      pendingCount: 0,
+      stepPendingCount: 0,
+      row: pendingRow({
+        source: "export-signoff",
+        stepKey: "export",
+        title: "Final export sign-off",
+      }),
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "approved" },
+      "user_1"
+    )
+    expect(completeStep).toHaveBeenCalledWith(
+      "fill_1",
+      "export",
+      expect.stringContaining("signed off")
+    )
+    expect(completeStep).toHaveBeenCalledWith(
+      "fill_1",
+      "review",
+      expect.stringContaining("signed off")
+    )
+  })
+
+  it("export-signoff Reject fails export + review with reason", async () => {
+    const { service, updateStep, setRfpStatus } = createService({
+      pendingCount: 0,
+      stepPendingCount: 0,
+      row: pendingRow({
+        source: "export-signoff",
+        stepKey: "export",
+        title: "Final export sign-off",
+      }),
+    })
+    await service.decide(
+      "org_1",
+      "fill_1",
+      "rev_test1",
+      { decision: "rejected", decisionNote: "rates look wrong" },
+      "user_1"
+    )
+    expect(updateStep).toHaveBeenCalledWith(
+      "fill_1",
+      "export",
+      "failed",
+      "Sign-off rejected: rates look wrong"
+    )
+    expect(updateStep).toHaveBeenCalledWith(
+      "fill_1",
+      "review",
+      "failed",
+      "Sign-off rejected: rates look wrong"
+    )
+    expect(setRfpStatus).toHaveBeenCalledWith("fill_1", "needs_review")
   })
 
   it("releases Progress when last pending Confirm clears", async () => {

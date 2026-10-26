@@ -111,7 +111,12 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
               Download filled
             </Button>
           ) : (
-            <Button variant="outline" size="sm" disabled>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              title={rfp.exportDownloadBlockedReason ?? undefined}
+            >
               Download filled
             </Button>
           )}
