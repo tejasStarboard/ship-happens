@@ -45,6 +45,7 @@ sh-client cells --lane lane_1   # filter one mapped lane id
 ## 1b. Resolve rates (Progress `rates`)
 
 Requires workspace `mapping.json` (Phase 2c stand-in) with `{ "version": 1, "lanes": […] }`.
+The fill **Map** tab is read-only against that file — write/edit it here or via Agent, then resolve.
 Calls Starboard `rates.resolve` server-side, persists fill-report cells, advances Progress `rates`.
 
 ```bash

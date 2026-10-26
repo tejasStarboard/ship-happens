@@ -76,6 +76,23 @@ export type RfpFillReportView = {
   cells: FillReportCellView[]
 }
 
+/**
+ * Read-only lane from workspace `mapping.json` (Phase 2c stand-in) for Map tab.
+ * Edit mapping in Agent; full schema UI is deferred.
+ */
+export type RfpMappedLaneView = {
+  laneId: string
+  originLocode: string
+  destLocode: string
+  equipmentType: string
+  serviceType: string | null
+  sheetName: string | null
+  rowIndex: number | null
+  columnKey: string | null
+  cellRef: string | null
+  surchargeSlots: string[]
+}
+
 export type RfpDetailView = RfpListItem & {
   progressSteps: RfpProgressStepView[]
   logs: RfpLogView[]
@@ -89,6 +106,10 @@ export type RfpDetailView = RfpListItem & {
   exportDownloadBlockedReason: string | null
   pendingReviews: RfpPendingReviewView[]
   fillReport: RfpFillReportView | null
+  /** Mapped O-D-equipment lanes from workspace `mapping.json` (may be empty). */
+  mappedLanes: RfpMappedLaneView[]
+  /** Set when `mapping.json` exists but fails to parse. */
+  mappingError: string | null
 }
 
 export function asRfpStatus(value: string): RfpStatus {

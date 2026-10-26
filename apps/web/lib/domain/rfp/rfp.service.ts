@@ -10,8 +10,11 @@ import type {
   ReviewItemService,
 } from "@ship-happens/fill"
 import {
+  domainErrorMessage,
+  isDomainError,
   resolveExportDownloadGate,
   toFillReportCellView,
+  type MappingStore,
 } from "@ship-happens/fill"
 
 export class RfpService {
@@ -19,7 +22,8 @@ export class RfpService {
     private readonly repo: RfpRepository,
     private readonly pipeline: FillPipelineManager,
     private readonly reviews: ReviewItemService,
-    private readonly fillReports: FillReportRepository
+    private readonly fillReports: FillReportRepository,
+    private readonly mappingStore: MappingStore
   ) {}
 
   async list(
@@ -50,13 +54,14 @@ export class RfpService {
     if (!row) return null
 
     const meta = (row.metadata ?? {}) as { templateName?: string }
-    const [progressSteps, logs, sourceFileRows, allReviews, report] =
+    const [progressSteps, logs, sourceFileRows, allReviews, report, mapping] =
       await Promise.all([
         this.pipeline.listSteps(row.id),
         this.pipeline.listLogs(row.id),
         this.repo.listSourceFiles(row.id),
         this.reviews.list(organizationId, row.id),
         this.fillReports.getReport(row.id),
+        this.readMappedLanes(row.id),
       ])
 
     const pendingReviews = allReviews.filter(
@@ -132,6 +137,39 @@ export class RfpService {
             cells: report.cells.map(toFillReportCellView),
           }
         : null,
+      mappedLanes: mapping.lanes,
+      mappingError: mapping.error,
+    }
+  }
+
+  private async readMappedLanes(fillId: string): Promise<{
+    lanes: RfpDetailView["mappedLanes"]
+    error: string | null
+  }> {
+    try {
+      const lanes = await this.mappingStore.readMappedLanes(fillId)
+      return {
+        lanes: lanes.map((lane) => ({
+          laneId: lane.laneId,
+          originLocode: lane.originLocode,
+          destLocode: lane.destLocode,
+          equipmentType: lane.equipmentType,
+          serviceType: lane.serviceType ?? null,
+          sheetName: lane.sheetName ?? null,
+          rowIndex: lane.rowIndex ?? null,
+          columnKey: lane.columnKey ?? null,
+          cellRef: lane.cellRef ?? null,
+          surchargeSlots: lane.surchargeSlots ?? [],
+        })),
+        error: null,
+      }
+    } catch (error) {
+      const message = isDomainError(error)
+        ? domainErrorMessage(error)
+        : error instanceof Error
+          ? error.message
+          : "Failed to load mapping.json"
+      return { lanes: [], error: message }
     }
   }
 }
