@@ -9,6 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@workspace/ui/components/card"
+import {
+  DownloadFilledButton,
+  downloadFilledStatusMessage,
+} from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillProgressTimeline } from "@/components/rfp/fill-progress-timeline"
 import { WaitingOnYouPanel } from "@/components/rfp/waiting-on-you-panel"
@@ -192,7 +196,8 @@ export function FillOverviewDashboard({
             <CardHeader>
               <CardTitle>File</CardTitle>
               <CardDescription>
-                Source workbook and filled export status.
+                Source workbook and filled export. Download unlocks after final
+                export sign-off.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-4 text-sm">
@@ -248,33 +253,16 @@ export function FillOverviewDashboard({
                       fillId={rfp.id}
                       pendingReviewCount={rfp.pendingReviews?.length ?? 0}
                     />
-                    {rfp.filledFileUrl ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        render={
-                          <a
-                            href={rfp.filledFileUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            download
-                          />
-                        }
-                        nativeButton={false}
-                      >
-                        Download filled
-                      </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Download filled
-                      </Button>
-                    )}
+                    <DownloadFilledButton
+                      filledFileUrl={rfp.filledFileUrl}
+                      blockedReason={rfp.exportDownloadBlockedReason}
+                    />
                   </div>
                   <p className="text-muted-foreground">
-                    {rfp.filledFileUrl
-                      ? "Filled workbook is ready."
-                      : (rfp.exportDownloadBlockedReason ??
-                        "Run Export filled to write sells into the original template.")}
+                    {downloadFilledStatusMessage(
+                      rfp.filledFileUrl,
+                      rfp.exportDownloadBlockedReason
+                    )}
                   </p>
                 </>
               ) : (
