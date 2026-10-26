@@ -273,7 +273,8 @@ export function FillOverviewDashboard({
                   <p className="text-muted-foreground">
                     {rfp.filledFileUrl
                       ? "Filled workbook is ready."
-                      : "Run Export filled to write sells into the original template."}
+                      : (rfp.exportDownloadBlockedReason ??
+                        "Run Export filled to write sells into the original template.")}
                   </p>
                 </>
               ) : (

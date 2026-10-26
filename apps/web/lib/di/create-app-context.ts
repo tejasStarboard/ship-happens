@@ -109,7 +109,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     rfpRepo,
     pipeline,
     fillReports,
-    reviewRepo,
+    reviews,
     blobStore,
     workbookWriter,
     sourceFetcher,

@@ -119,7 +119,7 @@ export class ShipHappensClient {
     )
   }
 
-  /** Cell-compliant write-back into the original BCO template (Progress `export`). */
+  /** Cell-compliant write-back; opens final export sign-off (Confirm unlocks download). */
   exportWorkbook(fillId?: string) {
     const id = this.resolveFillId(fillId)
     return this.http.request<unknown>("POST", `/api/sh/v1/fills/${id}/export`, {

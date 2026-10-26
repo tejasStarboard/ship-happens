@@ -21,6 +21,13 @@ export {
   type ExportCellPlan,
 } from "./export/select-export-cells"
 export {
+  EXPORT_SIGNOFF_REVIEW_SOURCE,
+  EXPORT_SIGNOFF_TITLE,
+  isExportSignoffConfirmed,
+  resolveExportDownloadGate,
+  type ExportDownloadGate,
+} from "./export/export-signoff"
+export {
   WorkbookExportService,
   type ExportWorkbookResult,
 } from "./export/workbook-export.service"

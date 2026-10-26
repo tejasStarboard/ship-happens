@@ -80,7 +80,13 @@ export type RfpDetailView = RfpListItem & {
   progressSteps: RfpProgressStepView[]
   logs: RfpLogView[]
   sourceFiles: RfpSourceFileView[]
+  /**
+   * Filled workbook URL only when final export sign-off is Confirmed.
+   * Null while gated (pending / rejected / edited) even if Blob exists.
+   */
   filledFileUrl: string | null
+  /** Why download is gated when an export artifact exists but is locked. */
+  exportDownloadBlockedReason: string | null
   pendingReviews: RfpPendingReviewView[]
   fillReport: RfpFillReportView | null
 }

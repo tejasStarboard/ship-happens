@@ -9,7 +9,10 @@ import type {
   FillReportRepository,
   ReviewItemService,
 } from "@ship-happens/fill"
-import { toFillReportCellView } from "@ship-happens/fill"
+import {
+  resolveExportDownloadGate,
+  toFillReportCellView,
+} from "@ship-happens/fill"
 
 export class RfpService {
   constructor(
@@ -47,14 +50,22 @@ export class RfpService {
     if (!row) return null
 
     const meta = (row.metadata ?? {}) as { templateName?: string }
-    const [progressSteps, logs, sourceFileRows, pendingReviews, report] =
+    const [progressSteps, logs, sourceFileRows, allReviews, report] =
       await Promise.all([
         this.pipeline.listSteps(row.id),
         this.pipeline.listLogs(row.id),
         this.repo.listSourceFiles(row.id),
-        this.reviews.list(organizationId, row.id, { status: "pending" }),
+        this.reviews.list(organizationId, row.id),
         this.fillReports.getReport(row.id),
       ])
+
+    const pendingReviews = allReviews.filter(
+      (item) => item.status === "pending"
+    )
+    const downloadGate = resolveExportDownloadGate(
+      allReviews,
+      row.filledFileUrl
+    )
 
     const blockedKeys = new Set(
       pendingReviews
@@ -70,7 +81,8 @@ export class RfpService {
       templateName: row.templateName ?? meta.templateName ?? "—",
       updatedAt: row.updatedAt.toISOString(),
       owner: ownerDisplayName || row.ownerName,
-      filledFileUrl: row.filledFileUrl,
+      filledFileUrl: downloadGate.filledFileUrl,
+      exportDownloadBlockedReason: downloadGate.blockedReason,
       progressSteps: progressSteps.map((step) => ({
         id: step.id,
         key: step.key,
