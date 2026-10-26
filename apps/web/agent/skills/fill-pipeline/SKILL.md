@@ -29,7 +29,8 @@ Typical flow:
 1. `agentStartStep(rfpId, "map")`
 2. Do work
 3. `agentCompleteStep(rfpId, "map", "Mapped 12 columns")` or `agentFailStep(...)`
-4. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
+4. For **rates**: prefer `sh-client rates resolve` (server Starboard resolve + Progress `rates` + logs). Do not invent money cells. Manual `agentStartStep`/`agentCompleteStep` for `rates` only if debugging.
+5. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
 
 ## Open review waits
 

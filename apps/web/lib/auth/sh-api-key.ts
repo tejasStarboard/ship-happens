@@ -118,7 +118,7 @@ export async function createFillAgentApiKey(input: {
         fillId: input.fillId,
       },
       permissions: {
-        fill: ["read", "reviews"],
+        fill: ["read", "reviews", "rates"],
       },
     },
   })

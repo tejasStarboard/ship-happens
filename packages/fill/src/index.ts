@@ -69,3 +69,33 @@ export {
 } from "./spreadsheet-constants"
 
 export { checksumSha256, discoverWorkbookSheets } from "./workbook-parse"
+
+export {
+  MappedLaneSchema,
+  MappingDocumentSchema,
+  parseMappingDocument,
+  parseMappingJson,
+  SMOKE_MAPPING_FIXTURE,
+  type MappedLane,
+  type MappingDocument,
+} from "./rates/mapped-lane"
+export {
+  mappedLaneToSearchInput,
+  pickResolvedCandidate,
+} from "./rates/lane-to-search-input"
+export {
+  FillReportRepository,
+  type FillCellOutcome,
+  type UpsertLaneCellInput,
+} from "./rates/fill-report.repository"
+export {
+  RateResolutionService,
+  type ResolveMappedLanesResult,
+} from "./rates/rate-resolution.service"
+export type {
+  MappingStore,
+  RateResolveSearchInput,
+  ResolvedRateCandidate,
+  ResolvedSurchargeCandidate,
+  StarboardRatesPort,
+} from "./rates/rate-ports"

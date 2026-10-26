@@ -1,6 +1,7 @@
 /**
  * Rates domain — re-exports the Starboard adapter (pure search + UI mapping).
  * Keep HTTP/env wiring in `@/lib/starboard/client`.
+ * Fill resolve: `createAppContext().rates` + workspace `mapping.json`.
  */
 export {
   buildContractSearchInput,
@@ -14,6 +15,11 @@ export {
   type RateSearchResult,
   type SearchRatesReadOnlyInput,
 } from "@/lib/starboard/rate-search"
+export {
+  FILL_MAPPING_RELATIVE_PATH,
+  createWorkspaceMappingStore,
+} from "@/lib/domain/rates/workspace-mapping-store"
+export { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"
 export type {
   OceanEquipmentType,
   RateResultChannel,

@@ -6,6 +6,7 @@
  *   sh-client progress [--fill id]
  *   sh-client logs [--fill id] [--limit N] [--level info]
  *   sh-client reviews list|get|create|update|resolve …
+ *   sh-client rates resolve [--fill id]
  *
  * Env: SH_APP_URL, SH_API_KEY, SH_FILL_ID
  */
@@ -15,7 +16,7 @@ import { createClient } from "./createClient.js"
 import { ShClientError } from "./errors.js"
 import { readJsonInput } from "./cli/parseBody.js"
 
-const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, reviews)
+const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, reviews, rates)
 
 Usage:
   sh-client <command> [subcommand] [options]
@@ -34,6 +35,9 @@ Reviews:
   reviews create [--fill id] --body '{ title, proposal?, … }'
   reviews update --id <reviewId> [--fill id] --body '{ … }'
   reviews resolve --id <reviewId> [--fill id] [--body '{ resolution? }']
+
+Rates:
+  rates resolve [--fill id]         Starboard resolve for mapping.json lanes; advances Progress rates
 
 Options:
   --fill <id>       Fill / workspace id (default: SH_FILL_ID)
@@ -165,6 +169,16 @@ async function main(): Promise<void> {
       }
       throw new Error(
         `Unknown reviews subcommand: ${sub ?? "(none)"}. Try list|get|create|update|resolve`
+      )
+    }
+
+    if (cmd === "rates") {
+      if (sub === "resolve") {
+        printJson(await client.ratesResolve(fill))
+        return
+      }
+      throw new Error(
+        `Unknown rates subcommand: ${sub ?? "(none)"}. Try resolve`
       )
     }
 
