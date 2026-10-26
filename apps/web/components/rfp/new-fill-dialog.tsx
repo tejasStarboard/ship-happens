@@ -102,8 +102,8 @@ export function NewFillDialog() {
         <DialogHeader>
           <DialogTitle>New fill</DialogTitle>
           <DialogDescription>
-            Upload a BCO bid sheet to start a fill job. Progress and logs will
-            track intake; mapping and rates come in later phases.
+            Upload a BCO bid sheet to start a fill. Progress and logs track
+            intake; then use Map or Agent for mapping, and Rates to resolve.
           </DialogDescription>
         </DialogHeader>
         <form className="flex flex-col gap-4" onSubmit={onSubmit}>
