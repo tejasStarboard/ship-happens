@@ -1,6 +1,6 @@
 import { defineHook } from "eve/hooks"
 import { createAppContext } from "@/lib/di/create-app-context"
-import { injectShClientCli } from "@/lib/sh-client/sandbox-cli"
+import { ensureShClientCli } from "@/lib/sh-client/sandbox-cli"
 import { mergeWorkspaceFiles } from "@/lib/workspace-fs"
 import {
   hydrateWorkspaceFromSourceFiles,
@@ -38,17 +38,11 @@ export default defineHook({
           })
         }
 
-        // Mint fill-scoped Better Auth API key + install sh-client (once per sandbox).
-        const hasShEnv = await sandbox.run({
-          command:
-            "if [[ -f /workspace/.eve/sh-client.env ]]; then echo __SH_ENV_OK__; else echo __SH_ENV_MISSING__; fi",
-        })
-        if (hasShEnv.stdout.includes("__SH_ENV_MISSING__")) {
-          try {
-            await injectShClientCli(sandbox, { fillId: workspaceId })
-          } catch (error) {
-            console.warn("[workspace-sync] sh-client inject failed", error)
-          }
+        // Install / refresh sh-client when missing, SH_APP_URL stale, or +x lost.
+        try {
+          await ensureShClientCli(sandbox, { fillId: workspaceId })
+        } catch (error) {
+          console.warn("[workspace-sync] sh-client ensure failed", error)
         }
       } catch (error) {
         console.warn("[workspace-sync] push failed", error)

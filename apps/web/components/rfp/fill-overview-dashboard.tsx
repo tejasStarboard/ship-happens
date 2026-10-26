@@ -50,9 +50,11 @@ function LogLines({ logs }: { logs: RfpDetailView["logs"] }) {
 
 export function FillOverviewDashboard({
   rfp,
+  initialReviewId,
   onAskAgent,
 }: {
   rfp: RfpDetailView
+  initialReviewId?: string | null
   onAskAgent?: (reviewId: string) => void
 }) {
   const source = rfp.sourceFiles[0] ?? null
@@ -79,6 +81,7 @@ export function FillOverviewDashboard({
         pendingReviews={rfp.pendingReviews ?? []}
         progressSteps={rfp.progressSteps}
         status={rfp.status}
+        initialReviewId={initialReviewId}
         onAskAgent={onAskAgent ?? (() => undefined)}
       />
 
