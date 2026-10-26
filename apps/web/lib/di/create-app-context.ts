@@ -5,6 +5,7 @@ import {
   FillMappingService,
   FillOrgSettingsRepository,
   FillOrgSettingsService,
+  FillBidOutcomeService,
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
@@ -158,6 +159,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     blobStore,
     workspace
   )
+  const fillBidOutcomes = new FillBidOutcomeService(rfpRepo, pipeline)
   const emailIntegrations = new EmailIntegrationRepository(database)
   const emailIntake = new EmailIntakeService(
     database,
@@ -175,6 +177,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     emailIntake,
     pipeline,
     reviews,
+    fillBidOutcomes,
     mapping,
     placeMapping,
     rates,

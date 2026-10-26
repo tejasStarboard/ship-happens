@@ -5,6 +5,7 @@ export const FILL_PIPELINE_EVENT_TYPES = [
   "rates.completed",
   "review.resolved",
   "export.signed_off",
+  "outcome.decided",
 ] as const
 
 export type FillPipelineEventType = (typeof FILL_PIPELINE_EVENT_TYPES)[number]

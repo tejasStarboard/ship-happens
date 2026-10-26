@@ -57,6 +57,19 @@ export const fillCellOutcomeEnum = pgEnum("fill_cell_outcome", [
 ])
 
 /**
+ * Commercial bid outcome for a fill (SB-7090) — distinct from cell
+ * `fill_cell_outcome` (pricing result).
+ * closed = withdrawn / no-bid; lost = competed and lost; expired = past due
+ * without a win/loss decision (also derivable at read time).
+ */
+export const rfpBidOutcomeEnum = pgEnum("rfp_bid_outcome", [
+  "won",
+  "lost",
+  "closed",
+  "expired",
+])
+
+/**
  * HITL review-item lifecycle (system of record — not chat transcripts).
  * Confirm auto-resolves to `resolved`; Edit/Reject land on `edited`/`rejected`
  * until the agent acks via resolve. `approved` remains for legacy / agent resolve.
@@ -135,6 +148,14 @@ export const rfps = pgTable(
     errorMessage: text("error_message"),
     startedAt: timestamp("started_at"),
     completedAt: timestamp("completed_at"),
+    /** Optional bid due date (ops aging / expiry). */
+    dueAt: timestamp("due_at"),
+    /** Commercial outcome when decided (nullable until set). */
+    bidOutcome: rfpBidOutcomeEnum("bid_outcome"),
+    decidedAt: timestamp("decided_at"),
+    decidedByUserId: text("decided_by_user_id").references(() => user.id, {
+      onDelete: "set null",
+    }),
     metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
@@ -151,6 +172,11 @@ export const rfps = pgTable(
     index("rfps_organization_updated_idx").on(
       table.organizationId,
       table.updatedAt
+    ),
+    index("rfps_organization_due_at_idx").on(table.organizationId, table.dueAt),
+    index("rfps_organization_bid_outcome_idx").on(
+      table.organizationId,
+      table.bidOutcome
     ),
     index("rfps_template_id_idx").on(table.templateId),
   ]

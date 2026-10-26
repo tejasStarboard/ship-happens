@@ -132,12 +132,16 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
     view.mappingQuality.confirmedLanes === 0 &&
     view.mappingQuality.agentOnlyPending === 0 &&
     view.mappingQuality.mapReviewsDecided === 0
+  const bid = view.bidConversion
+  const bidMixMax = Math.max(0, ...bid.outcomeMix.map((b) => b.count))
+  const dueAgingMax = Math.max(0, ...bid.dueAging.buckets.map((b) => b.count))
+  const bidSectionEmpty = bid.decidedCount === 0 && bid.dueAging.withDue === 0
   const isEmpty = view.fillCount === 0
 
   return (
     <PageChrome
       title="Analytics"
-      description="Fill ops, rate coverage, margins, and mapping quality for the active organization."
+      description="Fill ops, bid conversion, rate coverage, margins, and mapping quality for the active organization."
       meta={
         <p className="text-xs text-muted-foreground">
           {formatWindowLabel(view)}
@@ -150,17 +154,41 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
             No fills in the last {view.windowDays} days
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create a fill from the Fill desk or email intake. Funnel, rate
-            coverage, and mapping metrics will show up here as work completes.
+            Create a fill from the Fill desk or email intake. Funnel, bid
+            conversion, rate coverage, and mapping metrics will show up here as
+            work completes.
           </p>
         </div>
       ) : (
         <div className="flex flex-col gap-10 px-4 lg:px-6">
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             <MetricCard
               label="Fills"
               value={String(view.fillCount)}
               hint="Created in window"
+            />
+            <MetricCard
+              label="Win rate"
+              value={formatPct(bid.winRate)}
+              hint={
+                bid.won + bid.lost > 0
+                  ? `${bid.won} won · ${bid.lost} lost`
+                  : "No won/lost yet"
+              }
+            />
+            <MetricCard
+              label="Decided"
+              value={String(bid.decidedCount)}
+              hint="Outcomes in window"
+            />
+            <MetricCard
+              label="Overdue"
+              value={String(bid.dueAging.overdue)}
+              hint={
+                bid.dueAging.withDue > 0
+                  ? `${bid.dueAging.withDue} with due date`
+                  : "No open due dates"
+              }
             />
             <MetricCard
               label="Time to done (p50)"
@@ -172,15 +200,6 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
               }
             />
             <MetricCard
-              label="Time to done (p90)"
-              value={formatDuration(view.timeToDoneMs.p90)}
-              hint={
-                view.timeToDoneMs.sampleSize > 0
-                  ? "Start → completed"
-                  : undefined
-              }
-            />
-            <MetricCard
               label="Open reviews"
               value={String(view.openReviewAging.totalPending)}
               hint="Pending HITL waits"
@@ -188,6 +207,44 @@ export function OpsAnalyticsPage({ view }: { view: OpsAnalyticsView }) {
           </div>
 
           <div className="grid gap-10 lg:grid-cols-2">
+            <Section
+              title="Bid conversion"
+              description="Decided outcomes in this window (win rate = won ÷ won+lost). Due aging covers open overdue fills."
+              empty={bidSectionEmpty}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2.5">
+                  {bid.outcomeMix.map((bucket) => (
+                    <BarRow
+                      key={bucket.key}
+                      label={bucket.label}
+                      count={bucket.count}
+                      max={bidMixMax}
+                    />
+                  ))}
+                </div>
+                {bid.dueAging.overdue > 0 ? (
+                  <div className="flex flex-col gap-2.5">
+                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                      Overdue aging
+                    </p>
+                    {bid.dueAging.buckets.map((bucket) => (
+                      <BarRow
+                        key={bucket.key}
+                        label={bucket.label}
+                        count={bucket.count}
+                        max={dueAgingMax}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    No overdue fills with a due date.
+                  </p>
+                )}
+              </div>
+            </Section>
+
             <Section
               title="Status funnel"
               description="Fill counts by current status in this window."

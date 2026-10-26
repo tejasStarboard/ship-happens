@@ -1,7 +1,10 @@
 import type { FillReportCellView } from "../rates/lane-price-audit"
+import type { RfpBidOutcome } from "./fill-bid-outcome"
 
 export type RfpStatus =
   "queued" | "running" | "needs_review" | "done" | "failed"
+
+export type { RfpBidOutcome }
 
 export const RFP_STATUS_LABEL: Record<RfpStatus, string> = {
   queued: "Queued",
@@ -31,6 +34,15 @@ export type RfpListItem = {
   owner: string
   /** Present when `metadata.intakeSource === "email"`. */
   emailRef?: RfpEmailRef | null
+  /** Optional bid due date (ISO). */
+  dueAt?: string | null
+  /** Stored commercial outcome (null until decided). */
+  bidOutcome?: RfpBidOutcome | null
+  /** Effective outcome including derived expired when past due. */
+  effectiveBidOutcome?: RfpBidOutcome | null
+  /** True when effective outcome is derived (past due, undecided). */
+  bidOutcomeDerived?: boolean
+  decidedAt?: string | null
 }
 
 export type RfpProgressStepView = {
@@ -131,6 +143,11 @@ export type RfpDetailView = RfpListItem & {
   mappedLanes: RfpMappedLaneView[]
   /** Set when mapping load/import fails to parse. */
   mappingError: string | null
+  dueAt: string | null
+  bidOutcome: RfpBidOutcome | null
+  effectiveBidOutcome: RfpBidOutcome | null
+  bidOutcomeDerived: boolean
+  decidedAt: string | null
 }
 
 export function asRfpStatus(value: string): RfpStatus {

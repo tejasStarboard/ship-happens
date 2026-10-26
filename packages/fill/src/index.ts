@@ -53,6 +53,7 @@ export { OpsAnalyticsService } from "./analytics/ops-analytics.service"
 export {
   OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
   type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsBidConversion,
   type OpsAnalyticsFailureReason,
   type OpsAnalyticsMappingQuality,
   type OpsAnalyticsMarginImpact,
@@ -64,6 +65,20 @@ export {
 } from "./analytics/ops-analytics.types"
 
 export { RfpRepository, type AppDb } from "./rfp/rfp.repository"
+export {
+  isBidOverdue,
+  isRfpBidOutcome,
+  resolveEffectiveBidOutcome,
+  RFP_BID_OUTCOME_HINT,
+  RFP_BID_OUTCOME_LABEL,
+  RFP_BID_OUTCOMES,
+  type RfpBidOutcome,
+} from "./rfp/fill-bid-outcome"
+export {
+  FillBidOutcomeService,
+  type DecideFillBidOutcomeInput,
+  type SetFillDueAtInput,
+} from "./rfp/fill-bid-outcome.service"
 export {
   asRfpStatus,
   RFP_STATUS_LABEL,

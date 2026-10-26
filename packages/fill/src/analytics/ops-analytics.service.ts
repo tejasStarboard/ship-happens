@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, sql } from "drizzle-orm"
+import { and, eq, gte, inArray, isNotNull, sql } from "drizzle-orm"
 import {
   fillPipelineEvents,
   rfpFillReportCells,
@@ -8,9 +8,11 @@ import {
   rfps,
 } from "@ship-happens/db"
 import {
+  aggregateBidConversion,
   aggregateMappingQuality,
   aggregateMarginImpact,
   aggregateRateCoverage,
+  emptyBidConversion,
   emptyMappingQuality,
   emptyMarginImpact,
   emptyRateCoverage,
@@ -46,6 +48,7 @@ const EVENT_LABEL: Record<string, string> = {
   "rates.completed": "Rates",
   "review.resolved": "Review resolved",
   "export.signed_off": "Export signed off",
+  "outcome.decided": "Outcome decided",
 }
 
 const AGING_BUCKETS = [
@@ -74,7 +77,7 @@ function percentileSorted(sorted: number[], p: number): number | null {
 
 /**
  * Org-scoped ops analytics: funnel, time-to-done, review aging, failures,
- * plus rate coverage / margin impact / mapping quality (SB-7086).
+ * rate/margin/mapping (SB-7086), bid conversion (SB-7090).
  */
 export class OpsAnalyticsService {
   constructor(private readonly db: AppDb) {}
@@ -97,6 +100,7 @@ export class OpsAnalyticsService {
       fillCountRow,
       rateAndMargin,
       mappingQuality,
+      bidConversion,
     ] = await Promise.all([
       this.statusFunnel(organizationId, windowStartedAt),
       this.timeToDone(organizationId, windowStartedAt),
@@ -115,6 +119,7 @@ export class OpsAnalyticsService {
         .then((rows) => rows[0]?.count ?? 0),
       this.rateCoverageAndMargin(organizationId, windowStartedAt),
       this.mappingQuality(organizationId, windowStartedAt),
+      this.bidConversion(organizationId, windowStartedAt),
     ])
 
     return {
@@ -129,6 +134,7 @@ export class OpsAnalyticsService {
       rateCoverage: rateAndMargin.rateCoverage,
       marginImpact: rateAndMargin.marginImpact,
       mappingQuality,
+      bidConversion,
     }
   }
 
@@ -374,6 +380,44 @@ export class OpsAnalyticsService {
     return aggregateMappingQuality({
       confirmedLanes: laneCountRow,
       mapReviews,
+    })
+  }
+
+  private async bidConversion(organizationId: string, since: Date) {
+    const [decided, dueRows] = await Promise.all([
+      this.db
+        .select({ bidOutcome: rfps.bidOutcome })
+        .from(rfps)
+        .where(
+          and(
+            eq(rfps.organizationId, organizationId),
+            gte(rfps.decidedAt, since)
+          )
+        ),
+      this.db
+        .select({
+          dueAt: rfps.dueAt,
+          bidOutcome: rfps.bidOutcome,
+        })
+        .from(rfps)
+        .where(
+          and(eq(rfps.organizationId, organizationId), isNotNull(rfps.dueAt))
+        ),
+    ])
+
+    if (decided.length === 0 && dueRows.length === 0) {
+      return emptyBidConversion()
+    }
+
+    const openDue: Array<{ dueAt: Date; bidOutcome: string | null }> = []
+    for (const row of dueRows) {
+      if (row.dueAt == null) continue
+      openDue.push({ dueAt: row.dueAt, bidOutcome: row.bidOutcome })
+    }
+
+    return aggregateBidConversion({
+      decided: decided.map((r) => ({ bidOutcome: r.bidOutcome })),
+      dueRows: openDue,
     })
   }
 }

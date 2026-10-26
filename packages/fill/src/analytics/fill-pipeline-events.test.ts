@@ -18,13 +18,14 @@ describe("pipelineEventForStepDone", () => {
     expect(pipelineEventForStepDone("unknown")).toBeNull()
   })
 
-  it("exposes the five AC event types", () => {
+  it("exposes lifecycle event types including bid outcome", () => {
     expect(FILL_PIPELINE_EVENT_TYPES).toEqual([
       "intake.completed",
       "mapping.confirmed",
       "rates.completed",
       "review.resolved",
       "export.signed_off",
+      "outcome.decided",
     ])
   })
 })

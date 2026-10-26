@@ -27,6 +27,16 @@ export {
   type RfpStatus,
 } from "./rfp/rfp.types"
 
+export {
+  isBidOverdue,
+  isRfpBidOutcome,
+  resolveEffectiveBidOutcome,
+  RFP_BID_OUTCOME_HINT,
+  RFP_BID_OUTCOME_LABEL,
+  RFP_BID_OUTCOMES,
+  type RfpBidOutcome,
+} from "./rfp/fill-bid-outcome"
+
 export type {
   FeeBindingDoc,
   MappedLane,
@@ -112,6 +122,7 @@ export {
 export {
   OPS_ANALYTICS_DEFAULT_WINDOW_DAYS,
   type OpsAnalyticsAgingBucket,
+  type OpsAnalyticsBidConversion,
   type OpsAnalyticsFailureReason,
   type OpsAnalyticsMappingQuality,
   type OpsAnalyticsMarginImpact,

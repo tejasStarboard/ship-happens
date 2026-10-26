@@ -8,14 +8,43 @@ import type { FillPipelineManager } from "@/lib/domain/pipeline/fill-pipeline.ma
 import type {
   FillReportRepository,
   ReviewItemService,
+  RfpBidOutcome,
 } from "@ship-happens/fill"
 import {
   domainErrorMessage,
   isDomainError,
+  isRfpBidOutcome,
+  resolveEffectiveBidOutcome,
   resolveExportDownloadGate,
   toFillReportCellView,
   type MappingStore,
 } from "@ship-happens/fill"
+
+function asStoredBidOutcome(
+  value: string | null | undefined
+): RfpBidOutcome | null {
+  return isRfpBidOutcome(value) ? value : null
+}
+
+function bidFieldsFromRow(row: {
+  dueAt: Date | null
+  bidOutcome: string | null
+  decidedAt?: Date | null
+}) {
+  const bidOutcome = asStoredBidOutcome(row.bidOutcome)
+  const dueAt = row.dueAt?.toISOString() ?? null
+  const effective = resolveEffectiveBidOutcome({
+    bidOutcome,
+    dueAt: row.dueAt,
+  })
+  return {
+    dueAt,
+    bidOutcome,
+    effectiveBidOutcome: effective.outcome,
+    bidOutcomeDerived: effective.derived,
+    decidedAt: row.decidedAt?.toISOString() ?? null,
+  }
+}
 
 export class RfpService {
   constructor(
@@ -47,6 +76,7 @@ export class RfpService {
         owner: ownerDisplayName || row.ownerName,
         emailRef:
           meta.intakeSource === "email" && meta.email ? meta.email : null,
+        ...bidFieldsFromRow(row),
       }
     })
   }
@@ -97,6 +127,7 @@ export class RfpService {
       updatedAt: row.updatedAt.toISOString(),
       owner: ownerDisplayName || row.ownerName,
       emailRef: meta.intakeSource === "email" && meta.email ? meta.email : null,
+      ...bidFieldsFromRow(row),
       filledFileUrl: downloadGate.filledFileUrl,
       exportDownloadBlockedReason: downloadGate.blockedReason,
       progressSteps: progressSteps.map((step) => ({
