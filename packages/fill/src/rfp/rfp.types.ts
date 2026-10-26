@@ -1,3 +1,4 @@
+import type { MappingReuseSummary } from "../mapping/mapping-reuse"
 import type { FillReportCellView } from "../rates/lane-price-audit"
 import type { RfpBidOutcome } from "./fill-bid-outcome"
 
@@ -43,6 +44,10 @@ export type RfpListItem = {
   /** True when effective outcome is derived (past due, undecided). */
   bidOutcomeDerived?: boolean
   decidedAt?: string | null
+  /** Previous round in this lineage. Null on round 1. */
+  parentRfpId?: string | null
+  /** 1-based round. Absent on older payloads means round 1. */
+  roundNumber?: number
 }
 
 export type RfpProgressStepView = {
@@ -148,6 +153,8 @@ export type RfpDetailView = RfpListItem & {
   effectiveBidOutcome: RfpBidOutcome | null
   bidOutcomeDerived: boolean
   decidedAt: string | null
+  /** Counts from the last mapping reuse onto this fill, when one ran. */
+  mappingReuseSummary?: MappingReuseSummary | null
 }
 
 export function asRfpStatus(value: string): RfpStatus {

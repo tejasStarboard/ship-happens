@@ -3,6 +3,7 @@
 import { requireOrgSession } from "@/lib/auth/session"
 import { createAppContext } from "@/lib/di/create-app-context"
 import type {
+  CreateFillRevisionInput,
   SpreadsheetUploadInput,
   TemplateUploadInput,
 } from "@/lib/domain/rfp/intake.service"
@@ -14,6 +15,12 @@ export async function createFill(data: SpreadsheetUploadInput) {
   const { organizationId, session } = await requireOrgSession()
   const ctx = createAppContext()
   return ctx.intake.createFill(organizationId, session.user.id, data)
+}
+
+export async function createFillRevision(data: CreateFillRevisionInput) {
+  const { organizationId, session } = await requireOrgSession()
+  const ctx = createAppContext()
+  return ctx.intake.createFillRevision(organizationId, session.user.id, data)
 }
 
 export async function createFillFromTemplate(input: {

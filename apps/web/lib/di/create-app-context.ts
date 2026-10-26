@@ -11,6 +11,7 @@ import {
   IntakeService,
   MarginFloorRuleRepository,
   MarginFloorRuleService,
+  MappingReuseService,
   OpsAnalyticsService,
   OverlayApplicationService,
   OverlayRuleRepository,
@@ -152,12 +153,19 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     workspace,
     fillOrgSettings
   )
+  const mappingReuse = new MappingReuseService(
+    rfpRepo,
+    mapping,
+    reviews,
+    pipeline
+  )
   const intake = new IntakeService(
     database,
     rfpRepo,
     pipeline,
     blobStore,
-    workspace
+    workspace,
+    mappingReuse
   )
   const fillBidOutcomes = new FillBidOutcomeService(rfpRepo, pipeline)
   const emailIntegrations = new EmailIntegrationRepository(database)
@@ -174,6 +182,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports, mappingStore),
     templates: new TemplateService(templateRepo),
     intake,
+    mappingReuse,
     emailIntake,
     pipeline,
     reviews,

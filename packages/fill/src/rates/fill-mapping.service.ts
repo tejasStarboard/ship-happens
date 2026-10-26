@@ -51,7 +51,8 @@ export class FillMappingService {
   async upsertLanes(
     organizationId: string,
     fillId: string,
-    lanes: MappedLane[]
+    lanes: MappedLane[],
+    options?: { confirmMap?: boolean }
   ): Promise<ReplaceMappedLanesResult> {
     if (lanes.length === 0) {
       return this.replace(organizationId, fillId, [])
@@ -62,7 +63,16 @@ export class FillMappingService {
     for (const lane of lanes) {
       byId.set(lane.laneId, lane)
     }
-    return this.replace(organizationId, fillId, [...byId.values()])
+    const merged = [...byId.values()]
+    if (options?.confirmMap === false) {
+      const { laneCount } = await this.mappings.replaceAll({
+        rfpId: fillId,
+        organizationId,
+        lanes: merged,
+      })
+      return { fillId, laneCount }
+    }
+    return this.replace(organizationId, fillId, merged)
   }
 
   /** Confirm from a MappingDocument (`{ version?, lanes }`). */

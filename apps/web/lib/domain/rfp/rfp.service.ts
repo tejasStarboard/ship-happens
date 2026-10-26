@@ -14,6 +14,7 @@ import {
   domainErrorMessage,
   isDomainError,
   isRfpBidOutcome,
+  mappingReuseSummaryFromMetadata,
   resolveEffectiveBidOutcome,
   resolveExportDownloadGate,
   toFillReportCellViewsWithBidPriority,
@@ -77,6 +78,8 @@ export class RfpService {
         emailRef:
           meta.intakeSource === "email" && meta.email ? meta.email : null,
         ...bidFieldsFromRow(row),
+        parentRfpId: row.parentRfpId ?? null,
+        roundNumber: row.roundNumber ?? 1,
       }
     })
   }
@@ -128,6 +131,9 @@ export class RfpService {
       owner: ownerDisplayName || row.ownerName,
       emailRef: meta.intakeSource === "email" && meta.email ? meta.email : null,
       ...bidFieldsFromRow(row),
+      parentRfpId: row.parentRfpId ?? null,
+      roundNumber: row.roundNumber ?? 1,
+      mappingReuseSummary: mappingReuseSummaryFromMetadata(row.metadata),
       filledFileUrl: downloadGate.filledFileUrl,
       exportDownloadBlockedReason: downloadGate.blockedReason,
       progressSteps: progressSteps.map((step) => ({

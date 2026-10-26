@@ -22,6 +22,8 @@ describe("pipelineEventForStepDone", () => {
     expect(FILL_PIPELINE_EVENT_TYPES).toEqual([
       "intake.completed",
       "mapping.confirmed",
+      "mapping.reused",
+      "mapping.drift_detected",
       "rates.completed",
       "review.resolved",
       "export.signed_off",

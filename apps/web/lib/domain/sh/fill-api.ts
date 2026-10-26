@@ -1,9 +1,12 @@
 import {
   DomainError,
+  mappingReuseSummaryFromMetadata,
   parseMappingJson,
   toFillReportCellViewsWithBidPriority,
+  type CreateFillRevisionInput,
   type LogLevel,
   type CreateReviewItemInput,
+  type MappingReuseContext,
   type ProposeLanesInput,
   type UpdateReviewItemInput,
 } from "@ship-happens/fill"
@@ -42,6 +45,9 @@ export async function getFillStatus(ctx: ShApiKeyContext, fillId: string) {
     completedAt: fill.completedAt,
     createdAt: fill.createdAt,
     updatedAt: fill.updatedAt,
+    parentRfpId: fill.parentRfpId,
+    roundNumber: fill.roundNumber,
+    mappingReuseSummary: mappingReuseSummaryFromMetadata(fill.metadata),
   }
 }
 
@@ -259,6 +265,114 @@ export async function importFillMapping(
  * Jev geo propose: resolve O-D labels → upsert high-confidence lanes or open
  * map reviews. Optional customerLabel match fails open.
  */
+export async function createFillRevision(
+  ctx: ShApiKeyContext,
+  parentFillId: string,
+  body: Omit<CreateFillRevisionInput, "parentFillId">
+) {
+  assertFillAccess(ctx, parentFillId)
+  const app = createAppContext()
+  return app.intake.createFillRevision(ctx.organizationId, ctx.userId, {
+    ...body,
+    parentFillId,
+  })
+}
+
+function asReuseFingerprint(value: unknown): MappingReuseContext | undefined {
+  if (value == null) return undefined
+  if (typeof value !== "object" || Array.isArray(value)) {
+    throw new DomainError("fingerprint must be an object", "VALIDATION")
+  }
+  const row = value as Record<string, unknown>
+  const fingerprint: MappingReuseContext = {}
+  if (row.sheetNames != null) {
+    if (
+      !Array.isArray(row.sheetNames) ||
+      row.sheetNames.some((name) => typeof name !== "string")
+    ) {
+      throw new DomainError(
+        "fingerprint.sheetNames must be strings",
+        "VALIDATION"
+      )
+    }
+    fingerprint.sheetNames = row.sheetNames
+  }
+  if (row.anchors != null) {
+    if (!Array.isArray(row.anchors)) {
+      throw new DomainError(
+        "fingerprint.anchors must be an array",
+        "VALIDATION"
+      )
+    }
+    fingerprint.anchors = row.anchors as MappingReuseContext["anchors"]
+  }
+  return fingerprint
+}
+
+async function resolveReuseParentId(
+  organizationId: string,
+  fillId: string,
+  parentFillId?: string | null
+) {
+  const app = createAppContext()
+  if (parentFillId?.trim()) return parentFillId.trim()
+  const fill = await app.repos.rfps.findByIdForOrganization(
+    organizationId,
+    fillId
+  )
+  if (!fill) {
+    throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
+  }
+  if (!fill.parentRfpId) {
+    throw new DomainError(
+      "parentFillId is required when this fill has no parent round",
+      "VALIDATION"
+    )
+  }
+  return fill.parentRfpId
+}
+
+/** Classify parent lanes against this fill without writing. */
+export async function previewMappingReuse(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  options?: { parentFillId?: string | null }
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  const parentFillId = await resolveReuseParentId(
+    ctx.organizationId,
+    fillId,
+    options?.parentFillId
+  )
+  return app.mappingReuse.proposeFromParent({
+    organizationId: ctx.organizationId,
+    parentFillId,
+    fillId,
+  })
+}
+
+/** Copy reusable parent lanes and open map reviews for drifted anchors. */
+export async function applyMappingReuse(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  body?: { parentFillId?: string | null; fingerprint?: unknown }
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  const parentFillId = await resolveReuseParentId(
+    ctx.organizationId,
+    fillId,
+    body?.parentFillId
+  )
+  return app.mappingReuse.applyFromParent({
+    organizationId: ctx.organizationId,
+    parentFillId,
+    fillId,
+    fingerprint: asReuseFingerprint(body?.fingerprint),
+  })
+}
+
 export async function proposeFillMapping(
   ctx: ShApiKeyContext,
   fillId: string,

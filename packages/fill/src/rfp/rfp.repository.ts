@@ -23,6 +23,8 @@ export class RfpRepository {
         dueAt: rfps.dueAt,
         bidOutcome: rfps.bidOutcome,
         decidedAt: rfps.decidedAt,
+        parentRfpId: rfps.parentRfpId,
+        roundNumber: rfps.roundNumber,
       })
       .from(rfps)
       .leftJoin(templates, eq(rfps.templateId, templates.id))
@@ -52,6 +54,8 @@ export class RfpRepository {
         bidOutcome: rfps.bidOutcome,
         decidedAt: rfps.decidedAt,
         decidedByUserId: rfps.decidedByUserId,
+        parentRfpId: rfps.parentRfpId,
+        roundNumber: rfps.roundNumber,
       })
       .from(rfps)
       .leftJoin(templates, eq(rfps.templateId, templates.id))
@@ -105,6 +109,26 @@ export class RfpRepository {
     await this.db
       .update(rfps)
       .set({ customer: trimmed, updatedAt: new Date() })
+      .where(eq(rfps.id, rfpId))
+  }
+
+  async mergeMetadata(rfpId: string, patch: Record<string, unknown>) {
+    const current = await this.db
+      .select({ metadata: rfps.metadata })
+      .from(rfps)
+      .where(eq(rfps.id, rfpId))
+      .limit(1)
+      .then((rows) => rows[0]?.metadata ?? {})
+    const base =
+      current && typeof current === "object" && !Array.isArray(current)
+        ? (current as Record<string, unknown>)
+        : {}
+    await this.db
+      .update(rfps)
+      .set({
+        metadata: { ...base, ...patch },
+        updatedAt: new Date(),
+      })
       .where(eq(rfps.id, rfpId))
   }
 
