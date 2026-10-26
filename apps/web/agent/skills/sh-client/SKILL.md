@@ -45,10 +45,12 @@ Calls Starboard `rates.resolve` server-side, persists fill-report cells, advance
 
 ```bash
 sh-client rates resolve
-sh-client progress   # rates step should be done (or failed if no lanes)
+sh-client progress   # rates + overlay; overlay may stay running if floor reviews opened
 ```
 
 Do **not** invent rate amounts. Exploratory Starboard CLI lookups use the `sb-client` skill; this command is the fill happy path.
+
+If org/customer **Floor margins** (Settings) are enabled and a markup sell breaches the floor, resolve auto-creates `pending` reviews (`source: margin-floor`) on Overview. List them with `reviews list --status pending`, wait for Confirm/Edit/Reject, then `progress complete` for `overlay` when holds clear.
 
 ## 2. Submit for review (open a HITL wait)
 

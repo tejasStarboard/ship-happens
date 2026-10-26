@@ -31,15 +31,16 @@ Typical flow:
 3. `agentCompleteStep(rfpId, "map", "Mapped 12 columns")` or `agentFailStep(...)`
 4. For **rates**: prefer `sh-client rates resolve` (server Starboard resolve + Progress `rates` + logs, then overlays + Progress `overlay`). Do not invent money cells. Manual `agentStartStep`/`agentCompleteStep` for `rates` / `overlay` only if debugging.
 5. Overlay rules are configured in the Overlays UI (org/customer). Resolve applies projected sells on no-buy lanes and markup on priced buys automatically.
-6. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
+6. Floor-margin rules live under **Settings → Floor margins**. After overlay apply, buy+sell lanes that breach the matched floor open Phase 2b reviews (`source: margin-floor`, `stepKey: overlay`) and hold Progress until cleared. Projected-only (no buy) lanes are not floor-checked. Confirm keeps the proposed sell; then `agentCompleteStep` for `overlay` if still open.
+7. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
 
 ## Open review waits
 
-`sh-client reviews create` force-holds Progress (fill → `needs_review`; step with
-`stepKey` stays running until pending waits clear). Do **not** call
-`agentCompleteStep` for a step that still has open (`pending`) reviews — it
-errors. After the human leaves pending (Confirm / Edit / Reject), continue or
-complete the step yourself.
+`sh-client reviews create` **or** server floor-margin enforcement force-holds Progress
+(fill → `needs_review`; step with `stepKey` stays running until pending waits
+clear). Do **not** call `agentCompleteStep` for a step that still has open
+(`pending`) reviews — it errors. After the human leaves pending (Confirm / Edit /
+Reject), continue or complete the step yourself.
 
 ## Not this skill
 

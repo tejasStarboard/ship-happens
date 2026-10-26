@@ -3,6 +3,7 @@ import {
   IconAdjustmentsHorizontal,
   IconChevronRight,
   IconKey,
+  IconPercentage,
   IconUser,
   IconUsers,
 } from "@tabler/icons-react"
@@ -15,6 +16,12 @@ const generalLinks = [
     title: "Preferences",
     description: "Theme and home view for this browser.",
     icon: IconAdjustmentsHorizontal,
+  },
+  {
+    href: "/settings/floor-margins",
+    title: "Floor margins",
+    description: "Min $/FEU and gross % guardrails for fill overlays.",
+    icon: IconPercentage,
   },
   {
     href: "/settings/profile",

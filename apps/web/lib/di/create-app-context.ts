@@ -3,6 +3,8 @@ import {
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
+  MarginFloorRuleRepository,
+  MarginFloorRuleService,
   OverlayApplicationService,
   OverlayRuleRepository,
   OverlayRuleService,
@@ -71,6 +73,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const fillReports = new FillReportRepository(database)
   const overlayRulesRepo = new OverlayRuleRepository(database)
   const overlayRules = new OverlayRuleService(overlayRulesRepo)
+  const marginFloorsRepo = new MarginFloorRuleRepository(database)
+  const marginFloors = new MarginFloorRuleService(marginFloorsRepo)
   const mappingStore = deps?.mappingStore ?? createWorkspaceMappingStore()
   const starboardRates =
     deps?.starboardRates ?? createStarboardRatesPort(starboardFactory)
@@ -85,7 +89,9 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     rfpRepo,
     pipeline,
     fillReports,
-    overlayRulesRepo
+    overlayRulesRepo,
+    marginFloorsRepo,
+    reviews
   )
 
   return {
@@ -105,6 +111,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     reviews,
     rates,
     overlayRules,
+    marginFloors,
     overlays,
     workspaces: new WorkspaceManager(blob),
     repos: {
@@ -113,6 +120,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
       reviews: reviewRepo,
       fillReports,
       overlayRules: overlayRulesRepo,
+      marginFloors: marginFloorsRepo,
     },
   }
 }
