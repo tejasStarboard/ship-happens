@@ -7,7 +7,7 @@
  *   sh-client logs [--fill id] [--limit N] [--level info]
  *   sh-client cells [--fill id] [--lane id]
  *   sh-client reviews list|get|create|update|resolve …
- *   sh-client mapping get|put|import …
+ *   sh-client mapping get|put|import|propose …
  *   sh-client rates resolve [--fill id]
  *   sh-client export [--fill id]
  *
@@ -37,6 +37,8 @@ Mapping (Postgres; mapping.json is import/export only):
   mapping get [--fill id]           List confirmed lanes
   mapping put [--fill id] --body '{ "version": 1, "lanes": […] }'
   mapping import [--fill id] [--body …]  Body or workspace mapping.json → DB
+  mapping propose [--fill id] --body '{ "lanes":[{laneId,originLabel,destLabel,equipmentType}], "customerLabel"? }'
+                                    Jev geo resolve; upsert ≥0.9 or open map reviews
 
 Reviews:
   reviews list [--fill id] [--status pending|…]
@@ -215,8 +217,16 @@ async function main(): Promise<void> {
         printJson(await client.mappingImport(body, fill))
         return
       }
+      if (sub === "propose") {
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.mappingPropose(body, fill))
+        return
+      }
       throw new Error(
-        `Unknown mapping subcommand: ${sub ?? "(none)"}. Try get|put|import`
+        `Unknown mapping subcommand: ${sub ?? "(none)"}. Try get|put|import|propose`
       )
     }
 

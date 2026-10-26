@@ -136,6 +136,19 @@ export class ShipHappensClient {
     )
   }
 
+  /**
+   * Jev geo propose: free-text O-D labels → upsert high-confidence lanes or
+   * open `stepKey: map` reviews. Optional `customerLabel` fails open.
+   */
+  mappingPropose(body: Record<string, unknown>, fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "POST",
+      `/api/sh/v1/fills/${id}/mapping/propose`,
+      { body }
+    )
+  }
+
   /** Resolve mapped lanes via Starboard (DB mapping) and advance Progress `rates`. */
   ratesResolve(fillId?: string) {
     const id = this.resolveFillId(fillId)

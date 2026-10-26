@@ -45,17 +45,27 @@ sh-client cells --lane lane_1   # filter one mapped lane id
 ## 1b. Mapping (Postgres)
 
 Confirmed lanes live in Postgres. Workspace `mapping.json` is import/export only.
-Humans Confirm mapping on the Map tab (schema confirm UI). Low-confidence map
-proposals should use `reviews create` with `stepKey: map` — rates resolve blocks
-while those waits are pending. Lane-shaped proposals (origin/dest/equipment)
-upsert into Postgres when the analyst Confirms on Overview or Map.
+Humans Confirm mapping on the Map tab (schema confirm UI). Prefer **Jev geo
+propose** for free-text O-D labels — high-confidence (≥0.9) lanes upsert
+automatically; weaker rows open `stepKey: map` reviews (rates resolve blocks
+while pending). Lane-shaped proposals upsert when the analyst Confirms.
 
 ```bash
+# Preferred: extract O-D/equipment labels from the sheet, then:
+sh-client mapping propose --body '{
+  "customerLabel": "Optional BCO name",
+  "lanes":[
+    {"laneId":"lane_1","originLabel":"Shanghai","destLabel":"Los Angeles","equipmentType":"40HC","sheetName":"Rates","rowIndex":2}
+  ]
+}'
 sh-client mapping get
+sh-client reviews list --status pending   # low-confidence map waits
+# Manual override only when locodes are already known:
 sh-client mapping put --body '{"version":1,"lanes":[{"laneId":"lane_1","originLocode":"CNSHA","destLocode":"USLAX","equipmentType":"40HC"}]}'
-# or one-shot from workspace file:
 sh-client mapping import
 ```
+
+Do **not** hand-edit `mapping.json` or invent LOCODEs when `mapping propose` is available. Optional `customerLabel` enrichment fails open if Jev is down.
 
 ## 1c. Resolve rates (Progress `rates`)
 

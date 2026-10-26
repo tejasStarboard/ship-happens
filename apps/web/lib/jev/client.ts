@@ -9,7 +9,7 @@ export function getJevClient(): TypeSafeClient {
   const apiKey = env.JEV_API_KEY
   if (!apiKey) {
     throw new Error(
-      "JEV_API_KEY is not configured — cannot classify email intake"
+      "JEV_API_KEY is not configured — cannot call Jev (email / geo)"
     )
   }
   cached = new TypeSafeClient({

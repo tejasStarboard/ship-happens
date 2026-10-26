@@ -90,6 +90,16 @@ export class RfpRepository {
       .where(eq(rfps.id, rfpId))
   }
 
+  /** Optional CRM enrichment — only set when the fill has no customer yet. */
+  async updateCustomer(rfpId: string, customer: string) {
+    const trimmed = customer.trim()
+    if (!trimmed) return
+    await this.db
+      .update(rfps)
+      .set({ customer: trimmed, updatedAt: new Date() })
+      .where(eq(rfps.id, rfpId))
+  }
+
   findTemplateIdForOrganization(organizationId: string, templateId: string) {
     return this.db
       .select({ id: templates.id })

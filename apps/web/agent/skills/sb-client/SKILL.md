@@ -42,8 +42,9 @@ sb-client margins check-floor --body '{"buy":1000,"sell":1100,"min_amount":150}'
 
 ## Preferred bid-line flow
 
-1. `sb-client locations resolve-lane --origin "…" --destination "…"`
-2. `sb-client rates resolve --body '{ "service_type":"ocean_fcl", "origin_locodes":[…], "destination_locodes":[…], "cargo":{ "cargo_type":"container", "container_types":["40HC"] }, "effective_from":"…", "expires_on":"…" }'`
+1. For **fill mapping**, prefer `sh-client mapping propose` (Jev geo + HITL) over raw location CLI — see the `sh-client` skill. Use locations CLI for exploratory lookups only:
+   `sb-client locations resolve-lane --origin "…" --destination "…"`
+2. For fill rates after confirmed mapping: `sh-client rates resolve` (preferred). Exploratory: `sb-client rates resolve --body '{ "service_type":"ocean_fcl", "origin_locodes":[…], "destination_locodes":[…], "cargo":{ "cargo_type":"container", "container_types":["40HC"] }, "effective_from":"…", "expires_on":"…" }'`
 3. `sb-client rates recommend --body '{"rates":[...]}'` (or pick preferred carrier)
 4. `sb-client margins apply` / `margins check-floor` for sell + guardrails
 5. `sb-client globals classify` / `rollup` for sheet headings

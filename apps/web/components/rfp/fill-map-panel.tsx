@@ -372,7 +372,8 @@ export function FillMapPanel({
             <EmptyTitle>No confirmed lanes yet</EmptyTitle>
             <EmptyDescription>
               Add O-D / equipment rows below and Confirm mapping, or ask Agent
-              to propose lanes (low-confidence ones land as map reviews).
+              (`mapping propose`) to resolve places via Jev — low-confidence
+              lanes land as map reviews.
             </EmptyDescription>
           </EmptyHeader>
         </Empty>

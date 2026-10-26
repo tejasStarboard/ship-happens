@@ -4,6 +4,7 @@ import {
   toFillReportCellView,
   type LogLevel,
   type CreateReviewItemInput,
+  type ProposeLanesInput,
   type UpdateReviewItemInput,
 } from "@ship-happens/fill"
 import { createAppContext } from "@/lib/di/create-app-context"
@@ -249,6 +250,20 @@ export async function importFillMapping(
   const lanes = parseMappingJson(text)
   const result = await app.mapping.replace(ctx.organizationId, fillId, lanes)
   return { ...result, importedFromFile: true }
+}
+
+/**
+ * Jev geo propose: resolve O-D labels → upsert high-confidence lanes or open
+ * map reviews. Optional customerLabel match fails open.
+ */
+export async function proposeFillMapping(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  body: ProposeLanesInput
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  return app.placeMapping.proposeLanes(ctx.organizationId, fillId, body)
 }
 
 /** Resolve mapped lanes via Starboard, apply overlays, advance Progress. */
