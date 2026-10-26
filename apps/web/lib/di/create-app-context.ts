@@ -1,14 +1,20 @@
 import { db } from "@/lib/db"
 import {
   FillPipelineManager,
+  FillReportRepository,
   IntakeService,
+  RateResolutionService,
   ReviewItemRepository,
   ReviewItemService,
   RfpRepository,
   type AppDb,
   type BlobStore,
+  type MappingStore,
+  type StarboardRatesPort,
   type WorkspaceHost,
 } from "@ship-happens/fill"
+import { createStarboardRatesPort } from "@/lib/domain/rates/starboard-rates-adapter"
+import { createWorkspaceMappingStore } from "@/lib/domain/rates/workspace-mapping-store"
 import { RfpService } from "@/lib/domain/rfp/rfp.service"
 import { TemplateRepository } from "@/lib/domain/templates/template.repository"
 import { TemplateService } from "@/lib/domain/templates/template.service"
@@ -26,6 +32,8 @@ export type AppDeps = {
   blob: VercelBlobStorage
   createStarboardClient: () => Promise<StarboardClient>
   workspace?: WorkspaceHost
+  mappingStore?: MappingStore
+  starboardRates?: StarboardRatesPort
 }
 
 function asBlobStore(blob: VercelBlobStorage): BlobStore {
@@ -57,6 +65,17 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const pipeline = new FillPipelineManager(database)
   const reviewRepo = new ReviewItemRepository(database)
   const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline)
+  const fillReports = new FillReportRepository(database)
+  const mappingStore = deps?.mappingStore ?? createWorkspaceMappingStore()
+  const starboardRates =
+    deps?.starboardRates ?? createStarboardRatesPort(starboardFactory)
+  const rates = new RateResolutionService(
+    rfpRepo,
+    pipeline,
+    fillReports,
+    mappingStore,
+    starboardRates
+  )
 
   return {
     db: database,
@@ -73,11 +92,13 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     ),
     pipeline,
     reviews,
+    rates,
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,
       templates: templateRepo,
       reviews: reviewRepo,
+      fillReports,
     },
   }
 }

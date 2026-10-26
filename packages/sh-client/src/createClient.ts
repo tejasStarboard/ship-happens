@@ -100,6 +100,16 @@ export class ShipHappensClient {
       { body: body ?? {} }
     )
   }
+
+  /** Resolve mapped lanes via Starboard (`mapping.json`) and advance Progress `rates`. */
+  ratesResolve(fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "POST",
+      `/api/sh/v1/fills/${id}/rates/resolve`,
+      { body: {} }
+    )
+  }
 }
 
 export function createClient(

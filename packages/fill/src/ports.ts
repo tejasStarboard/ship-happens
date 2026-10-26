@@ -2,6 +2,14 @@
  * Runtime ports — inject from Next, worker, or CLI so fill stays framework-free.
  */
 
+export type {
+  MappingStore,
+  RateResolveSearchInput,
+  ResolvedRateCandidate,
+  ResolvedSurchargeCandidate,
+  StarboardRatesPort,
+} from "./rates/rate-ports"
+
 export type BlobUploadResult = {
   url: string
   pathname: string

@@ -38,6 +38,18 @@ sh-client logs --limit 50
 # optional: --fill <id>  (defaults to SH_FILL_ID)
 ```
 
+## 1b. Resolve rates (Progress `rates`)
+
+Requires workspace `mapping.json` (Phase 2c stand-in) with `{ "version": 1, "lanes": […] }`.
+Calls Starboard `rates.resolve` server-side, persists fill-report cells, advances Progress `rates`.
+
+```bash
+sh-client rates resolve
+sh-client progress   # rates step should be done (or failed if no lanes)
+```
+
+Do **not** invent rate amounts. Exploratory Starboard CLI lookups use the `sb-client` skill; this command is the fill happy path.
+
 ## 2. Submit for review (open a HITL wait)
 
 Agent **creates** pending review items — this is allowed and expected.

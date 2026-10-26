@@ -185,7 +185,7 @@ export const auth = betterAuth({
       },
       permissions: {
         defaultPermissions: {
-          fill: ["read", "reviews"],
+          fill: ["read", "reviews", "rates"],
         },
       },
     }),
