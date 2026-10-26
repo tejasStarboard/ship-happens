@@ -143,11 +143,15 @@ export async function resolveReview(
   return app.reviews.resolve(ctx.organizationId, fillId, reviewId, body)
 }
 
-/** Resolve mapped lanes via Starboard and advance Progress `rates`. */
+/** Resolve mapped lanes via Starboard, apply overlays, advance Progress. */
 export async function resolveFillRates(ctx: ShApiKeyContext, fillId: string) {
   assertFillAccess(ctx, fillId)
   const app = createAppContext()
   const result = await app.rates.resolveMappedLanes({
+    organizationId: ctx.organizationId,
+    fillId,
+  })
+  const overlay = await app.overlays.applyForFill({
     organizationId: ctx.organizationId,
     fillId,
   })
@@ -157,7 +161,12 @@ export async function resolveFillRates(ctx: ShApiKeyContext, fillId: string) {
     noHitCount: result.noHitCount,
     errorCount: result.errorCount,
     detail: result.detail,
-    cells: result.cells.map((cell) => ({
+    overlay: {
+      appliedCount: overlay.appliedCount,
+      unchangedCount: overlay.unchangedCount,
+      detail: overlay.detail,
+    },
+    cells: overlay.cells.map((cell) => ({
       outcome: cell.outcome,
       value: cell.value ?? null,
       reason: cell.reason ?? null,
