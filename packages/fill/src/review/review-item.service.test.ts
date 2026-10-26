@@ -174,6 +174,7 @@ function createService(opts?: {
   const setRfpStatus = vi.fn(async () => undefined)
   const updateStep = vi.fn(async () => undefined)
   const appendLog = vi.fn(async () => undefined)
+  const appendPipelineEvent = vi.fn(async () => undefined)
   const completeStep = vi.fn(async () => undefined)
   const listSteps = vi.fn(async () => [
     {
@@ -187,6 +188,7 @@ function createService(opts?: {
     setRfpStatus,
     updateStep,
     appendLog,
+    appendPipelineEvent,
     completeStep,
     listSteps,
   } as unknown as FillPipelineManager
@@ -202,6 +204,7 @@ function createService(opts?: {
     setRfpStatus,
     updateStep,
     appendLog,
+    appendPipelineEvent,
     completeStep,
     listSteps,
     mapping: opts?.mapping,
@@ -341,7 +344,7 @@ describe("ReviewItemService.decide", () => {
   })
 
   it("export-signoff Confirm completes export + review steps", async () => {
-    const { service, completeStep } = createService({
+    const { service, completeStep, appendPipelineEvent } = createService({
       pendingCount: 0,
       stepPendingCount: 0,
       row: pendingRow({
@@ -356,6 +359,13 @@ describe("ReviewItemService.decide", () => {
       "rev_test1",
       { decision: "approved" },
       "user_1"
+    )
+    expect(appendPipelineEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "review.resolved",
+        rfpId: "fill_1",
+        organizationId: "org_1",
+      })
     )
     expect(completeStep).toHaveBeenCalledWith(
       "fill_1",

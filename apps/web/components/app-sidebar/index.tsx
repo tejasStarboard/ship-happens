@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import {
+  IconChartBar,
   IconCurrencyDollar,
   IconFileSpreadsheet,
   IconHelp,
@@ -42,6 +43,11 @@ const navMain = [
     title: "Starboard rates",
     url: "/rates",
     icon: IconCurrencyDollar,
+  },
+  {
+    title: "Analytics",
+    url: "/analytics",
+    icon: IconChartBar,
   },
   {
     title: "Integrations",
