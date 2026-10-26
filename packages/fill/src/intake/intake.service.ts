@@ -4,6 +4,7 @@ import { z } from "zod"
 import { rfps, rfpSourceFiles, templates } from "@ship-happens/db"
 import { DomainError } from "../errors"
 import type { BlobStore, WorkspaceHost } from "../ports"
+import type { MappingReuseService } from "../mapping/mapping-reuse.service"
 import { FillPipelineManager } from "../pipeline/fill-pipeline.manager"
 import type { AppDb, RfpRepository } from "../rfp/rfp.repository"
 import {
@@ -33,7 +34,18 @@ const spreadsheetUploadSchema = z.object({
   /** Extra metadata merged onto `rfps.metadata` (e.g. email intake provenance). */
   metadata: z.record(z.string(), z.unknown()).optional(),
   email: emailProvenanceSchema.optional(),
+  /** Previous round. When set, the new fill is the next workbook in that lineage. */
+  parentRfpId: z.string().min(1).optional(),
+  /** Explicit round. Defaults to parent.roundNumber + 1 when parentRfpId is set. */
+  roundNumber: z.number().int().positive().optional(),
 })
+
+const fillRevisionSchema = spreadsheetUploadSchema
+  .omit({ name: true, parentRfpId: true, roundNumber: true })
+  .extend({
+    parentFillId: z.string().min(1),
+    name: z.string().min(1).max(200).optional(),
+  })
 
 const templateUploadSchema = z.object({
   fileName: z.string().min(1).max(255),
@@ -45,6 +57,7 @@ const templateUploadSchema = z.object({
 
 export type SpreadsheetUploadInput = z.infer<typeof spreadsheetUploadSchema>
 export type TemplateUploadInput = z.infer<typeof templateUploadSchema>
+export type CreateFillRevisionInput = z.infer<typeof fillRevisionSchema>
 
 function fillId() {
   return `fill_${randomUUID().replaceAll("-", "").slice(0, 20)}`
@@ -82,7 +95,8 @@ export class IntakeService {
     private readonly rfpRepo: RfpRepository,
     private readonly pipeline: FillPipelineManager,
     private readonly blob: BlobStore,
-    private readonly workspace: WorkspaceHost
+    private readonly workspace: WorkspaceHost,
+    private readonly mappingReuse?: MappingReuseService
   ) {}
 
   private async uploadSpreadsheetBlob(input: {
@@ -121,6 +135,20 @@ export class IntakeService {
       )
       if (!template) {
         throw new DomainError("Template not found", "NOT_FOUND")
+      }
+    }
+
+    let roundNumber = parsed.roundNumber ?? 1
+    if (parsed.parentRfpId) {
+      const parent = await this.rfpRepo.findByIdForOrganization(
+        organizationId,
+        parsed.parentRfpId
+      )
+      if (!parent) {
+        throw new DomainError("Parent fill not found", "NOT_FOUND")
+      }
+      if (parsed.roundNumber == null) {
+        roundNumber = (parent.roundNumber ?? 1) + 1
       }
     }
 
@@ -167,6 +195,8 @@ export class IntakeService {
           customer: parsed.customer?.trim() || null,
           status: "queued",
           ownerUserId,
+          parentRfpId: parsed.parentRfpId ?? null,
+          roundNumber,
           startedAt: new Date(),
           metadata: rfpMetadata,
         })
@@ -236,6 +266,71 @@ export class IntakeService {
     })
 
     return { id }
+  }
+
+  /**
+   * Next workbook round linked to a confirmed fill. Copies lane anchors that
+   * still match and opens map reviews for drifted coordinates.
+   */
+  async createFillRevision(
+    organizationId: string,
+    ownerUserId: string,
+    data: CreateFillRevisionInput
+  ) {
+    if (!this.mappingReuse) {
+      throw new DomainError("Mapping reuse is not configured", "VALIDATION")
+    }
+    const parsed = fillRevisionSchema.safeParse(data)
+    if (!parsed.success) {
+      throw new DomainError(
+        parsed.error.issues[0]?.message ?? "Invalid revision",
+        "VALIDATION"
+      )
+    }
+
+    const parent = await this.rfpRepo.findByIdForOrganization(
+      organizationId,
+      parsed.data.parentFillId
+    )
+    if (!parent) {
+      throw new DomainError("Parent fill not found", "NOT_FOUND")
+    }
+
+    const roundNumber = (parent.roundNumber ?? 1) + 1
+    const name =
+      parsed.data.name?.trim() || `${parent.name} (round ${roundNumber})`
+    const customer =
+      parsed.data.customer?.trim() || parent.customer?.trim() || undefined
+
+    const created = await this.createFill(organizationId, ownerUserId, {
+      fileName: parsed.data.fileName,
+      contentType: parsed.data.contentType,
+      base64: parsed.data.base64,
+      name,
+      customer,
+      templateId: parsed.data.templateId,
+      metadata: {
+        ...(parsed.data.metadata ?? {}),
+        parentRfpId: parent.id,
+        roundNumber,
+        mappingReuse: true,
+      },
+      parentRfpId: parent.id,
+      roundNumber,
+    })
+
+    const mappingReuse = await this.mappingReuse.applyFromParent({
+      organizationId,
+      parentFillId: parent.id,
+      fillId: created.id,
+    })
+
+    return {
+      id: created.id,
+      parentRfpId: parent.id,
+      roundNumber,
+      mappingReuse,
+    }
   }
 
   async createFillFromTemplate(

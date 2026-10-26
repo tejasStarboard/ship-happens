@@ -71,6 +71,13 @@
       "when": 1793028409006,
       "tag": "0009_tearful_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1793031330200,
+      "tag": "0010_smart_jigsaw",
+      "breakpoints": true
     }
   ]
 }

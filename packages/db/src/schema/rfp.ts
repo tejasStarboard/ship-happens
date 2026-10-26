@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm"
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -136,6 +137,15 @@ export const rfps = pgTable(
     templateId: text("template_id").references(() => templates.id, {
       onDelete: "set null",
     }),
+    /**
+     * Previous round in this fill lineage (SB-7091). Null on round 1.
+     * ON DELETE SET NULL keeps later rounds if the parent fill is removed.
+     */
+    parentRfpId: text("parent_rfp_id").references((): AnyPgColumn => rfps.id, {
+      onDelete: "set null",
+    }),
+    /** 1-based round within the lineage. Round 1 has no parent. */
+    roundNumber: integer("round_number").notNull().default(1),
     name: text("name").notNull(),
     customer: text("customer"),
     status: rfpStatusEnum("status").notNull().default("queued"),
@@ -179,6 +189,10 @@ export const rfps = pgTable(
       table.bidOutcome
     ),
     index("rfps_template_id_idx").on(table.templateId),
+    index("rfps_organization_parent_rfp_idx").on(
+      table.organizationId,
+      table.parentRfpId
+    ),
   ]
 )
 
@@ -273,7 +287,7 @@ export const fillPipelineEvents = pgTable(
     rfpId: text("rfp_id")
       .notNull()
       .references(() => rfps.id, { onDelete: "cascade" }),
-    /** e.g. intake.completed | mapping.confirmed | rates.completed | … */
+    /** e.g. intake.completed | mapping.confirmed | mapping.reused | mapping.drift_detected | … */
     type: text("type").notNull(),
     stepKey: text("step_key"),
     reviewItemId: text("review_item_id"),
@@ -566,6 +580,12 @@ export const rfpsRelations = relations(rfps, ({ one, many }) => ({
     fields: [rfps.ownerUserId],
     references: [user.id],
   }),
+  parentRfp: one(rfps, {
+    fields: [rfps.parentRfpId],
+    references: [rfps.id],
+    relationName: "rfpLineage",
+  }),
+  childRfps: many(rfps, { relationName: "rfpLineage" }),
   sourceFiles: many(rfpSourceFiles),
   progressSteps: many(rfpProgressSteps),
   logs: many(rfpLogs),

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { Badge } from "@ship-happens/ui/components/badge"
 import { Button } from "@ship-happens/ui/components/button"
 import {
   Tabs,
@@ -11,6 +12,7 @@ import {
 } from "@ship-happens/ui/components/tabs"
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
 import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
+import { StartNextRoundDialog } from "@/components/rfp/start-next-round-dialog"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
 import { FillMapPanel } from "@/components/rfp/fill-map-panel"
@@ -78,12 +80,24 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
             <span className={statusPillClass(rfp.status)}>
               {RFP_STATUS_LABEL[rfp.status]}
             </span>
+            {(rfp.roundNumber ?? 1) > 1 ? (
+              <Badge variant="secondary">Round {rfp.roundNumber}</Badge>
+            ) : null}
           </div>
           <p className="text-sm text-muted-foreground">
             {rfp.customer || "—"} · {rfp.templateName || "—"}
+            {rfp.mappingReuseSummary
+              ? ` · reused ${rfp.mappingReuseSummary.reused}, ${rfp.mappingReuseSummary.drifted} to review`
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <StartNextRoundDialog
+            parentFillId={rfp.id}
+            parentName={rfp.name}
+            parentCustomer={rfp.customer}
+            roundNumber={rfp.roundNumber ?? 1}
+          />
           <Button
             variant="secondary"
             size="sm"

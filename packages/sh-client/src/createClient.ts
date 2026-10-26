@@ -149,6 +149,45 @@ export class ShipHappensClient {
     )
   }
 
+  /**
+   * Classify a parent fill's confirmed lanes against this fill.
+   * Pass `parentFillId` when this fill has no stored parent round.
+   */
+  mappingReusePreview(fillId?: string, options?: { parentFillId?: string }) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "GET",
+      `/api/sh/v1/fills/${id}/mapping/reuse`,
+      { query: { parentFillId: options?.parentFillId } }
+    )
+  }
+
+  /**
+   * Copy nearby parent lanes onto this fill and open map reviews for drift.
+   * Summary counts are `reused`, `drifted`, `removed`, and `feeDrift`.
+   */
+  mappingReuseApply(body: Record<string, unknown> = {}, fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "POST",
+      `/api/sh/v1/fills/${id}/mapping/reuse`,
+      { body }
+    )
+  }
+
+  /**
+   * Upload the next workbook round for a parent fill. The response includes
+   * the new fill id, round number, and mapping reuse summary.
+   */
+  revisionsCreate(body: Record<string, unknown>, fillId?: string) {
+    const id = this.resolveFillId(fillId)
+    return this.http.request<unknown>(
+      "POST",
+      `/api/sh/v1/fills/${id}/revisions`,
+      { body }
+    )
+  }
+
   /** Resolve mapped lanes via Starboard (DB mapping) and advance Progress `rates`. */
   ratesResolve(fillId?: string) {
     const id = this.resolveFillId(fillId)

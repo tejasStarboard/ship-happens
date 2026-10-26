@@ -67,6 +67,18 @@ sh-client mapping import
 
 Do **not** hand-edit `mapping.json` or invent LOCODEs when `mapping propose` is available. Optional `customerLabel` enrichment fails open if Jev is down.
 
+## 1b-2. Next round (mapping reuse)
+
+A new workbook revision is a new fill (`parentRfpId`, `roundNumber`). Lanes with the same column and a row within ±2 are copied (same `laneId`). Larger header or coordinate moves open `source: mapping-reuse` map reviews and do not finish the map step. Fee-slot differences are noted and do not block the copy.
+
+```bash
+sh-client revisions create --body '{ "fileName":"round2.xlsx", "contentType":"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "base64":"..." }'
+sh-client mapping reuse preview --parent <parentFillId>
+sh-client mapping reuse apply --parent <parentFillId>
+```
+
+`revisions create` returns the new fill id plus `mappingReuse` counts (`reused`, `drifted`, `removed`, `feeDrift`). The API key stays scoped to the parent fill.
+
 ## 1c. Resolve rates (Progress `rates`)
 
 Requires confirmed lanes in Postgres (put/import / Map Confirm first; empty DB

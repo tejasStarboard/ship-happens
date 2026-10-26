@@ -45,6 +45,8 @@ const STATUS_LABEL: Record<string, string> = {
 const EVENT_LABEL: Record<string, string> = {
   "intake.completed": "Intake",
   "mapping.confirmed": "Mapping confirmed",
+  "mapping.reused": "Mapping reused",
+  "mapping.drift_detected": "Mapping drift",
   "rates.completed": "Rates",
   "review.resolved": "Review resolved",
   "export.signed_off": "Export signed off",

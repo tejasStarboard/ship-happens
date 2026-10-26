@@ -12,6 +12,10 @@ export {
 } from "./errors"
 
 export {
+  MAPPING_REUSE_SOURCE,
+  type MappingReuseSummary,
+} from "./mapping/mapping-reuse"
+export {
   asRfpStatus,
   RFP_STATUS_LABEL,
   type RfpDetailView,

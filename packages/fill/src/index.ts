@@ -96,6 +96,7 @@ export {
 
 export {
   IntakeService,
+  type CreateFillRevisionInput,
   type SpreadsheetUploadInput,
   type TemplateUploadInput,
 } from "./intake/intake.service"
@@ -207,6 +208,27 @@ export type {
   PlaceResolveResult,
 } from "./mapping/geo-ports"
 export { PlaceMappingService } from "./mapping/place-mapping.service"
+export {
+  classifyMappingReuse,
+  columnLetterFromCellRef,
+  fingerprintFromSource,
+  MAPPING_REUSE_ROW_TOLERANCE,
+  MAPPING_REUSE_SOURCE,
+  mappingReuseSummaryFromMetadata,
+  summarizeMappingReuse,
+  type ClassifiedMappingLane,
+  type MappingReuseAnchor,
+  type MappingReuseClassification,
+  type MappingReuseContext,
+  type MappingReuseCoordinate,
+  type MappingReuseSummary,
+} from "./mapping/mapping-reuse"
+export {
+  MappingReuseService,
+  type ApplyMappingReuseInput,
+  type MappingReuseApplyResult,
+  type MappingReuseProposeResult,
+} from "./mapping/mapping-reuse.service"
 export type {
   LanePlaceInput,
   LanePlaceProposal,

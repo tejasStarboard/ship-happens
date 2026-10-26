@@ -10,6 +10,7 @@ import {
 } from "@tabler/icons-react"
 import {
   isLowConfidenceMapping,
+  MAPPING_REUSE_SOURCE,
   mappedLaneFromProposal,
   proposeFeeBindingsFromLabels,
   type FeeBinding,
@@ -225,6 +226,12 @@ export function FillMapPanel({
       ).length,
     [pendingMapReviews]
   )
+  const driftCount = useMemo(
+    () =>
+      pendingMapReviews.filter((item) => item.source === MAPPING_REUSE_SOURCE)
+        .length,
+    [pendingMapReviews]
+  )
 
   function updateDraft(key: string, patch: Partial<LaneDraft>) {
     setDrafts((prev) =>
@@ -357,6 +364,11 @@ export function FillMapPanel({
                 {lowConfidenceCount} low confidence
               </Badge>
             ) : null}
+            {driftCount > 0 ? (
+              <Badge variant="outline">
+                {driftCount} drifted from prior round
+              </Badge>
+            ) : null}
           </div>
           <p className="text-xs text-muted-foreground">
             Confirm lane-shaped proposals here or on Overview. Resolve rates
@@ -372,7 +384,12 @@ export function FillMapPanel({
                   className="flex flex-wrap items-center justify-between gap-2 rounded-[6px] border border-border bg-card px-3 py-2"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{item.title}</p>
+                    <p className="flex flex-wrap items-center gap-2 truncate text-sm font-medium">
+                      <span className="truncate">{item.title}</span>
+                      {item.source === MAPPING_REUSE_SOURCE ? (
+                        <Badge variant="outline">Drift</Badge>
+                      ) : null}
+                    </p>
                     <p className="truncate text-xs text-muted-foreground">
                       {proposalSummary(item.proposal)}
                       {item.confidence != null

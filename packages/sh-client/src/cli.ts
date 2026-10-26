@@ -7,7 +7,8 @@
  *   sh-client logs [--fill id] [--limit N] [--level info]
  *   sh-client cells [--fill id] [--lane id]
  *   sh-client reviews list|get|create|update|resolve …
- *   sh-client mapping get|put|import|propose …
+ *   sh-client mapping get|put|import|propose|reuse …
+ *   sh-client revisions create [--fill parentId] --body '{ fileName, contentType, base64, name? }'
  *   sh-client rates resolve [--fill id]
  *   sh-client export [--fill id]
  *
@@ -39,6 +40,14 @@ Mapping (Postgres; mapping.json is import/export only):
   mapping import [--fill id] [--body …]  Body or workspace mapping.json → DB
   mapping propose [--fill id] --body '{ "lanes":[{laneId,originLabel,destLabel,equipmentType}], "customerLabel"? }'
                                     Jev geo resolve; upsert ≥0.9 or open map reviews
+  mapping reuse preview [--fill id] [--parent id]
+                                    Classify parent mapping; no writes
+  mapping reuse apply [--fill id] [--parent id] [--body '{ fingerprint? }']
+                                    Copy nearby lanes; open reviews for drift
+
+Revisions:
+  revisions create [--fill parentId] --body '{ fileName, contentType, base64, name?, customer? }'
+                                    Next workbook round; reuses confirmed mapping
 
 Reviews:
   reviews list [--fill id] [--status pending|…]
@@ -98,6 +107,7 @@ async function main(): Promise<void> {
       limit: { type: "string" },
       level: { type: "string" },
       lane: { type: "string" },
+      parent: { type: "string" },
     },
     allowPositionals: true,
     strict: true,
@@ -225,8 +235,50 @@ async function main(): Promise<void> {
         printJson(await client.mappingPropose(body, fill))
         return
       }
+      if (sub === "reuse") {
+        const action = positionals[2] ?? "apply"
+        const parentFillId = strFlag(values.parent)
+        if (action === "preview") {
+          printJson(await client.mappingReusePreview(fill, { parentFillId }))
+          return
+        }
+        if (action === "apply") {
+          const hasInput =
+            strFlag(values.body) != null || strFlag(values.file) != null
+          const body = hasInput
+            ? await readJsonInput({
+                body: strFlag(values.body),
+                file: strFlag(values.file),
+              })
+            : {}
+          printJson(
+            await client.mappingReuseApply(
+              { ...body, ...(parentFillId ? { parentFillId } : {}) },
+              fill
+            )
+          )
+          return
+        }
+        throw new Error(
+          `Unknown mapping reuse action: ${action}. Try preview|apply`
+        )
+      }
       throw new Error(
-        `Unknown mapping subcommand: ${sub ?? "(none)"}. Try get|put|import|propose`
+        `Unknown mapping subcommand: ${sub ?? "(none)"}. Try get|put|import|propose|reuse`
+      )
+    }
+
+    if (cmd === "revisions") {
+      if (sub === "create") {
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.revisionsCreate(body, fill))
+        return
+      }
+      throw new Error(
+        `Unknown revisions subcommand: ${sub ?? "(none)"}. Try create`
       )
     }
 
