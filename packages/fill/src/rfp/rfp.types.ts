@@ -1,5 +1,4 @@
 import type { FillReportCellView } from "../rates/lane-price-audit"
-import type { MappedLane } from "../rates/mapped-lane"
 
 export type RfpStatus =
   "queued" | "running" | "needs_review" | "done" | "failed"
@@ -77,6 +76,23 @@ export type RfpFillReportView = {
   cells: FillReportCellView[]
 }
 
+/**
+ * Read-only confirmed lane for Map tab (Postgres `rfp_mapped_lanes`).
+ * `mapping.json` remains import/export only.
+ */
+export type RfpMappedLaneView = {
+  laneId: string
+  originLocode: string
+  destLocode: string
+  equipmentType: string
+  serviceType: string | null
+  sheetName: string | null
+  rowIndex: number | null
+  columnKey: string | null
+  cellRef: string | null
+  surchargeSlots: string[]
+}
+
 export type RfpDetailView = RfpListItem & {
   progressSteps: RfpProgressStepView[]
   logs: RfpLogView[]
@@ -90,8 +106,10 @@ export type RfpDetailView = RfpListItem & {
   exportDownloadBlockedReason: string | null
   pendingReviews: RfpPendingReviewView[]
   fillReport: RfpFillReportView | null
-  /** Confirmed Map / rates lanes from Postgres. */
-  mappedLanes: MappedLane[]
+  /** Confirmed Map / rates lanes from Postgres (may be empty). */
+  mappedLanes: RfpMappedLaneView[]
+  /** Set when mapping load/import fails to parse. */
+  mappingError: string | null
 }
 
 export function asRfpStatus(value: string): RfpStatus {

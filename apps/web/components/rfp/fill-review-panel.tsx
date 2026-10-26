@@ -1,6 +1,14 @@
 "use client"
 
 import { Fragment, useMemo, useState } from "react"
+import { IconChartBar } from "@tabler/icons-react"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@workspace/ui/components/empty"
 import {
   Table,
   TableBody,
@@ -193,29 +201,19 @@ export function FillReviewPanel({
 
   if (!fillReport || counts.total === 0) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="grid gap-3 sm:grid-cols-3">
-          {(
-            [
-              ["Filled", "—"],
-              ["Skipped", "—"],
-              ["Needs human", "—"],
-            ] as const
-          ).map(([label, value]) => (
-            <div
-              key={label}
-              className="rounded-[6px] border border-border bg-card p-3"
-            >
-              <p className="tabular text-[20px] font-semibold">{value}</p>
-              <p className="text-sm text-muted-foreground">{label}</p>
-            </div>
-          ))}
-        </div>
-        <p className="text-sm text-muted-foreground">
-          No fill-report cells yet. Run rates resolve (and overlays) to persist
-          Starboard source, overlay, and markup provenance per lane.
-        </p>
-      </div>
+      <Empty className="min-h-[240px] border border-dashed border-border bg-card">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <IconChartBar aria-hidden />
+          </EmptyMedia>
+          <EmptyTitle>No pricing audit yet</EmptyTitle>
+          <EmptyDescription>
+            Run rates resolve (and overlays) after mapping so each lane gets a
+            Starboard source, overlay, and markup row. Misses show as “No
+            Starboard hit” once cells exist.
+          </EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     )
   }
 

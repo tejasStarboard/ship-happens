@@ -4,6 +4,7 @@ import { RfpDetail } from "@/components/rfp/rfp-detail"
 import { requireOrgSession } from "@/lib/server/session"
 import { getOrgRfpDetail } from "@/lib/server/rfps"
 import { ensureRfpWorkspace } from "@/lib/workspace-registry"
+import RfpDetailLoading from "./loading"
 
 export default async function RfpDetailPage({
   params,
@@ -27,7 +28,7 @@ export default async function RfpDetailPage({
   })
 
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<RfpDetailLoading />}>
       <RfpDetail rfp={rfp} />
     </Suspense>
   )

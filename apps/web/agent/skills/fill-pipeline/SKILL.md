@@ -43,6 +43,17 @@ clear). Do **not** call `agentCompleteStep` for a step that still has open
 (`pending`) reviews — it errors. After the human leaves pending (Confirm / Edit /
 Reject), continue or complete the step yourself.
 
+## Demo templates (SB-6673)
+
+Verified local workbooks for live demos (not committed — live under repo `tmp/`):
+
+1. `tmp/sb-tournament/Auto Zone Bid Sheet clean.xlsx`
+2. `tmp/fwdfwbidexamples/Vivint - Sun Chief Express - 4.7.25.xlsx`
+
+Happy path: upload → write workspace `mapping.json` (Map tab is read-only) →
+`sh-client rates resolve` → clear reviews → `sh-client export` → Confirm export
+sign-off on Overview → Download. Download stays blocked until Confirm.
+
 ## Not this skill
 
 Sandbox **inspect**, **submit-for-review**, **read decisions**, and **resolve after ack**

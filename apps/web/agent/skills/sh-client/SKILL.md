@@ -45,6 +45,7 @@ sh-client cells --lane lane_1   # filter one mapped lane id
 ## 1b. Mapping (Postgres)
 
 Confirmed lanes live in Postgres. Workspace `mapping.json` is import/export only.
+The fill **Map** tab is read-only against the DB store.
 
 ```bash
 sh-client mapping get

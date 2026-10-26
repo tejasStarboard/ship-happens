@@ -13,8 +13,8 @@ import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
 import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
 import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
 import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
-import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
 import { FillMapPanel } from "@/components/rfp/fill-map-panel"
+import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
 import { FillReviewPanel } from "@/components/rfp/fill-review-panel"
 import {
   RFP_STATUS_LABEL,
@@ -99,9 +99,6 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
             filledFileUrl={rfp.filledFileUrl}
             blockedReason={rfp.exportDownloadBlockedReason}
           />
-          <Button size="sm" disabled>
-            Retry
-          </Button>
         </div>
       </div>
 
@@ -140,11 +137,17 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
             initialReviewId={reviewParam}
             onAskAgent={() => setTab("chat")}
             onOpenReview={() => setTab("review")}
+            onOpenMap={() => setTab("map")}
           />
         </TabsContent>
 
         <TabsContent value="map" className="mt-4 overflow-auto">
-          <FillMapPanel lanes={rfp.mappedLanes} />
+          <FillMapPanel
+            mappedLanes={rfp.mappedLanes}
+            mappingError={rfp.mappingError}
+            mapStep={rfp.progressSteps.find((step) => step.key === "map")}
+            onAskAgent={() => setTab("chat")}
+          />
         </TabsContent>
 
         <TabsContent value="review" className="mt-4 overflow-auto">
