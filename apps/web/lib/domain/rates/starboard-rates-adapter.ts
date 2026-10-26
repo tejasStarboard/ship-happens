@@ -3,7 +3,10 @@ import type {
   ResolvedRateCandidate,
   StarboardRatesPort,
 } from "@ship-happens/fill"
-import type { ContractSearchInput } from "@ship-happens/sb-client"
+import {
+  provenanceFromSearchHit,
+  type ContractSearchInput,
+} from "@ship-happens/sb-client"
 import type { StarboardClient } from "@/lib/starboard/client"
 
 /**
@@ -19,18 +22,23 @@ export function createStarboardRatesPort(
     ): Promise<ResolvedRateCandidate[]> {
       const client = await createClient()
       const result = await client.rates.resolve(input as ContractSearchInput)
-      return result.rates.map((rate) => ({
-        id: typeof rate.id === "string" ? rate.id : undefined,
-        carrier_name: rate.carrier_name ?? null,
-        resolved_buy_total: rate.resolved_buy_total,
-        resolved_currency: rate.resolved_currency,
-        resolved_surcharges: (rate.resolved_surcharges ?? []).map((s) => ({
-          name: s.name,
-          amount: s.amount,
-          currency: s.currency,
-          source: s.source,
-        })),
-      }))
+      return result.rates.map((rate) => {
+        const provenance = provenanceFromSearchHit(rate)
+        return {
+          id: typeof rate.id === "string" ? rate.id : undefined,
+          carrier_name: rate.carrier_name ?? null,
+          resolved_buy_total: rate.resolved_buy_total,
+          resolved_currency: rate.resolved_currency,
+          resolved_surcharges: (rate.resolved_surcharges ?? []).map((s) => ({
+            name: s.name,
+            amount: s.amount,
+            currency: s.currency,
+            source: s.source,
+          })),
+          vendor_rate_doc_id: provenance.vendorRateDocId,
+          vendor_email_url: provenance.vendorEmailUrl,
+        }
+      })
     },
   }
 }

@@ -14,6 +14,12 @@ import {
   type SearchRateHit,
 } from "./resolveFullRate.js"
 import {
+  getRateDocSignedUrl,
+  isRateDocId,
+  provenanceFromSearchHit,
+  type RateDocSignedUrlResult,
+} from "./rateDocSignedUrl.js"
+import {
   ContractSearchInputSchema,
   SpotSearchInputSchema,
   type ContractSearchInput,
@@ -27,8 +33,15 @@ export type {
   RateSearchPaginationMeta,
   ResolvedRate,
   SearchRateHit,
+  RateDocSignedUrlResult,
 }
-export { asRateList, countRateSearchHits, paginationFromSearchBody }
+export {
+  asRateList,
+  countRateSearchHits,
+  paginationFromSearchBody,
+  isRateDocId,
+  provenanceFromSearchHit,
+}
 
 export class RatesModule {
   constructor(private readonly http: StarboardHttp) {}
@@ -57,6 +70,14 @@ export class RatesModule {
   async resolve(input: ContractSearchInput) {
     const body = ContractSearchInputSchema.parse(input)
     return resolveContractRates(this.http, body)
+  }
+
+  /**
+   * Signed download URL for a vendor rate doc (rate sheet / email artifact).
+   * Soft-callers should catch StarboardApiError / AuthError.
+   */
+  getRateDocSignedUrl(rateDocId: string): Promise<RateDocSignedUrlResult> {
+    return getRateDocSignedUrl(this.http, rateDocId)
   }
 
   /** Assemble one search hit with provided global default rows (offline / tests). */

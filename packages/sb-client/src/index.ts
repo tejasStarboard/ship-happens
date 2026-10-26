@@ -26,6 +26,8 @@ export {
   asRateList,
   countRateSearchHits,
   paginationFromSearchBody,
+  isRateDocId,
+  provenanceFromSearchHit,
 } from "./modules/rates/index.js"
 export type {
   ContractSearchInput,
@@ -33,4 +35,5 @@ export type {
   RateSearchPaginationMeta,
   ResolvedRate,
   SearchRateHit,
+  RateDocSignedUrlResult,
 } from "./modules/rates/index.js"

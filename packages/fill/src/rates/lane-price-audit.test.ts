@@ -36,10 +36,34 @@ describe("lane-price-audit", () => {
       starboardHitId: "hit_1",
       carrier: "MSC",
       resolvedBuyTotal: 1500,
+      vendorRateDocId: null,
+      vendorEmailUrl: null,
       reason: null,
       pickConfidence: null,
       pickConfidenceReason: "n/a",
     })
+  })
+
+  it("persists vendor rate-doc provenance on hit metadata", () => {
+    const meta = buildRateAuditMetadata(
+      lane,
+      {
+        id: "hit_1",
+        carrier_name: "MSC",
+        resolved_buy_total: 1500,
+        resolved_currency: "USD",
+        vendor_rate_doc_id: "a1b2c3d4-0000-4000-8000-000000000000",
+        vendor_email_url: "https://signed.example/mail.eml",
+      },
+      null
+    )
+    const audit = lanePriceAuditFromMetadata(meta)
+    expect(audit.starboard.vendorRateDocId).toBe(
+      "a1b2c3d4-0000-4000-8000-000000000000"
+    )
+    expect(audit.starboard.vendorEmailUrl).toBe(
+      "https://signed.example/mail.eml"
+    )
   })
 
   it("builds miss metadata when no candidate", () => {
