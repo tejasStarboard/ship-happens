@@ -6,6 +6,16 @@ import { DomainError } from "../errors"
  * Durable store is Postgres (`rfp_mapped_lanes`); `mapping.json` is import/export.
  * Keep this shape stable for resolve, CLI, and tests.
  */
+export const FeeBindingSchema = z.object({
+  heading: z.string().min(1),
+  columnKey: z.string().min(1).optional(),
+  cellRef: z.string().min(1).optional(),
+  sheetName: z.string().min(1).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+})
+
+export type FeeBindingDoc = z.infer<typeof FeeBindingSchema>
+
 export const MappedLaneSchema = z.object({
   laneId: z.string().min(1),
   originLocode: z.string().min(1),
@@ -28,7 +38,10 @@ export const MappedLaneSchema = z.object({
   rowIndex: z.number().int().optional(),
   columnKey: z.string().optional(),
   cellRef: z.string().optional(),
+  /** Legacy heading list; still accepted and merged into feeBindings. */
   surchargeSlots: z.array(z.string().min(1)).optional(),
+  /** Structured BCO fee column → Starboard charge/heading bindings (SB-7088). */
+  feeBindings: z.array(FeeBindingSchema).optional(),
 })
 
 export type MappedLane = z.infer<typeof MappedLaneSchema>

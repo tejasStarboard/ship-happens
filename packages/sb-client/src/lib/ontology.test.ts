@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest"
-import { classifySurchargeName, rollupCharges } from "./chargeOntology.js"
+import {
+  allocateChargesToHeadings,
+  classifySurchargeName,
+  rollupCharges,
+} from "./chargeOntology.js"
 import { splitVia, splitViaAlternates } from "./laneText.js"
 import { recommendRate } from "./recommendRate.js"
 
@@ -37,6 +41,21 @@ describe("rollupCharges", () => {
     expect(by.baf).toBe(200)
     expect(by.documentation).toBe(35)
     expect(by.total).toBe(2235)
+  })
+})
+
+describe("allocateChargesToHeadings", () => {
+  it("rolls fees into headings and flags unexpected", () => {
+    const { headings, unexpected } = allocateChargesToHeadings({
+      charges: [
+        { name: "ocean_freight", amount: 2000, currency: "USD" },
+        { name: "BAF", amount: 200, currency: "USD" },
+        { name: "Chassis", amount: 80, currency: "USD" },
+      ],
+      headings: ["baf"],
+    })
+    expect(headings[0]?.amount).toBe(200)
+    expect(unexpected.some((u) => /chassis/i.test(u.name))).toBe(true)
   })
 })
 

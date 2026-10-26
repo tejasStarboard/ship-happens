@@ -21,6 +21,11 @@ import {
   RATE_PICK_REVIEW_SOURCE,
   scoreContractPick,
 } from "./rate-pick-confidence"
+import {
+  allocateLaneFees,
+  UNEXPECTED_FEE_REVIEW_SOURCE,
+  type UnexpectedFeeLine,
+} from "./fee-bindings"
 
 const DEFAULT_CONCURRENCY = 3
 const MAP_STEP_KEY = "map"
@@ -32,6 +37,7 @@ export type ResolveMappedLanesResult = {
   noHitCount: number
   errorCount: number
   weakPickCount: number
+  unexpectedFeeCount: number
   detail: string
   cells: UpsertLaneCellInput[]
 }
@@ -128,10 +134,10 @@ export class RateResolutionService {
       `Resolving ${lanes.length} mapped lane(s)`
     )
 
-    const cells = await mapPool(
+    const cellGroups = await mapPool(
       lanes,
       this.concurrency,
-      async (lane): Promise<UpsertLaneCellInput> => {
+      async (lane): Promise<UpsertLaneCellInput[]> => {
         try {
           const search = mappedLaneToSearchInput(lane)
           const rates = await this.starboard.resolve(search)
@@ -152,25 +158,59 @@ export class RateResolutionService {
               message: `Lane ${lane.laneId} (${lane.originLocode}→${lane.destLocode} ${lane.equipmentType}): ${reason}`,
               metadata: { laneId: lane.laneId, hitCount: rates.length },
             })
-            return {
-              sheetName: lane.sheetName ?? null,
-              cellRef: lane.cellRef ?? null,
-              rowIndex: lane.rowIndex ?? null,
-              columnKey: lane.columnKey ?? lane.laneId,
-              outcome: "skipped",
-              value: null,
-              reason,
-              metadata: buildRateAuditMetadata(lane, null, reason, pick),
-            }
+            return [
+              {
+                sheetName: lane.sheetName ?? null,
+                cellRef: lane.cellRef ?? null,
+                rowIndex: lane.rowIndex ?? null,
+                columnKey: lane.columnKey ?? lane.laneId,
+                outcome: "skipped",
+                value: null,
+                reason,
+                metadata: buildRateAuditMetadata(lane, null, reason, pick),
+              },
+            ]
           }
 
-          const value = String(chosen.resolved_buy_total)
+          const allocation = allocateLaneFees({
+            lane,
+            resolvedBuyTotal: chosen.resolved_buy_total,
+            resolvedCurrency: chosen.resolved_currency,
+            resolvedSurcharges: chosen.resolved_surcharges ?? [],
+          })
+
+          const baseValue =
+            allocation.baseAmount != null
+              ? String(allocation.baseAmount)
+              : String(chosen.resolved_buy_total)
+          const baseMeta = {
+            ...buildRateAuditMetadata(lane, chosen, null, pick),
+            cellRole: "base" as const,
+            feeBindings: allocation.bindings,
+            feeAllocations: allocation.feeCells.map((f) => ({
+              heading: f.binding.heading,
+              amount: f.amount,
+              currency: f.currency,
+              match: f.match,
+              constituents: f.constituents,
+            })),
+            unexpectedFees: allocation.unexpected,
+          }
+
           await this.pipeline.appendLog({
             rfpId: input.fillId,
             stepKey: "rates",
             source: "rates",
             message:
-              `Lane ${lane.laneId}: buy ${value} ${chosen.resolved_currency ?? ""}`.trim(),
+              `Lane ${lane.laneId}: buy ${baseValue} ${chosen.resolved_currency ?? ""}${
+                allocation.feeCells.length > 0
+                  ? `; ${allocation.feeCells.length} fee column(s)`
+                  : ""
+              }${
+                allocation.unexpected.length > 0
+                  ? `; ${allocation.unexpected.length} unexpected fee(s)`
+                  : ""
+              }`.trim(),
             metadata: {
               laneId: lane.laneId,
               starboardHitId: chosen.id ?? null,
@@ -178,18 +218,49 @@ export class RateResolutionService {
               resolvedBuyTotal: chosen.resolved_buy_total,
               pickConfidence: pick.confidence,
               pickConfidenceReason: pick.reason,
+              feeCellCount: allocation.feeCells.length,
+              unexpectedFeeCount: allocation.unexpected.length,
             },
           })
-          return {
-            sheetName: lane.sheetName ?? null,
-            cellRef: lane.cellRef ?? null,
-            rowIndex: lane.rowIndex ?? null,
-            columnKey: lane.columnKey ?? lane.laneId,
-            outcome: "filled",
-            value,
-            reason: null,
-            metadata: buildRateAuditMetadata(lane, chosen, null, pick),
+
+          const cells: UpsertLaneCellInput[] = [
+            {
+              sheetName: lane.sheetName ?? null,
+              cellRef: lane.cellRef ?? null,
+              rowIndex: lane.rowIndex ?? null,
+              columnKey: lane.columnKey ?? lane.laneId,
+              outcome: "filled",
+              value: baseValue,
+              reason: null,
+              metadata: baseMeta,
+            },
+          ]
+
+          for (const fee of allocation.feeCells) {
+            const sheetName = fee.binding.sheetName ?? lane.sheetName ?? null
+            const columnKey = fee.binding.columnKey ?? fee.binding.heading
+            cells.push({
+              sheetName,
+              cellRef: fee.binding.cellRef ?? null,
+              rowIndex: lane.rowIndex ?? null,
+              columnKey,
+              outcome: fee.match === "empty" ? "skipped" : "filled",
+              value: fee.match === "empty" ? null : String(fee.amount),
+              reason:
+                fee.match === "empty"
+                  ? `No Starboard amount for fee “${fee.binding.heading}”`
+                  : null,
+              metadata: {
+                ...baseMeta,
+                cellRole: "fee",
+                feeHeading: fee.binding.heading,
+                feeMatch: fee.match,
+                feeConstituents: fee.constituents,
+              },
+            })
           }
+
+          return cells
         } catch (error) {
           const reason =
             error instanceof Error ? error.message : "Starboard resolve failed"
@@ -201,31 +272,44 @@ export class RateResolutionService {
             message: `Lane ${lane.laneId}: ${reason}`,
             metadata: { laneId: lane.laneId },
           })
-          return {
-            sheetName: lane.sheetName ?? null,
-            cellRef: lane.cellRef ?? null,
-            rowIndex: lane.rowIndex ?? null,
-            columnKey: lane.columnKey ?? lane.laneId,
-            outcome: "error",
-            value: null,
-            reason,
-            metadata: buildRateAuditMetadata(lane, null, reason),
-          }
+          return [
+            {
+              sheetName: lane.sheetName ?? null,
+              cellRef: lane.cellRef ?? null,
+              rowIndex: lane.rowIndex ?? null,
+              columnKey: lane.columnKey ?? lane.laneId,
+              outcome: "error",
+              value: null,
+              reason,
+              metadata: buildRateAuditMetadata(lane, null, reason),
+            },
+          ]
         }
       }
     )
 
-    const hitCount = cells.filter((c) => c.outcome === "filled").length
-    const noHitCount = cells.filter((c) => c.outcome === "skipped").length
-    const errorCount = cells.filter((c) => c.outcome === "error").length
+    const cells = cellGroups.flat()
+    const baseCells = cells.filter((c) => c.metadata?.cellRole !== "fee")
+    const hitCount = baseCells.filter((c) => c.outcome === "filled").length
+    const noHitCount = baseCells.filter((c) => c.outcome === "skipped").length
+    const errorCount = baseCells.filter((c) => c.outcome === "error").length
     let detail = `Resolved ${hitCount} hit / ${noHitCount} no-hit / ${errorCount} error`
 
     await this.reports.replaceLaneCells(input.fillId, cells, detail)
 
+    const unexpectedFeeCount = await this.enforceUnexpectedFees({
+      organizationId: input.organizationId,
+      fillId: input.fillId,
+      cells: baseCells,
+    })
+    if (unexpectedFeeCount > 0) {
+      detail = `${detail}; ${unexpectedFeeCount} unexpected-fee warning(s)`
+    }
+
     const weakPickCount = await this.enforceWeakRatePicks({
       organizationId: input.organizationId,
       fillId: input.fillId,
-      cells,
+      cells: baseCells,
     })
 
     if (weakPickCount > 0) {
@@ -244,6 +328,7 @@ export class RateResolutionService {
         noHitCount,
         errorCount,
         weakPickCount,
+        unexpectedFeeCount,
         detail,
         cells,
       }
@@ -272,9 +357,98 @@ export class RateResolutionService {
       noHitCount,
       errorCount,
       weakPickCount: 0,
+      unexpectedFeeCount,
       detail,
       cells,
     }
+  }
+
+  /** Flag sells that carry fees the sheet did not request (SB-7088). */
+  private async enforceUnexpectedFees(input: {
+    organizationId: string
+    fillId: string
+    cells: UpsertLaneCellInput[]
+  }): Promise<number> {
+    if (!this.reviews) return 0
+
+    const existingReviews = await this.reviews.list(
+      input.organizationId,
+      input.fillId,
+      { status: "pending" }
+    )
+    const pendingByLane = new Map<string, ReviewItemView>()
+    for (const review of existingReviews) {
+      if (review.source !== UNEXPECTED_FEE_REVIEW_SOURCE) continue
+      const key = review.sourceMetadata?.laneKey
+      if (typeof key === "string" && key.trim()) {
+        pendingByLane.set(key.trim(), review)
+      }
+    }
+
+    let opened = 0
+    for (const cell of input.cells) {
+      if (cell.outcome !== "filled") continue
+      const unexpected = cell.metadata?.unexpectedFees
+      if (!Array.isArray(unexpected) || unexpected.length === 0) continue
+
+      const lines = unexpected as UnexpectedFeeLine[]
+      const laneKey = laneKeyForCell(cell)
+      const meta = cell.metadata ?? {}
+      const origin =
+        typeof meta.originLocode === "string" ? meta.originLocode : null
+      const dest = typeof meta.destLocode === "string" ? meta.destLocode : null
+      const equipment =
+        typeof meta.equipmentType === "string" ? meta.equipmentType : null
+      const laneLabel =
+        origin && dest
+          ? `${origin} → ${dest}${equipment ? ` · ${equipment}` : ""}`
+          : laneKey
+      const feeNames = lines.map((l) => l.name).join(", ")
+      const title = `Unexpected fees on sell: ${laneLabel}`
+      const proposal = {
+        kind: UNEXPECTED_FEE_REVIEW_SOURCE,
+        summary: `Sell includes fee(s) not requested by the sheet: ${feeNames}`,
+        rationale:
+          "Starboard resolve returned charge lines that are not bound to BCO fee columns. Soft-warn by default; Settings → Fill export can hard-block export.",
+        settingsPath: "/settings/fill-export",
+        unexpectedFees: lines,
+        laneKey,
+        laneId: typeof meta.laneId === "string" ? meta.laneId : null,
+      }
+      const sourceMetadata = {
+        laneKey,
+        laneId: typeof meta.laneId === "string" ? meta.laneId : null,
+        step: RATES_STEP_KEY,
+        unexpectedFeeCount: lines.length,
+      }
+
+      const existing = pendingByLane.get(laneKey)
+      if (existing) {
+        await this.reviews.update(
+          input.organizationId,
+          input.fillId,
+          existing.id,
+          { title, proposal, sourceMetadata }
+        )
+        opened++
+        continue
+      }
+
+      const created = await this.reviews.create(
+        input.organizationId,
+        input.fillId,
+        {
+          title,
+          stepKey: RATES_STEP_KEY,
+          source: UNEXPECTED_FEE_REVIEW_SOURCE,
+          proposal,
+          sourceMetadata,
+        }
+      )
+      pendingByLane.set(laneKey, created)
+      opened++
+    }
+    return opened
   }
 
   /**

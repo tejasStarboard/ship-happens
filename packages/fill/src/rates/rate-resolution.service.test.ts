@@ -42,6 +42,7 @@ function createService(opts: {
   resolve?: StarboardRatesPort["resolve"]
   mappingError?: Error
   pendingMapReviews?: number
+  withReviews?: boolean
 }) {
   const rfps = {
     findByIdForOrganization: vi.fn().mockResolvedValue(fillRow()),
@@ -91,6 +92,15 @@ function createService(opts: {
         } as never)
       : undefined
 
+  const reviews =
+    opts.withReviews || opts.pendingMapReviews !== undefined
+      ? ({
+          list: vi.fn().mockResolvedValue([]),
+          create: vi.fn().mockResolvedValue({ id: "rev_1" }),
+          update: vi.fn().mockResolvedValue({ id: "rev_1" }),
+        } as never)
+      : undefined
+
   const service = new RateResolutionService(
     rfps,
     pipeline,
@@ -98,14 +108,58 @@ function createService(opts: {
     mapping,
     starboard,
     reviewItems,
-    undefined,
+    reviews,
     2
   )
 
-  return { service, pipeline, reports, starboard, mapping, rfps }
+  return { service, pipeline, reports, starboard, mapping, rfps, reviews }
 }
 
 describe("RateResolutionService", () => {
+  it("emits fee cells from surcharge slots and flags unexpected fees", async () => {
+    const { service, reports, reviews } = createService({
+      lanes: [
+        {
+          ...lane,
+          feeBindings: [{ heading: "BAF", columnKey: "baf", cellRef: "E3" }],
+        },
+      ],
+      resolve: vi.fn().mockResolvedValue([
+        {
+          id: "hit_1",
+          carrier_name: "MSC",
+          resolved_buy_total: 1700,
+          resolved_currency: "USD",
+          resolved_surcharges: [
+            { name: "ocean_freight", amount: 1500, currency: "USD" },
+            { name: "BAF", amount: 200, currency: "USD" },
+            { name: "Chassis", amount: 40, currency: "USD" },
+          ],
+        },
+      ]),
+      withReviews: true,
+    })
+
+    const result = await service.resolveMappedLanes({
+      organizationId: "org_1",
+      fillId: "fill_1",
+    })
+
+    expect(result.hitCount).toBe(1)
+    expect(result.unexpectedFeeCount).toBe(1)
+    expect(reports.replaceLaneCells).toHaveBeenCalled()
+    const cells = (reports.replaceLaneCells as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[1] as Array<{
+      columnKey: string | null
+      value: string | null
+      metadata?: Record<string, unknown>
+    }>
+    expect(cells.some((c) => c.columnKey === "baf" && c.value === "200")).toBe(
+      true
+    )
+    expect(reviews?.create).toHaveBeenCalled()
+  })
+
   it("resolves hits, persists cells, and completes rates step", async () => {
     const { service, pipeline, reports, starboard } = createService({})
     const result = await service.resolveMappedLanes({
@@ -115,6 +169,7 @@ describe("RateResolutionService", () => {
 
     expect(result.hitCount).toBe(1)
     expect(result.noHitCount).toBe(0)
+    expect(result.unexpectedFeeCount).toBe(0)
     expect(pipeline.startStep).toHaveBeenCalledWith(
       "fill_1",
       "rates",

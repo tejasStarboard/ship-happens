@@ -346,7 +346,13 @@ export const rfpMappedLanes = pgTable(
     rowIndex: integer("row_index"),
     columnKey: text("column_key"),
     cellRef: text("cell_ref"),
-    surchargeSlots: jsonb("surcharge_slots").$type<string[]>().default([]),
+    /**
+     * Fee column bindings. Legacy rows may be `string[]` headings;
+     * SB-7088 stores `{ heading, columnKey?, cellRef?, sheetName?, confidence? }[]`.
+     */
+    surchargeSlots: jsonb("surcharge_slots")
+      .$type<Array<string | Record<string, unknown>>>()
+      .default([]),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
       .defaultNow()

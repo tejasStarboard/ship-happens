@@ -18,6 +18,16 @@ import {
   EXPORT_SIGNOFF_TITLE,
 } from "./export-signoff"
 import { selectExportCells } from "./select-export-cells"
+import {
+  UNEXPECTED_FEE_REVIEW_SOURCE,
+  UNEXPECTED_FEE_SETTINGS_PATH,
+  type UnexpectedFeeMode,
+} from "../rates/fee-bindings"
+import {
+  encodeUnexpectedFeeSoftWarn,
+  type UnexpectedFeeWarningPayload,
+} from "../rates/unexpected-fee-gate"
+import type { FillOrgSettingsService } from "../settings/fill-org-settings.service"
 
 export type ExportWorkbookResult = {
   fillId: string
@@ -27,6 +37,8 @@ export type ExportWorkbookResult = {
   skippedMissingRef: number
   skippedOther: number
   pendingReviewCount: number
+  /** Soft-warn payload when unexpected fees exist and mode is soft_warn. */
+  unexpectedFeeWarning: UnexpectedFeeWarningPayload | null
   detail: string
 }
 
@@ -39,12 +51,15 @@ export class WorkbookExportService {
     private readonly blob: BlobStore,
     private readonly workbookWriter: WorkbookWritePort,
     private readonly sourceFetcher: SourceBytesFetcher,
-    private readonly workspace: WorkspaceHost
+    private readonly workspace: WorkspaceHost,
+    private readonly fillOrgSettings?: FillOrgSettingsService
   ) {}
 
   async exportForFill(input: {
     organizationId: string
     fillId: string
+    /** When soft_warn, client must pass true after showing the warn dialog. */
+    acknowledgeUnexpectedFees?: boolean
   }): Promise<ExportWorkbookResult> {
     const fill = await this.rfps.findByIdForOrganization(
       input.organizationId,
@@ -52,6 +67,15 @@ export class WorkbookExportService {
     )
     if (!fill) {
       throw new DomainError(`Fill not found: ${input.fillId}`, "NOT_FOUND")
+    }
+
+    const feeGate = await this.resolveUnexpectedFeeGate({
+      organizationId: input.organizationId,
+      fillId: input.fillId,
+      acknowledgeUnexpectedFees: input.acknowledgeUnexpectedFees === true,
+    })
+    if (feeGate.blockMessage) {
+      throw new DomainError(feeGate.blockMessage, "VALIDATION")
     }
 
     const sources = await this.rfps.listSourceFiles(input.fillId)
@@ -180,6 +204,7 @@ export class WorkbookExportService {
         skippedMissingRef: plan.skippedMissingRef,
         skippedOther: plan.skippedOther,
         pendingReviewCount,
+        unexpectedFeeWarning: feeGate.warning,
         detail,
       }
     } catch (error) {
@@ -190,6 +215,53 @@ export class WorkbookExportService {
         ? error
         : new DomainError(message, "VALIDATION")
     }
+  }
+
+  private async resolveUnexpectedFeeGate(input: {
+    organizationId: string
+    fillId: string
+    acknowledgeUnexpectedFees: boolean
+  }): Promise<{
+    warning: ExportWorkbookResult["unexpectedFeeWarning"]
+    blockMessage: string | null
+  }> {
+    const pending = (
+      await this.reviews.list(input.organizationId, input.fillId, {
+        status: "pending",
+      })
+    ).filter((row) => row.source === UNEXPECTED_FEE_REVIEW_SOURCE)
+
+    if (pending.length === 0) {
+      return { warning: null, blockMessage: null }
+    }
+
+    const mode: UnexpectedFeeMode = this.fillOrgSettings
+      ? await this.fillOrgSettings.getUnexpectedFeeMode(input.organizationId)
+      : "soft_warn"
+
+    const titles = pending.map((p) => p.title)
+    const warning = {
+      mode,
+      count: pending.length,
+      titles,
+      settingsPath: UNEXPECTED_FEE_SETTINGS_PATH,
+    }
+
+    if (mode === "hard_block") {
+      return {
+        warning,
+        blockMessage: `Export blocked: ${pending.length} unexpected fee warning(s). Resolve them on Review, or switch to Soft warn at ${UNEXPECTED_FEE_SETTINGS_PATH}.`,
+      }
+    }
+
+    if (!input.acknowledgeUnexpectedFees) {
+      return {
+        warning,
+        blockMessage: encodeUnexpectedFeeSoftWarn(warning),
+      }
+    }
+
+    return { warning, blockMessage: null }
   }
 
   private async openOrRefreshSignoff(input: {
