@@ -1,4 +1,4 @@
-import { and, asc, desc, eq } from "drizzle-orm"
+import { and, asc, count, desc, eq, isNull } from "drizzle-orm"
 import { rfpReviewItems } from "@workspace/db"
 import type { AppDb } from "../rfp/rfp.repository"
 import type { ReviewItemStatus } from "./review-item.types"
@@ -12,6 +12,30 @@ export class ReviewItemRepository {
       .values(row)
       .returning()
       .then((rows) => rows[0]!)
+  }
+
+  /** Open waits = `pending` only. Optional `stepKey` scopes to that progress step. */
+  async countPending(
+    rfpId: string,
+    options?: { stepKey?: string | null }
+  ): Promise<number> {
+    const filters = [
+      eq(rfpReviewItems.rfpId, rfpId),
+      eq(rfpReviewItems.status, "pending"),
+    ]
+    if (options && "stepKey" in options) {
+      if (options.stepKey == null) {
+        filters.push(isNull(rfpReviewItems.stepKey))
+      } else {
+        filters.push(eq(rfpReviewItems.stepKey, options.stepKey))
+      }
+    }
+    const row = await this.db
+      .select({ value: count() })
+      .from(rfpReviewItems)
+      .where(and(...filters))
+      .then((rows) => rows[0])
+    return Number(row?.value ?? 0)
   }
 
   findByIdForOrganization(organizationId: string, id: string) {

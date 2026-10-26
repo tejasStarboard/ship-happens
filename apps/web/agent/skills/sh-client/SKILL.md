@@ -95,12 +95,15 @@ sh-client reviews resolve --id rev_… --body '{"resolution":{"applied":true}}'
 
 ## Lifecycle (do not invent)
 
-1. Agent **`reviews create`** → `pending` (“Waiting on you”) + short chat notify with Overview deep-link
+1. Agent **`reviews create`** → `pending` (“Waiting on you”) + short chat notify with Overview deep-link.
+   Also **force-holds Progress**: fill → `needs_review`; known `stepKey` stays
+   `running` with “Waiting on human review” until pending waits for that step clear.
+   Null/`stepKey` omitted → fill-level hold only. `completeStep` on a blocked step fails.
 2. Human on Overview:
-   - **Confirm** → `resolved` (done; leave the inbox)
-   - **Edit** / **Reject** → `edited` / `rejected`
+   - **Confirm** → `resolved` (done; leave the inbox) — Progress unblocks when no pending left
+   - **Edit** / **Reject** → `edited` / `rejected` — also leave pending (inbox); Progress unblocks; still ack via resolve
 3. For Edit/Reject: agent **reads** decision via `list` / `get`
-4. Agent **`reviews resolve`** → `resolved` (Edit/Reject only)
+4. Agent **`reviews resolve`** → `resolved` (Edit/Reject only), then may `completeStep`
 
 ## vs `fill-pipeline` skill
 

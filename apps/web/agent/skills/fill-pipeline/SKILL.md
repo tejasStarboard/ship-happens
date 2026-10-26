@@ -31,6 +31,14 @@ Typical flow:
 3. `agentCompleteStep(rfpId, "map", "Mapped 12 columns")` or `agentFailStep(...)`
 4. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
 
+## Open review waits
+
+`sh-client reviews create` force-holds Progress (fill → `needs_review`; step with
+`stepKey` stays running until pending waits clear). Do **not** call
+`agentCompleteStep` for a step that still has open (`pending`) reviews — it
+errors. After the human leaves pending (Confirm / Edit / Reject), continue or
+complete the step yourself.
+
 ## Not this skill
 
 Sandbox **inspect**, **submit-for-review**, **read decisions**, and **resolve after ack**
