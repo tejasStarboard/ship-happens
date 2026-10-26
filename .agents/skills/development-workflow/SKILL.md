@@ -42,9 +42,9 @@ If the user asks only to “set up the repo,” stop after README verify steps s
 - One Linear ticket → one feature branch → one PR into `dev`.
 - Production gets changes only by promoting already-merged `dev` commits onto `main`.
 
-Required status check on both `dev` and `main` PRs: **`format · lint · typecheck · build`**.
-CI also runs **e2e**; keep it green when possible. Rulesets block deletion and force-push
-on `dev` / `main`.
+Required status checks on both `dev` and `main` PRs (rulesets block merge until green):
+**`format · lint · typecheck · build`** and **`e2e`**. Rulesets also block deletion and
+force-push on `dev` / `main`.
 
 ---
 
@@ -57,9 +57,9 @@ on `dev` / `main`.
 - [ ] 3. Plan fix/feature (+ clarifying questions if needed)
 - [ ] 4. Branch SB-XXXX off origin/dev
 - [ ] 5. Implement
-- [ ] 6. Run GitHub CI mirror (format · lint · typecheck · build) — must pass
+- [ ] 6. Run GitHub CI mirror (format · lint · typecheck · build; e2e when UI/auth/flows touched) — must pass; remote **e2e** is also required to merge
 - [ ] 7. Deliver live QA + commit title + PR title + PR description
-- [ ] 8. Open PR → dev (only if user asks; only after step 6 is green)
+- [ ] 8. Open PR → dev (only if user asks; only after step 6 is green; wait for remote e2e too)
 - [ ] 9. After merge to dev + green CI: promote to main when asked
 ```
 
@@ -196,11 +196,11 @@ correct **in CI only**.
 
 | Step | Command | CI job |
 |------|---------|--------|
-| Format | `pnpm format:check` | required |
-| Lint | `pnpm lint` | required |
-| Typecheck | `pnpm typecheck` | required |
-| Build | `pnpm build` | required |
-| e2e | `pnpm test:e2e` (needs Postgres + Redis + `pnpm db:push`) | runs in CI; run when UI/auth/flows touched |
+| Format | `pnpm format:check` | required (merge gate) |
+| Lint | `pnpm lint` | required (merge gate) |
+| Typecheck | `pnpm typecheck` | required (merge gate) |
+| Build | `pnpm build` | required (merge gate) |
+| e2e | `pnpm test:e2e` (needs Postgres + Redis + `pnpm db:push`) | required (merge gate); run locally when UI/auth/flows touched |
 
 **Rules**
 
@@ -239,9 +239,10 @@ Use `feat` or `fix` (or `chore` only when neither fits). No brackets around the 
 
 ## Test plan
 - [x] Local CI mirror: format · lint · typecheck · build
+- [ ] Local e2e when UI/auth/flows touched (`pnpm test:e2e`)
 - [ ] <live QA step against local instance>
 - [ ] <edge case / regression>
-- [ ] Remote CI green on this PR
+- [ ] Remote CI green (`format · lint · typecheck · build` **and** `e2e`)
 ```
 
 ### Live QA
@@ -257,7 +258,8 @@ run/fix §6 before `git push` / `gh pr create`. Do not open a PR “to see if
 CI passes.”
 
 In the PR body’s Test plan, note that the local mirror already passed (so
-reviewers know remote CI should be confirmatory).
+reviewers know remote CI should be confirmatory). Merge is blocked until remote
+**`e2e`** is green as well.
 
 ```bash
 git push -u origin SB-XXXX
@@ -269,13 +271,14 @@ gh pr create --base dev --head SB-XXXX \
 
 ## Test plan
 - [x] Local CI mirror: format · lint · typecheck · build
+- [ ] Remote CI green (includes required e2e)
 - [ ] …
 EOF
 )"
 ```
 
-Wait for remote CI. Merge only after required checks pass (and user asks /
-approves merge).
+Wait for remote CI. Merge only after required checks pass — including **`e2e`**
+(and user asks / approves merge).
 
 After merge, `dev` deploys to **ship-happens-dev**.
 
@@ -315,7 +318,7 @@ List every ticket id included in the cherry-pick, space-separated.
 - <one line on user-visible impact>
 
 ## Test plan
-- [ ] CI green on this PR (`format · lint · typecheck · build`)
+- [ ] CI green on this PR (`format · lint · typecheck · build` **and** `e2e`)
 - [ ] Smoke on `ship-happens` Production after deploy
 - [ ] <ticket-specific prod checks>
 ```
@@ -335,6 +338,7 @@ List every ticket id included in the cherry-pick, space-separated.
 | Upstream | Ticket branch → `origin/SB-XXXX` only (never `origin/dev`) |
 | Land on staging/dev app | PR → `dev` → title `feat\|fix(SB-XXXX): …` |
 | Before any PR | §6 local mirror green (`format:check` · `lint` · `typecheck` · `build`) |
+| Merge into `dev`/`main` | Remote required checks green: `format · lint · typecheck · build` **and** `e2e` |
 | Land on prod | Cherry-pick onto branch from `main` → PR → `main` → title `DEPLOYMENT dev -> main: SB-…` |
 | Commit/PR without ask | Never |
 | PR without local CI green | Never |
