@@ -28,6 +28,7 @@ const SEGMENT_LABELS: Record<string, string> = {
   profile: "Profile",
   preferences: "Preferences",
   members: "Members",
+  "floor-margins": "Floor margins",
 }
 
 function labelForSegment(segment: string, index: number, parts: string[]) {

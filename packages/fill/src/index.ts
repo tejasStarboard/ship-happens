@@ -102,9 +102,19 @@ export type {
 } from "./rates/rate-ports"
 
 export { matchOverlayRule } from "./overlay/match-overlay-rule"
-export { applyMarkup, parseMoney } from "./overlay/margin-math"
+export { matchMarginFloorRule } from "./overlay/match-margin-floor"
+export {
+  applyMarkup,
+  checkFloor,
+  parseMoney,
+  type FloorBreach,
+  type FloorCheckInput,
+  type FloorCheckResult,
+} from "./overlay/margin-math"
 export { OverlayRuleRepository } from "./overlay/overlay-rule.repository"
 export { OverlayRuleService } from "./overlay/overlay-rule.service"
+export { MarginFloorRuleRepository } from "./overlay/margin-floor.repository"
+export { MarginFloorRuleService } from "./overlay/margin-floor.service"
 export {
   OverlayApplicationService,
   type ApplyOverlaysResult,
@@ -118,3 +128,10 @@ export {
   type OverlayRuleView,
   type UpdateOverlayRuleInput,
 } from "./overlay/overlay.types"
+export {
+  MARGIN_FLOOR_REVIEW_SOURCE,
+  type CreateMarginFloorRuleInput,
+  type MarginFloorRuleView,
+  type MatchedMarginFloorRule,
+  type UpdateMarginFloorRuleInput,
+} from "./overlay/margin-floor.types"
