@@ -51,14 +51,15 @@ export function FillMapPanel({
           <EmptyMedia variant="icon">
             <IconMap aria-hidden />
           </EmptyMedia>
-          <EmptyTitle>Mapping file is invalid</EmptyTitle>
+          <EmptyTitle>Mapping failed to load</EmptyTitle>
           <EmptyDescription>{mappingError}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
           <p className="mb-3 max-w-md text-center text-sm text-muted-foreground">
-            Fix or replace workspace{" "}
-            <code className="text-xs">mapping.json</code> in Agent, then re-open
-            this tab.
+            Fix with <code className="text-xs">sh-client mapping put</code> /{" "}
+            <code className="text-xs">mapping import</code>, or repair workspace{" "}
+            <code className="text-xs">mapping.json</code>, then re-open this
+            tab.
           </p>
           <Button type="button" size="sm" onClick={onAskAgent}>
             <IconRobot data-icon="inline-start" />
@@ -78,10 +79,11 @@ export function FillMapPanel({
           </EmptyMedia>
           <EmptyTitle>No mapped lanes yet</EmptyTitle>
           <EmptyDescription>
-            Rates resolve needs a workspace{" "}
-            <code className="text-xs">mapping.json</code> with O-D-equipment
-            lanes. Schema confirm UI is deferred — edit the file in Agent (or
-            ask the agent to write it), then run rates.
+            Confirmed lanes live in Postgres. Persist with{" "}
+            <code className="text-xs">sh-client mapping put</code> or{" "}
+            <code className="text-xs">mapping import</code> (from workspace{" "}
+            <code className="text-xs">mapping.json</code>), then resolve rates.
+            Schema confirm UI is deferred.
           </EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -105,10 +107,10 @@ export function FillMapPanel({
         <div>
           <h2 className="text-base font-medium tracking-tight">Mapped lanes</h2>
           <p className="text-sm text-muted-foreground">
-            Read-only view of workspace{" "}
-            <code className="text-xs">mapping.json</code> ({mappedLanes.length}{" "}
-            lane{mappedLanes.length === 1 ? "" : "s"}). Edit in Agent before
-            rates resolve.
+            Confirmed lanes from Postgres ({mappedLanes.length} lane
+            {mappedLanes.length === 1 ? "" : "s"}). Rates resolve reads this
+            store; <code className="text-xs">mapping.json</code> is
+            import/export only.
           </p>
           {stepHint ? (
             <p className="mt-1 text-xs text-muted-foreground">

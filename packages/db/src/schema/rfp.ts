@@ -286,6 +286,46 @@ export const rfpFillReportCells = pgTable(
 )
 
 /**
+ * Confirmed O-D-equipment lanes for a fill (Map / rates resolve).
+ * Replaces workspace-only `mapping.json` as the durable source of truth.
+ * Shape mirrors `@ship-happens/fill` `MappedLane`.
+ */
+export const rfpMappedLanes = pgTable(
+  "rfp_mapped_lanes",
+  {
+    id: text("id").primaryKey(),
+    rfpId: text("rfp_id")
+      .notNull()
+      .references(() => rfps.id, { onDelete: "cascade" }),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    laneId: text("lane_id").notNull(),
+    originLocode: text("origin_locode").notNull(),
+    destLocode: text("dest_locode").notNull(),
+    equipmentType: text("equipment_type").notNull(),
+    validFrom: text("valid_from"),
+    validTo: text("valid_to"),
+    serviceType: text("service_type"),
+    sheetName: text("sheet_name"),
+    rowIndex: integer("row_index"),
+    columnKey: text("column_key"),
+    cellRef: text("cell_ref"),
+    surchargeSlots: jsonb("surcharge_slots").$type<string[]>().default([]),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (table) => [
+    index("rfp_mapped_lanes_rfp_id_idx").on(table.rfpId),
+    index("rfp_mapped_lanes_organization_id_idx").on(table.organizationId),
+    uniqueIndex("rfp_mapped_lanes_rfp_lane_uidx").on(table.rfpId, table.laneId),
+  ]
+)
+
+/**
  * Durable human-in-the-loop review gates for a fill.
  * Overview “Waiting on you” lists `pending` rows; progress blocking derives
  * from open pending items (no denormalized wait columns on `rfps`).
@@ -463,8 +503,20 @@ export const rfpsRelations = relations(rfps, ({ one, many }) => ({
   progressSteps: many(rfpProgressSteps),
   logs: many(rfpLogs),
   fillReport: one(rfpFillReports),
+  mappedLanes: many(rfpMappedLanes),
   reviewItems: many(rfpReviewItems),
   chats: many(rfpChats),
+}))
+
+export const rfpMappedLanesRelations = relations(rfpMappedLanes, ({ one }) => ({
+  rfp: one(rfps, {
+    fields: [rfpMappedLanes.rfpId],
+    references: [rfps.id],
+  }),
+  organization: one(organization, {
+    fields: [rfpMappedLanes.organizationId],
+    references: [organization.id],
+  }),
 }))
 
 export const rfpReviewItemsRelations = relations(rfpReviewItems, ({ one }) => ({

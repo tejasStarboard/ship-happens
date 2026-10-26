@@ -168,7 +168,7 @@ export class RfpService {
         ? domainErrorMessage(error)
         : error instanceof Error
           ? error.message
-          : "Failed to load mapping.json"
+          : "Failed to load mapping"
       return { lanes: [], error: message }
     }
   }

@@ -1,5 +1,6 @@
 import {
   DomainError,
+  parseMappingJson,
   toFillReportCellView,
   type LogLevel,
   type CreateReviewItemInput,
@@ -7,6 +8,7 @@ import {
 } from "@ship-happens/fill"
 import { createAppContext } from "@/lib/di/create-app-context"
 import { assertFillAccess, type ShApiKeyContext } from "@/lib/auth/sh-api-key"
+import { createWorkspaceMappingFileReader } from "@/lib/domain/rates/workspace-mapping-store"
 
 const LOG_LEVELS = new Set(["debug", "info", "warn", "error"])
 
@@ -185,6 +187,68 @@ export async function resolveReview(
   assertFillAccess(ctx, fillId)
   const app = createAppContext()
   return app.reviews.resolve(ctx.organizationId, fillId, reviewId, body)
+}
+
+/** List confirmed mapped lanes (Postgres). */
+export async function getFillMapping(ctx: ShApiKeyContext, fillId: string) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  return app.mapping.exportDocument(ctx.organizationId, fillId)
+}
+
+/**
+ * Replace confirmed mapped lanes from a MappingDocument body
+ * (`{ version?, lanes }`) or raw `{ lanes }`.
+ */
+export async function putFillMapping(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  body: unknown
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  return app.mapping.replaceFromDocument(ctx.organizationId, fillId, body)
+}
+
+/**
+ * One-shot import: if body provided, persist it; otherwise import workspace
+ * `mapping.json` when present.
+ */
+function isMappingDocumentBody(body: unknown): boolean {
+  return (
+    body != null &&
+    typeof body === "object" &&
+    !Array.isArray(body) &&
+    "lanes" in body
+  )
+}
+
+export async function importFillMapping(
+  ctx: ShApiKeyContext,
+  fillId: string,
+  body?: unknown
+) {
+  assertFillAccess(ctx, fillId)
+  const app = createAppContext()
+  if (isMappingDocumentBody(body)) {
+    const result = await app.mapping.replaceFromDocument(
+      ctx.organizationId,
+      fillId,
+      body
+    )
+    return { ...result, importedFromFile: false }
+  }
+
+  const text = await createWorkspaceMappingFileReader().readMappingJson(fillId)
+  if (text == null) {
+    throw new DomainError(
+      "No mapping.json in workspace and no body provided",
+      "VALIDATION"
+    )
+  }
+  const lanes = parseMappingJson(text)
+  const result = await app.mapping.replace(ctx.organizationId, fillId, lanes)
+  return { ...result, importedFromFile: true }
 }
 
 /** Resolve mapped lanes via Starboard, apply overlays, advance Progress. */

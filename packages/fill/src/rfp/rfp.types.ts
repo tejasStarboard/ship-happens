@@ -77,8 +77,8 @@ export type RfpFillReportView = {
 }
 
 /**
- * Read-only lane from workspace `mapping.json` (Phase 2c stand-in) for Map tab.
- * Edit mapping in Agent; full schema UI is deferred.
+ * Read-only confirmed lane for Map tab (Postgres `rfp_mapped_lanes`).
+ * `mapping.json` remains import/export only.
  */
 export type RfpMappedLaneView = {
   laneId: string
@@ -106,9 +106,9 @@ export type RfpDetailView = RfpListItem & {
   exportDownloadBlockedReason: string | null
   pendingReviews: RfpPendingReviewView[]
   fillReport: RfpFillReportView | null
-  /** Mapped O-D-equipment lanes from workspace `mapping.json` (may be empty). */
+  /** Confirmed Map / rates lanes from Postgres (may be empty). */
   mappedLanes: RfpMappedLaneView[]
-  /** Set when `mapping.json` exists but fails to parse. */
+  /** Set when mapping load/import fails to parse. */
   mappingError: string | null
 }
 

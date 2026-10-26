@@ -25,6 +25,8 @@ export {
   type RfpStatus,
 } from "./rfp/rfp.types"
 
+export type { MappedLane, MappingDocument } from "./rates/mapped-lane"
+
 export {
   lanePriceAuditFromMetadata,
   toFillReportCellView,

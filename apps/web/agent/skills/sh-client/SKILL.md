@@ -42,11 +42,23 @@ sh-client cells --lane lane_1   # filter one mapped lane id
 
 `cells` returns fill-report counts plus each row’s `audit.starboard` (contract buy/miss) and `audit.overlay` (rule id/name, markup or projected sell). Same provenance as the Review tab.
 
-## 1b. Resolve rates (Progress `rates`)
+## 1b. Mapping (Postgres)
 
-Requires workspace `mapping.json` (Phase 2c stand-in) with `{ "version": 1, "lanes": […] }`.
-The fill **Map** tab is read-only against that file — write/edit it here or via Agent, then resolve.
-Calls Starboard `rates.resolve` server-side, persists fill-report cells, advances Progress `rates`.
+Confirmed lanes live in Postgres. Workspace `mapping.json` is import/export only.
+The fill **Map** tab is read-only against the DB store.
+
+```bash
+sh-client mapping get
+sh-client mapping put --body '{"version":1,"lanes":[{"laneId":"lane_1","originLocode":"CNSHA","destLocode":"USLAX","equipmentType":"40HC"}]}'
+# or one-shot from workspace file:
+sh-client mapping import
+```
+
+## 1c. Resolve rates (Progress `rates`)
+
+Requires confirmed lanes in Postgres (put/import first; empty DB auto-imports
+`mapping.json` on resolve when the file exists). Calls Starboard `rates.resolve`
+server-side, persists fill-report cells, advances Progress `rates`.
 
 ```bash
 sh-client rates resolve

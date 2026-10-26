@@ -4,6 +4,7 @@ export {
   RFP_STATUS_LABEL,
   type FillReportCellView,
   type LanePriceAudit,
+  type MappedLane,
   type RfpDetailView,
   type RfpFillReportView,
   type RfpListItem,
