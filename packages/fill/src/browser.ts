@@ -15,6 +15,7 @@ export {
   asRfpStatus,
   RFP_STATUS_LABEL,
   type RfpDetailView,
+  type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
   type RfpPendingReviewView,
@@ -22,6 +23,18 @@ export {
   type RfpSourceFileView,
   type RfpStatus,
 } from "./rfp/rfp.types"
+
+export {
+  lanePriceAuditFromMetadata,
+  toFillReportCellView,
+  type FillAuditCellOutcome,
+  type FillReportCellView,
+  type LaneOverlayAudit,
+  type LaneOverlayMode,
+  type LanePriceAudit,
+  type LaneStarboardAudit,
+  type StarboardRateChannel,
+} from "./rates/lane-price-audit"
 
 export {
   ALLOWED_SPREADSHEET_MIME_TYPES,

@@ -39,7 +39,7 @@ When the user explicitly asks for Starboard rates, locations, globals, or margin
 
 # Fill status & HITL reviews (on request)
 
-When the user asks to inspect fill status/progress/logs, submit something for review, list waits / decisions, resolve after a decision, or run `sh-client` QA, load the **`sh-client`** skill and run the **`sh-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sh-client`). Env (`SH_APP_URL`, `SH_API_KEY`, `SH_FILL_ID`) is injected for this workspace.
+When the user asks to inspect fill status/progress/logs, read per-row pricing audit (`cells` — Starboard source + overlay + markup), submit something for review, list waits / decisions, resolve after a decision, or run `sh-client` QA, load the **`sh-client`** skill and run the **`sh-client`** CLI in the sandbox (on PATH; also `/workspace/.eve/bin/sh-client`). Env (`SH_APP_URL`, `SH_API_KEY`, `SH_FILL_ID`) is injected for this workspace.
 
 One skill covers all four ops — do not invent review state in free text:
 

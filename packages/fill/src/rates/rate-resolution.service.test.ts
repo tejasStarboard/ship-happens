@@ -119,6 +119,13 @@ describe("RateResolutionService", () => {
     expect(starboard.resolve).toHaveBeenCalled()
     expect(result.cells[0]?.outcome).toBe("filled")
     expect(result.cells[0]?.value).toBe("1500")
+    expect(result.cells[0]?.metadata).toMatchObject({
+      channel: "contract",
+      starboardHitId: "hit_1",
+      carrier: "MSC",
+      resolvedBuyTotal: 1500,
+      laneId: "lane_1",
+    })
   })
 
   it("treats empty Starboard results as no-hit and still completes", async () => {

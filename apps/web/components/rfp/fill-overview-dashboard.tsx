@@ -52,10 +52,12 @@ export function FillOverviewDashboard({
   rfp,
   initialReviewId,
   onAskAgent,
+  onOpenReview,
 }: {
   rfp: RfpDetailView
   initialReviewId?: string | null
   onAskAgent?: (reviewId: string) => void
+  onOpenReview?: () => void
 }) {
   const source = rfp.sourceFiles[0] ?? null
   const counts = stepCounts(rfp.progressSteps)
@@ -105,6 +107,27 @@ export function FillOverviewDashboard({
           </motion.div>
         ))}
       </div>
+
+      {rfp.fillReport && rfp.fillReport.cells.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card px-4 py-3">
+          <div>
+            <p className="text-sm font-medium tracking-tight">Pricing audit</p>
+            <p className="text-xs text-muted-foreground">
+              {rfp.fillReport.filledCount} filled ·{" "}
+              {rfp.fillReport.skippedCount} skipped
+              {rfp.fillReport.errorCount > 0
+                ? ` · ${rfp.fillReport.errorCount} error`
+                : ""}
+              {rfp.fillReport.summary ? ` — ${rfp.fillReport.summary}` : ""}
+            </p>
+          </div>
+          {onOpenReview ? (
+            <Button variant="outline" size="sm" onClick={onOpenReview}>
+              Open Review
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-2 flex items-center justify-between gap-2">

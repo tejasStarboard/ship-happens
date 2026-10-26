@@ -8,6 +8,7 @@ import type {
   LaneCellRow,
   UpsertLaneCellInput,
 } from "../rates/fill-report.repository"
+import { withOverlayAuditMetadata } from "../rates/lane-price-audit"
 import { applyMarkup, checkFloor, parseMoney } from "./margin-math"
 import {
   MARGIN_FLOOR_REVIEW_SOURCE,
@@ -73,15 +74,14 @@ function applyProjected(
     outcome: "filled",
     value,
     reason: null,
-    metadata: {
-      ...cell.metadata,
-      overlayRuleId: rule.id,
-      overlayRuleName: rule.name,
-      overlayMode: "projected",
-      overlayCurrency: rule.currency,
+    metadata: withOverlayAuditMetadata(cell.metadata ?? {}, {
+      ruleId: rule.id,
+      ruleName: rule.name,
+      mode: "projected",
+      currency: rule.currency,
       projectedSell: amount,
       sellTotal: amount,
-    },
+    }),
   }
 }
 
@@ -98,18 +98,17 @@ function applyMarkupRule(
     outcome: "filled",
     value: String(result.sell),
     reason: null,
-    metadata: {
-      ...cell.metadata,
-      overlayRuleId: rule.id,
-      overlayRuleName: rule.name,
-      overlayMode: "markup",
-      overlayCurrency: rule.currency,
+    metadata: withOverlayAuditMetadata(cell.metadata ?? {}, {
+      ruleId: rule.id,
+      ruleName: rule.name,
+      mode: "markup",
+      currency: rule.currency,
       markupPct: pct ?? null,
       markupAmount: amount ?? null,
       sellTotal: result.sell,
       margin: result.margin,
       marginPct: result.marginPct,
-    },
+    }),
   }
 }
 

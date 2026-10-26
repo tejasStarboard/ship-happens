@@ -5,6 +5,7 @@
  *   sh-client status [--fill id]
  *   sh-client progress [--fill id]
  *   sh-client logs [--fill id] [--limit N] [--level info]
+ *   sh-client cells [--fill id] [--lane id]
  *   sh-client reviews list|get|create|update|resolve …
  *   sh-client rates resolve [--fill id]
  *
@@ -16,7 +17,7 @@ import { createClient } from "./createClient.js"
 import { ShClientError } from "./errors.js"
 import { readJsonInput } from "./cli/parseBody.js"
 
-const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, reviews, rates)
+const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, reviews, rates)
 
 Usage:
   sh-client <command> [subcommand] [options]
@@ -28,6 +29,7 @@ Inspect:
   status [--fill id]                Fill run status
   progress [--fill id]              Progress steps
   logs [--fill id] [--limit N] [--level info|warn|…]
+  cells [--fill id] [--lane id]     Per-row audit (Starboard + overlay + markup)
 
 Reviews:
   reviews list [--fill id] [--status pending|…]
@@ -83,6 +85,7 @@ async function main(): Promise<void> {
       status: { type: "string" },
       limit: { type: "string" },
       level: { type: "string" },
+      lane: { type: "string" },
     },
     allowPositionals: true,
     strict: true,
@@ -122,6 +125,11 @@ async function main(): Promise<void> {
           level: strFlag(values.level),
         })
       )
+      return
+    }
+
+    if (cmd === "cells") {
+      printJson(await client.cells(fill, { laneId: strFlag(values.lane) }))
       return
     }
 

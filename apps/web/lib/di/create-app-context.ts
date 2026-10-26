@@ -98,7 +98,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     db: database,
     blob,
     createStarboardClient: starboardFactory,
-    rfps: new RfpService(rfpRepo, pipeline, reviews),
+    rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports),
     templates: new TemplateService(templateRepo),
     intake: new IntakeService(
       database,

@@ -35,8 +35,12 @@ sh-client auth test
 sh-client status
 sh-client progress
 sh-client logs --limit 50
+sh-client cells                 # per-row Starboard + overlay + markup audit
+sh-client cells --lane lane_1   # filter one mapped lane id
 # optional: --fill <id>  (defaults to SH_FILL_ID)
 ```
+
+`cells` returns fill-report counts plus each row’s `audit.starboard` (contract buy/miss) and `audit.overlay` (rule id/name, markup or projected sell). Same provenance as the Review tab.
 
 ## 1b. Resolve rates (Progress `rates`)
 

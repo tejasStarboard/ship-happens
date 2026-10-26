@@ -2,7 +2,10 @@
 export {
   asRfpStatus,
   RFP_STATUS_LABEL,
+  type FillReportCellView,
+  type LanePriceAudit,
   type RfpDetailView,
+  type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
   type RfpPendingReviewView,

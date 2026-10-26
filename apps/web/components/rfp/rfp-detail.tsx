@@ -12,6 +12,7 @@ import {
 import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
 import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
 import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
+import { FillReviewPanel } from "@/components/rfp/fill-review-panel"
 import { ComingSoonEmpty } from "@/components/shared/coming-soon"
 import {
   RFP_STATUS_LABEL,
@@ -131,6 +132,7 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
             rfp={rfp}
             initialReviewId={reviewParam}
             onAskAgent={() => setTab("chat")}
+            onOpenReview={() => setTab("review")}
           />
         </TabsContent>
 
@@ -142,28 +144,17 @@ export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
         </TabsContent>
 
         <TabsContent value="review" className="mt-4 overflow-auto">
-          <div className="flex flex-col gap-4">
-            <ComingSoonEmpty
-              title="Review"
-              description="Cell-level fill outcomes, buy-rate source, overlays, and approvals before export."
-            />
-            <div className="grid gap-3 sm:grid-cols-3">
-              {(
-                [
-                  ["Filled", "—"],
-                  ["Skipped", "—"],
-                  ["Needs human", "—"],
-                ] as const
-              ).map(([label, value]) => (
-                <div
-                  key={label}
-                  className="rounded-[6px] border border-border bg-card p-3"
-                >
-                  <p className="tabular text-[20px] font-semibold">{value}</p>
-                  <p className="text-sm text-muted-foreground">{label}</p>
-                </div>
-              ))}
+          <div className="flex flex-col gap-3">
+            <div>
+              <h2 className="text-base font-medium tracking-tight">
+                Pricing audit
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Per-row Starboard source, overlay rule, and markup/sell
+                provenance before export.
+              </p>
             </div>
+            <FillReviewPanel fillReport={rfp.fillReport} />
           </div>
         </TabsContent>
 
