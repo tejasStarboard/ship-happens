@@ -37,6 +37,8 @@ describe("lane-price-audit", () => {
       carrier: "MSC",
       resolvedBuyTotal: 1500,
       reason: null,
+      pickConfidence: null,
+      pickConfidenceReason: "n/a",
     })
   })
 
@@ -50,6 +52,8 @@ describe("lane-price-audit", () => {
     expect(audit.starboard.buyTotal).toBeNull()
     expect(audit.starboard.missReason).toBe("No Starboard contract hits")
     expect(audit.overlay).toBeNull()
+    expect(audit.pick.confidence).toBeNull()
+    expect(audit.pick.reason).toBe("n/a")
   })
 
   it("merges overlay markup onto rate metadata", () => {
@@ -61,7 +65,8 @@ describe("lane-price-audit", () => {
         resolved_buy_total: 1000,
         resolved_currency: "USD",
       },
-      null
+      null,
+      { confidence: 0.95, reason: "only_option", candidateCount: 1 }
     )
     const meta = withOverlayAuditMetadata(base, {
       ruleId: "ovr_1",
@@ -73,6 +78,7 @@ describe("lane-price-audit", () => {
       sellTotal: 1100,
       margin: 100,
       marginPct: 10,
+      pick: { confidence: 0.9, reason: "markup_overlay", candidateCount: 0 },
     })
     const audit = lanePriceAuditFromMetadata(meta)
     expect(audit.starboard.hitId).toBe("hit_1")
@@ -81,6 +87,10 @@ describe("lane-price-audit", () => {
       mode: "markup",
       markupPct: 5,
       sellTotal: 1100,
+    })
+    expect(audit.pick).toMatchObject({
+      confidence: 0.9,
+      reason: "markup_overlay",
     })
   })
 
@@ -103,7 +113,8 @@ describe("lane-price-audit", () => {
             resolved_buy_total: 1000,
             resolved_currency: "USD",
           },
-          null
+          null,
+          { confidence: 0.95, reason: "only_option", candidateCount: 1 }
         ),
         {
           ruleId: "ovr_1",
@@ -112,10 +123,17 @@ describe("lane-price-audit", () => {
           currency: "USD",
           projectedSell: 1100,
           sellTotal: 1100,
+          pick: {
+            confidence: 0.6,
+            reason: "projected_overlay",
+            candidateCount: 0,
+          },
         }
       ),
     })
     expect(view.audit.overlay?.mode).toBe("projected")
     expect(view.audit.starboard.channel).toBe("contract")
+    expect(view.audit.pick.confidence).toBe(0.6)
+    expect(view.audit.pick.reason).toBe("projected_overlay")
   })
 })

@@ -87,7 +87,11 @@ function contextBits(
     asString(meta.sheet) ??
     asString(proposal.sheetName) ??
     asString(meta.sheetName)
-  const lane = asString(proposal.lane) ?? asString(meta.lane)
+  const lane =
+    asString(proposal.lane) ??
+    asString(meta.lane) ??
+    asString(proposal.laneKey) ??
+    asString(meta.laneKey)
   const column =
     asString(proposal.column) ??
     asString(proposal.col) ??

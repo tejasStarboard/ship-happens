@@ -268,11 +268,13 @@ export async function resolveFillRates(ctx: ShApiKeyContext, fillId: string) {
     hitCount: result.hitCount,
     noHitCount: result.noHitCount,
     errorCount: result.errorCount,
+    weakPickCount: result.weakPickCount,
     detail: result.detail,
     overlay: {
       appliedCount: overlay.appliedCount,
       unchangedCount: overlay.unchangedCount,
       floorBreachCount: overlay.floorBreachCount,
+      weakPickCount: overlay.weakPickCount,
       detail: overlay.detail,
     },
     cells: overlay.cells.map((cell) => ({

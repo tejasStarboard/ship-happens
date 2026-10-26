@@ -40,10 +40,17 @@ export {
   type FillReportCellView,
   type LaneOverlayAudit,
   type LaneOverlayMode,
+  type LanePickConfidenceAudit,
   type LanePriceAudit,
   type LaneStarboardAudit,
   type StarboardRateChannel,
 } from "./rates/lane-price-audit"
+export {
+  isLowConfidenceRatePick,
+  RATE_PICK_LOW_CONFIDENCE_THRESHOLD,
+  RATE_PICK_REVIEW_SOURCE,
+  type RatePickConfidenceReason,
+} from "./rates/rate-pick-confidence"
 
 export {
   ALLOWED_SPREADSHEET_MIME_TYPES,
