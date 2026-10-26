@@ -3,6 +3,9 @@ import {
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
+  OverlayApplicationService,
+  OverlayRuleRepository,
+  OverlayRuleService,
   RateResolutionService,
   ReviewItemRepository,
   ReviewItemService,
@@ -66,6 +69,8 @@ export function createAppContext(deps?: Partial<AppDeps>) {
   const reviewRepo = new ReviewItemRepository(database)
   const reviews = new ReviewItemService(reviewRepo, rfpRepo, pipeline)
   const fillReports = new FillReportRepository(database)
+  const overlayRulesRepo = new OverlayRuleRepository(database)
+  const overlayRules = new OverlayRuleService(overlayRulesRepo)
   const mappingStore = deps?.mappingStore ?? createWorkspaceMappingStore()
   const starboardRates =
     deps?.starboardRates ?? createStarboardRatesPort(starboardFactory)
@@ -75,6 +80,12 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     fillReports,
     mappingStore,
     starboardRates
+  )
+  const overlays = new OverlayApplicationService(
+    rfpRepo,
+    pipeline,
+    fillReports,
+    overlayRulesRepo
   )
 
   return {
@@ -93,12 +104,15 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     pipeline,
     reviews,
     rates,
+    overlayRules,
+    overlays,
     workspaces: new WorkspaceManager(blob),
     repos: {
       rfps: rfpRepo,
       templates: templateRepo,
       reviews: reviewRepo,
       fillReports,
+      overlayRules: overlayRulesRepo,
     },
   }
 }

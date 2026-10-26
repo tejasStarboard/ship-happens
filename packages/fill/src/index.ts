@@ -86,6 +86,7 @@ export {
 export {
   FillReportRepository,
   type FillCellOutcome,
+  type LaneCellRow,
   type UpsertLaneCellInput,
 } from "./rates/fill-report.repository"
 export {
@@ -99,3 +100,21 @@ export type {
   ResolvedSurchargeCandidate,
   StarboardRatesPort,
 } from "./rates/rate-ports"
+
+export { matchOverlayRule } from "./overlay/match-overlay-rule"
+export { applyMarkup, parseMoney } from "./overlay/margin-math"
+export { OverlayRuleRepository } from "./overlay/overlay-rule.repository"
+export { OverlayRuleService } from "./overlay/overlay-rule.service"
+export {
+  OverlayApplicationService,
+  type ApplyOverlaysResult,
+} from "./overlay/overlay-application.service"
+export {
+  OVERLAY_RULE_MODES,
+  type CreateOverlayRuleInput,
+  type MatchedOverlayRule,
+  type OverlayLaneContext,
+  type OverlayRuleMode,
+  type OverlayRuleView,
+  type UpdateOverlayRuleInput,
+} from "./overlay/overlay.types"

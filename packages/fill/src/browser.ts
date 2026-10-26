@@ -30,3 +30,11 @@ export {
   sanitizeFileName,
   type AllowedSpreadsheetMime,
 } from "./spreadsheet-constants"
+
+export {
+  OVERLAY_RULE_MODES,
+  type CreateOverlayRuleInput,
+  type OverlayRuleMode,
+  type OverlayRuleView,
+  type UpdateOverlayRuleInput,
+} from "./overlay/overlay.types"

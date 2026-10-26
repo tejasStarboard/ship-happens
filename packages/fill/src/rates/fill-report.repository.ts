@@ -24,6 +24,18 @@ export type UpsertLaneCellInput = {
   metadata?: Record<string, unknown>
 }
 
+export type LaneCellRow = {
+  id: string
+  sheetName: string | null
+  cellRef: string | null
+  rowIndex: number | null
+  columnKey: string | null
+  outcome: FillCellOutcome
+  value: string | null
+  reason: string | null
+  metadata: Record<string, unknown>
+}
+
 export class FillReportRepository {
   constructor(private readonly db: AppDb) {}
 
@@ -49,6 +61,44 @@ export class FillReportRepository {
       metadata: {},
     })
     return id
+  }
+
+  async listLaneCells(rfpId: string): Promise<LaneCellRow[]> {
+    const report = await this.db
+      .select({ id: rfpFillReports.id })
+      .from(rfpFillReports)
+      .where(eq(rfpFillReports.rfpId, rfpId))
+      .limit(1)
+      .then((rows) => rows[0] ?? null)
+
+    if (!report) return []
+
+    const rows = await this.db
+      .select({
+        id: rfpFillReportCells.id,
+        sheetName: rfpFillReportCells.sheetName,
+        cellRef: rfpFillReportCells.cellRef,
+        rowIndex: rfpFillReportCells.rowIndex,
+        columnKey: rfpFillReportCells.columnKey,
+        outcome: rfpFillReportCells.outcome,
+        value: rfpFillReportCells.value,
+        reason: rfpFillReportCells.reason,
+        metadata: rfpFillReportCells.metadata,
+      })
+      .from(rfpFillReportCells)
+      .where(eq(rfpFillReportCells.reportId, report.id))
+
+    return rows.map((row) => ({
+      id: row.id,
+      sheetName: row.sheetName,
+      cellRef: row.cellRef,
+      rowIndex: row.rowIndex,
+      columnKey: row.columnKey,
+      outcome: row.outcome,
+      value: row.value,
+      reason: row.reason,
+      metadata: (row.metadata ?? {}) as Record<string, unknown>,
+    }))
   }
 
   async replaceLaneCells(
