@@ -153,23 +153,33 @@ jobs:
             nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
             nextjs-${{ runner.os }}-
 
+      # Browser binaries only — OS/apt packages are not cached. Key includes the
+      # Playwright version so lock bumps invalidate the cache.
       - name: Cache Playwright browsers
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          key: playwright-1.63.0-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            playwright-1.63.0-${{ runner.os }}-
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Install Playwright Chromium
-        if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: pnpm --filter web exec playwright install --with-deps chromium
-
-      - name: Install Playwright OS deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: pnpm --filter web exec playwright install-deps chromium
+      # Cache hit still needs OS libs every run (fresh VM). `install-deps` can
+      # hang on apt; bound it and fall back to a full --with-deps install.
+      - name: Install Playwright Chromium + OS deps
+        timeout-minutes: 5
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          set -euo pipefail
+          pnpm --filter web exec playwright install chromium
+          if ! timeout 90 pnpm --filter web exec playwright install-deps chromium; then
+            echo "::warning::playwright install-deps timed out or failed; falling back to install --with-deps"
+            timeout 240 pnpm --filter web exec playwright install --with-deps chromium
+          fi
 
       - name: Build web + workspace deps
         # Builds @workspace/db, @ship-happens/fill, @starboard/sb-client, then web
