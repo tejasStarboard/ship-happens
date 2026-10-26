@@ -7,18 +7,11 @@ const appDir = path.dirname(fileURLToPath(import.meta.url))
 /** Hostnames for tunnels (ngrok, etc.) so Next allows /_next + HMR in dev. */
 function extraDevOrigins(): string[] {
   const hosts = new Set<string>()
-  for (const raw of [
-    process.env.APP_URL,
-    process.env.NEXT_PUBLIC_APP_URL,
-  ]) {
+  for (const raw of [process.env.APP_URL, process.env.NEXT_PUBLIC_APP_URL]) {
     if (!raw) continue
     try {
       const { hostname } = new URL(raw)
-      if (
-        hostname &&
-        hostname !== "localhost" &&
-        hostname !== "127.0.0.1"
-      ) {
+      if (hostname && hostname !== "localhost" && hostname !== "127.0.0.1") {
         hosts.add(hostname)
       }
     } catch {

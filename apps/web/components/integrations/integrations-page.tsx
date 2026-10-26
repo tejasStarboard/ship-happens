@@ -129,7 +129,7 @@ export function IntegrationsPage({
                       {provider.title}
                     </h2>
                     {!uiEnabled ? (
-                      <span className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      <span className="rounded border border-border px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
                         Unavailable
                       </span>
                     ) : null}
@@ -182,7 +182,7 @@ export function IntegrationsPage({
                       must include (exact match; this is not the Better Auth
                       sign-in callback):
                     </p>
-                    <code className="block break-all rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[11px] text-foreground">
+                    <code className="block rounded border border-border bg-muted/40 px-2 py-1.5 font-mono text-[11px] break-all text-foreground">
                       {gmailRedirectUri}
                     </code>
                   </div>
