@@ -65,6 +65,8 @@ export type LanePriceAudit = {
   pick: LanePickConfidenceAudit
 }
 
+export type FillCellRole = "base" | "fee" | "answer"
+
 export type FillReportCellView = {
   id: string
   sheetName: string | null
@@ -74,6 +76,12 @@ export type FillReportCellView = {
   outcome: FillAuditCellOutcome
   value: string | null
   reason: string | null
+  /** base = ocean/sell; fee / answer nest under the lane in Quote view. */
+  cellRole: FillCellRole | null
+  /** Fee column heading when cellRole is fee. */
+  feeHeading: string | null
+  /** Answer binding id when cellRole is answer. */
+  answerId: string | null
   audit: LanePriceAudit
   /** Analyst bid priority (SB-7092); null until attached via with-priority mapper. */
   bidPriority?: LaneBidPriority | null
@@ -265,6 +273,12 @@ export function lanePriceAuditFromMetadata(
   }
 }
 
+function asCellRole(value: unknown): FillCellRole | null {
+  return value === "base" || value === "fee" || value === "answer"
+    ? value
+    : null
+}
+
 export function toFillReportCellView(row: {
   id: string
   sheetName: string | null
@@ -276,6 +290,7 @@ export function toFillReportCellView(row: {
   reason: string | null
   metadata: Record<string, unknown>
 }): FillReportCellView {
+  const meta = row.metadata ?? {}
   return {
     id: row.id,
     sheetName: row.sheetName,
@@ -285,6 +300,9 @@ export function toFillReportCellView(row: {
     outcome: row.outcome,
     value: row.value,
     reason: row.reason,
-    audit: lanePriceAuditFromMetadata(row.metadata),
+    cellRole: asCellRole(meta.cellRole),
+    feeHeading: asString(meta.feeHeading),
+    answerId: asString(meta.answerId),
+    audit: lanePriceAuditFromMetadata(meta),
   }
 }

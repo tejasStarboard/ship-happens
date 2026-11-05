@@ -205,6 +205,60 @@ export class ShipHappensClient {
       body: {},
     })
   }
+
+  // --- Org-scoped account rules (no fill id) ---
+
+  overlaysList() {
+    return this.http.request<unknown>("GET", "/api/sh/v1/overlays")
+  }
+
+  overlaysCreate(body: Record<string, unknown>) {
+    return this.http.request<unknown>("POST", "/api/sh/v1/overlays", { body })
+  }
+
+  overlaysUpdate(id: string, body: Record<string, unknown>) {
+    return this.http.request<unknown>(
+      "PATCH",
+      `/api/sh/v1/overlays/${encodeURIComponent(id)}`,
+      { body }
+    )
+  }
+
+  overlaysDelete(id: string) {
+    return this.http.request<unknown>(
+      "DELETE",
+      `/api/sh/v1/overlays/${encodeURIComponent(id)}`
+    )
+  }
+
+  floorsList() {
+    return this.http.request<unknown>("GET", "/api/sh/v1/floors")
+  }
+
+  floorsCreate(body: Record<string, unknown>) {
+    return this.http.request<unknown>("POST", "/api/sh/v1/floors", { body })
+  }
+
+  floorsUpdate(id: string, body: Record<string, unknown>) {
+    return this.http.request<unknown>(
+      "PATCH",
+      `/api/sh/v1/floors/${encodeURIComponent(id)}`,
+      { body }
+    )
+  }
+
+  floorsDelete(id: string) {
+    return this.http.request<unknown>(
+      "DELETE",
+      `/api/sh/v1/floors/${encodeURIComponent(id)}`
+    )
+  }
+
+  locationsSearch(query: string) {
+    return this.http.request<unknown>("GET", "/api/sh/v1/locations/search", {
+      query: { q: query },
+    })
+  }
 }
 
 export function createClient(

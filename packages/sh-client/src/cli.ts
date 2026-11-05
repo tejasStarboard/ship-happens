@@ -11,8 +11,10 @@
  *   sh-client revisions create [--fill parentId] --body '{ fileName, contentType, base64, name? }'
  *   sh-client rates resolve [--fill id]
  *   sh-client export [--fill id]
+ *   sh-client overlays|floors list|create|update|delete
+ *   sh-client locations search --query "…"
  *
- * Env: SH_APP_URL, SH_API_KEY, SH_FILL_ID
+ * Env: SH_APP_URL, SH_API_KEY, SH_FILL_ID (fill commands only)
  */
 
 import { parseArgs } from "node:util"
@@ -20,7 +22,7 @@ import { createClient } from "./createClient.js"
 import { ShClientError } from "./errors.js"
 import { readJsonInput } from "./cli/parseBody.js"
 
-const HELP = `sh-client — Ship Happens fill CLI (status, progress, logs, cells, mapping, reviews, rates, export)
+const HELP = `sh-client — Ship Happens CLI (fill control-plane + org overlay/floor rules)
 
 Usage:
   sh-client <command> [subcommand] [options]
@@ -28,7 +30,7 @@ Usage:
 Auth:
   auth test                         Verify API key
 
-Inspect:
+Inspect (fill):
   status [--fill id]                Fill run status
   progress [--fill id]              Progress steps
   logs [--fill id] [--limit N] [--level info|warn|…]
@@ -62,16 +64,28 @@ Rates:
 Export:
   export [--fill id]                Write sells into original BCO template; opens final export sign-off (Confirm unlocks download)
 
+Org rules (no --fill; org API key):
+  overlays list
+  overlays create --body '{ name, mode, … }'
+  overlays update --id <id> --body '{ … }'
+  overlays delete --id <id>
+  floors list
+  floors create --body '{ name, minAmount?, minPct?, … }'
+  floors update --id <id> --body '{ … }'
+  floors delete --id <id>
+  locations search --query "shanghai"
+
 Options:
   --fill <id>       Fill / workspace id (default: SH_FILL_ID)
   --body <json>     JSON payload
   --file <path>     JSON file (or use stdin)
+  --query <text>    Location search query
   --help            Show this help
 
 Env:
   SH_APP_URL
   SH_API_KEY
-  SH_FILL_ID
+  SH_FILL_ID        Required for fill commands only
 `
 
 function printJson(data: unknown): void {
@@ -108,6 +122,7 @@ async function main(): Promise<void> {
       level: { type: "string" },
       lane: { type: "string" },
       parent: { type: "string" },
+      query: { type: "string" },
     },
     allowPositionals: true,
     strict: true,
@@ -295,6 +310,88 @@ async function main(): Promise<void> {
     if (cmd === "export") {
       printJson(await client.exportWorkbook(fill))
       return
+    }
+
+    if (cmd === "overlays") {
+      if (sub === "list") {
+        printJson(await client.overlaysList())
+        return
+      }
+      if (sub === "create") {
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.overlaysCreate(body))
+        return
+      }
+      if (sub === "update") {
+        const id = strFlag(values.id)
+        if (!id) throw new Error("overlays update requires --id")
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.overlaysUpdate(id, body))
+        return
+      }
+      if (sub === "delete") {
+        const id = strFlag(values.id)
+        if (!id) throw new Error("overlays delete requires --id")
+        printJson(await client.overlaysDelete(id))
+        return
+      }
+      throw new Error(
+        `Unknown overlays subcommand: ${sub ?? "(none)"}. Try list|create|update|delete`
+      )
+    }
+
+    if (cmd === "floors") {
+      if (sub === "list") {
+        printJson(await client.floorsList())
+        return
+      }
+      if (sub === "create") {
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.floorsCreate(body))
+        return
+      }
+      if (sub === "update") {
+        const id = strFlag(values.id)
+        if (!id) throw new Error("floors update requires --id")
+        const body = await readJsonInput({
+          body: strFlag(values.body),
+          file: strFlag(values.file),
+        })
+        printJson(await client.floorsUpdate(id, body))
+        return
+      }
+      if (sub === "delete") {
+        const id = strFlag(values.id)
+        if (!id) throw new Error("floors delete requires --id")
+        printJson(await client.floorsDelete(id))
+        return
+      }
+      throw new Error(
+        `Unknown floors subcommand: ${sub ?? "(none)"}. Try list|create|update|delete`
+      )
+    }
+
+    if (cmd === "locations") {
+      if (sub === "search") {
+        const query = strFlag(values.query)
+        if (!query || query.trim().length < 2) {
+          throw new Error("locations search requires --query (≥2 chars)")
+        }
+        printJson(await client.locationsSearch(query.trim()))
+        return
+      }
+      throw new Error(
+        `Unknown locations subcommand: ${sub ?? "(none)"}. Try search`
+      )
     }
 
     throw new Error(`Unknown command: ${cmd}. Run sh-client --help`)

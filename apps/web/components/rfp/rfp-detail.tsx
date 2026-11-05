@@ -1,30 +1,40 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
+import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { Badge } from "@ship-happens/ui/components/badge"
-import { Button } from "@ship-happens/ui/components/button"
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
 } from "@ship-happens/ui/components/tabs"
-import { WorkspaceShell } from "@/app/_components/workspace/workspace-shell"
-import { DownloadFilledButton } from "@/components/rfp/download-filled-button"
-import { StartNextRoundDialog } from "@/components/rfp/start-next-round-dialog"
-import { ExportWorkbookButton } from "@/components/rfp/export-workbook-button"
-import { FillFlowRail } from "@/components/rfp/fill-flow-rail"
-import { FillMapPanel } from "@/components/rfp/fill-map-panel"
-import { FillOverviewDashboard } from "@/components/rfp/fill-overview-dashboard"
+import { useSetBreadcrumbLeaf } from "@/components/breadcrumb-leaf"
+import { FillManageMenu } from "@/components/rfp/fill-manage-menu"
 import { FillReviewPanel } from "@/components/rfp/fill-review-panel"
+import { RfpChatPanel } from "@/components/rfp/rfp-chat-panel"
+import { RfpFilesPanel } from "@/components/rfp/rfp-files-panel"
+import { RfpReviewsPanel } from "@/components/rfp/rfp-reviews-panel"
 import {
   RFP_STATUS_LABEL,
   type RfpDetailView,
   type RfpStatus,
 } from "@/lib/domain/rfp/rfp.types"
+import { Separator } from "@ship-happens/ui/components/separator"
 
-type FillTab = "overview" | "map" | "review" | "chat"
+type FillTab = "chat" | "files" | "quotes" | "reviews"
+
+function parseTab(value: string | null): FillTab | null {
+  if (
+    value === "chat" ||
+    value === "files" ||
+    value === "quotes" ||
+    value === "reviews"
+  ) {
+    return value
+  }
+  return null
+}
 
 function primaryAction(status: RfpStatus): {
   label: string
@@ -32,16 +42,9 @@ function primaryAction(status: RfpStatus): {
 } {
   switch (status) {
     case "needs_review":
-      return { label: "Continue review", tab: "review" }
-    case "queued":
-    case "running":
-      return { label: "View overview", tab: "overview" }
-    case "done":
-      return { label: "View overview", tab: "overview" }
-    case "failed":
-      return { label: "View overview", tab: "overview" }
+      return { label: "Open reviews", tab: "reviews" }
     default:
-      return { label: "View overview", tab: "overview" }
+      return { label: "Open chat", tab: "chat" }
   }
 }
 
@@ -50,6 +53,7 @@ function statusPillClass(status: RfpStatus) {
     case "done":
       return "status-pill status-pill-positive"
     case "failed":
+    case "cancelled":
       return "status-pill status-pill-negative"
     case "running":
     case "needs_review":
@@ -60,136 +64,162 @@ function statusPillClass(status: RfpStatus) {
 }
 
 export function RfpDetail({ rfp }: { rfp: RfpDetailView }) {
+  const router = useRouter()
+  const pathname = usePathname()
   const searchParams = useSearchParams()
   const reviewParam = searchParams.get("review")
-  const [tab, setTab] = useState<FillTab>("overview")
+  const tabParam = parseTab(searchParams.get("tab"))
+  const [tab, setTab] = useState<FillTab>(
+    tabParam ?? (reviewParam ? "reviews" : "chat")
+  )
+  const [chatInsert, setChatInsert] = useState<string | null>(null)
+  const [agentResetKey, setAgentResetKey] = useState(0)
+  const [filesRefreshKey, setFilesRefreshKey] = useState(0)
   const action = primaryAction(rfp.status)
+  const pendingCount = rfp.pendingReviews?.length ?? 0
+
+  useSetBreadcrumbLeaf(rfp.name)
 
   useEffect(() => {
-    if (reviewParam) setTab("overview")
-  }, [reviewParam])
+    if (reviewParam) setTab("reviews")
+    else if (tabParam) setTab(tabParam)
+  }, [reviewParam, tabParam])
+
+  function selectTab(next: FillTab) {
+    setTab(next)
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("tab", next)
+    if (next !== "reviews") params.delete("review")
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4 px-4 py-4 md:py-6 lg:px-6">
-      <div className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="font-heading text-[26px] leading-tight font-semibold tracking-tight">
-              {rfp.name}
-            </h1>
-            <span className={statusPillClass(rfp.status)}>
+    <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-hidden px-4 py-2 lg:px-6">
+      <Tabs
+        value={tab}
+        onValueChange={(value) => selectTab(value as FillTab)}
+        className="flex min-h-0 flex-1 flex-col gap-0"
+      >
+        <div className="flex shrink-0 items-end justify-between gap-3">
+          <TabsList
+            variant="line"
+            className="h-auto w-fit shrink-0 gap-4 rounded-none bg-transparent p-0"
+          >
+            {(
+              [
+                ["chat", "Chat"],
+                ["files", "Files"],
+                ["quotes", "Quote"],
+                ["reviews", "Reviews"],
+              ] as const
+            ).map(([value, label]) => (
+              <TabsTrigger
+                key={value}
+                value={value}
+                className="rounded-none px-0 pb-1.5 text-sm"
+              >
+                {label}
+                {value === "reviews" && pendingCount > 0
+                  ? ` (${pendingCount})`
+                  : ""}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+
+          <div className="flex shrink-0 items-center gap-2 pb-1.5">
+            <span className={`${statusPillClass(rfp.status)} shrink-0`}>
               {RFP_STATUS_LABEL[rfp.status]}
             </span>
             {(rfp.roundNumber ?? 1) > 1 ? (
-              <Badge variant="secondary">Round {rfp.roundNumber}</Badge>
+              <Badge variant="secondary" className="shrink-0">
+                R{rfp.roundNumber}
+              </Badge>
             ) : null}
+            <FillManageMenu
+              fillId={rfp.id}
+              name={rfp.name}
+              customer={rfp.customer}
+              status={rfp.status}
+              size="sm"
+              detailActions={{
+                primaryAction: {
+                  label: action.label,
+                  onSelect: () => selectTab(action.tab),
+                },
+                startNextRound: {
+                  parentFillId: rfp.id,
+                  parentName: rfp.name,
+                  parentCustomer: rfp.customer,
+                  roundNumber: rfp.roundNumber ?? 1,
+                },
+                exportFill: {
+                  fillId: rfp.id,
+                  pendingReviewCount: pendingCount,
+                },
+                download: {
+                  filledFileUrl: rfp.filledFileUrl,
+                  blockedReason: rfp.exportDownloadBlockedReason,
+                },
+                onAgentReset: () => setAgentResetKey((key) => key + 1),
+                onSheetReset: () => setFilesRefreshKey((key) => key + 1),
+              }}
+            />
           </div>
-          <p className="text-sm text-muted-foreground">
-            {rfp.customer || "—"} · {rfp.templateName || "—"}
-            {rfp.mappingReuseSummary
-              ? ` · reused ${rfp.mappingReuseSummary.reused}, ${rfp.mappingReuseSummary.drifted} to review`
-              : ""}
-          </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <StartNextRoundDialog
-            parentFillId={rfp.id}
-            parentName={rfp.name}
-            parentCustomer={rfp.customer}
-            roundNumber={rfp.roundNumber ?? 1}
-          />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setTab(action.tab)}
-          >
-            {action.label}
-          </Button>
-          <ExportWorkbookButton
-            fillId={rfp.id}
-            pendingReviewCount={rfp.pendingReviews?.length ?? 0}
-          />
-          <DownloadFilledButton
-            filledFileUrl={rfp.filledFileUrl}
-            blockedReason={rfp.exportDownloadBlockedReason}
-          />
-        </div>
-      </div>
 
-      <FillFlowRail status={rfp.status} className="shrink-0" />
+        <Separator />
 
-      <Tabs
-        value={tab}
-        onValueChange={(value) => setTab(value as FillTab)}
-        className="flex min-h-0 flex-1 flex-col gap-0"
-      >
-        <TabsList
-          variant="line"
-          className="h-auto w-fit shrink-0 gap-4 rounded-none border-b border-border bg-transparent p-0"
+        {/*
+          Keep the fill agent mounted when switching Files/Quote/Reviews so an
+          in-flight Eve session is not torn down mid-turn.
+        */}
+        <div
+          className={
+            tab === "chat"
+              ? "mt-2 flex min-h-0 flex-1 flex-col overflow-hidden"
+              : "hidden"
+          }
+          aria-hidden={tab !== "chat"}
         >
-          {(
-            [
-              ["overview", "Overview"],
-              ["map", "Map"],
-              ["review", "Review"],
-              ["chat", "Agent"],
-            ] as const
-          ).map(([value, label]) => (
-            <TabsTrigger
-              key={value}
-              value={value}
-              className="rounded-none px-0 pb-2 text-sm"
-            >
-              {label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="overview" className="mt-4 overflow-auto">
-          <FillOverviewDashboard
-            rfp={rfp}
-            initialReviewId={reviewParam}
-            onAskAgent={() => setTab("chat")}
-            onOpenReview={() => setTab("review")}
-            onOpenMap={() => setTab("map")}
+          <RfpChatPanel
+            key={`${rfp.id}-agent-${agentResetKey}`}
+            workspaceId={rfp.id}
+            insertText={chatInsert}
+            onInsertTextConsumed={() => setChatInsert(null)}
           />
-        </TabsContent>
+        </div>
 
-        <TabsContent value="map" className="mt-4 overflow-auto">
-          <FillMapPanel
-            fillId={rfp.id}
-            mappedLanes={rfp.mappedLanes}
-            mappingError={rfp.mappingError}
-            mapStep={rfp.progressSteps.find((step) => step.key === "map")}
-            pendingMapReviews={(rfp.pendingReviews ?? []).filter(
-              (item) => item.stepKey === "map"
-            )}
-            onAskAgent={() => setTab("chat")}
-          />
-        </TabsContent>
-
-        <TabsContent value="review" className="mt-4 overflow-auto">
-          <div className="flex flex-col gap-3">
-            <div>
-              <h2 className="text-base font-medium tracking-tight">
-                Pricing audit
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Per-row Starboard source, overlay rule, and markup/sell
-                provenance before export.
-              </p>
-            </div>
-            <FillReviewPanel fillReport={rfp.fillReport} />
-          </div>
+        <TabsContent
+          value="files"
+          className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden data-hidden:hidden"
+        >
+          <RfpFilesPanel key={`files-${filesRefreshKey}`} rfp={rfp} />
         </TabsContent>
 
         <TabsContent
-          value="chat"
-          className="mt-4 flex min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-border data-hidden:hidden"
+          value="quotes"
+          className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden data-hidden:hidden"
         >
-          {tab === "chat" ? (
-            <WorkspaceShell embedded workspaceId={rfp.id} />
-          ) : null}
+          <FillReviewPanel fillReport={rfp.fillReport ?? null} />
+        </TabsContent>
+
+        <TabsContent
+          value="reviews"
+          className="mt-2 flex min-h-0 flex-1 flex-col overflow-hidden data-hidden:hidden"
+        >
+          <RfpReviewsPanel
+            fillId={rfp.id}
+            pendingReviews={rfp.pendingReviews ?? []}
+            progressSteps={rfp.progressSteps}
+            status={rfp.status}
+            initialReviewId={reviewParam}
+            onAskAgent={(reviewId) => {
+              setChatInsert(
+                `Help with review ${reviewId} on fill ${rfp.id}. Check reviews get / list and continue after my decision.`
+              )
+              selectTab("chat")
+            }}
+          />
         </TabsContent>
       </Tabs>
     </div>

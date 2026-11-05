@@ -95,6 +95,13 @@ export function mappedLaneFromProposal(
   if (rowIndex !== undefined) candidate.rowIndex = rowIndex
   if (surchargeSlots) candidate.surchargeSlots = surchargeSlots
 
+  if (Array.isArray(source.answerBindings)) {
+    candidate.answerBindings = source.answerBindings
+  }
+  if (Array.isArray(source.feeBindings)) {
+    candidate.feeBindings = source.feeBindings
+  }
+
   const parsed = MappedLaneSchema.safeParse(candidate)
   return parsed.success ? parsed.data : null
 }

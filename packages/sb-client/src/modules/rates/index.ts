@@ -6,13 +6,28 @@ import {
 import {
   asRateList,
   assembleResolvedRate,
+  contractFactsFromSearchHit,
   countRateSearchHits,
   paginationFromSearchBody,
   resolveContractRates,
+  type ContractServiceFacts,
   type RateSearchPaginationMeta,
+  type ResolvedFreeTime,
   type ResolvedRate,
   type SearchRateHit,
 } from "./resolveFullRate.js"
+import {
+  normalizeForFill as normalizeForFillHit,
+  pickForFill as pickForFillHits,
+  type FillView,
+  type PickForFillOptions,
+} from "./fillView.js"
+import {
+  resolveMany,
+  type ResolveManyJob,
+  type ResolveManyOptions,
+  type ResolveManyResult,
+} from "./resolveMany.js"
 import {
   getRateDocSignedUrl,
   isRateDocId,
@@ -30,17 +45,27 @@ import type { RateItemRow } from "../globals/filter.js"
 export type {
   ContractSearchInput,
   SpotSearchInput,
+  ContractServiceFacts,
   RateSearchPaginationMeta,
+  ResolvedFreeTime,
   ResolvedRate,
   SearchRateHit,
   RateDocSignedUrlResult,
+  FillView,
+  PickForFillOptions,
+  ResolveManyJob,
+  ResolveManyOptions,
+  ResolveManyResult,
 }
 export {
   asRateList,
+  contractFactsFromSearchHit,
   countRateSearchHits,
   paginationFromSearchBody,
   isRateDocId,
   provenanceFromSearchHit,
+  normalizeForFillHit as normalizeForFill,
+  pickForFillHits as pickForFill,
 }
 
 export class RatesModule {
@@ -97,5 +122,33 @@ export class RatesModule {
     }
   ) {
     return recommendRate(rates, opts)
+  }
+
+  /** Peel base/lss/arb/all_in + contract facts for one equipment — pure. */
+  normalizeForFill(
+    hit: SearchRateHit | Record<string, unknown>,
+    equipment: string
+  ): FillView {
+    return normalizeForFillHit(hit, equipment)
+  }
+
+  /** Cheapest usable hit for equipment (optional floor + service preference). */
+  pickForFill(
+    rates: Array<SearchRateHit | Record<string, unknown>>,
+    equipment: string,
+    opts?: PickForFillOptions
+  ) {
+    return pickForFillHits(rates, equipment, opts)
+  }
+
+  /**
+   * Resolve many lanes with one session, bounded concurrency, optional cache.
+   * Prefer this over spawning CLI per lane.
+   */
+  resolveMany(
+    jobs: ResolveManyJob[],
+    opts?: ResolveManyOptions
+  ): Promise<ResolveManyResult[]> {
+    return resolveMany(this.http, jobs, opts)
   }
 }

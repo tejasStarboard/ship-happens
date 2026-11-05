@@ -13,6 +13,7 @@ import {
   MAPPING_REUSE_SOURCE,
   mappedLaneFromProposal,
   proposeFeeBindingsFromLabels,
+  type AnswerBinding,
   type FeeBinding,
   type MappedLane,
 } from "@ship-happens/fill/browser"
@@ -61,6 +62,12 @@ type LaneDraft = {
   feeSlots: string
   /** Optional column keys aligned to feeSlots by index (comma-separated). */
   feeColumnKeys: string
+  /** Optional cell refs aligned to feeSlots (e.g. M3 for LSS). */
+  feeCellRefs: string
+  /** Comma-separated PRD answer ids (carrier_name, transit_days, all_in, …). */
+  answerIds: string
+  /** Cell refs aligned to answerIds (e.g. A3, P3, L3). */
+  answerCellRefs: string
 }
 
 function mapStepLabel(step: RfpProgressStepView | undefined) {
@@ -73,6 +80,9 @@ function mapStepLabel(step: RfpProgressStepView | undefined) {
 function bindingsToDraftFields(lane: RfpMappedLaneView): {
   feeSlots: string
   feeColumnKeys: string
+  feeCellRefs: string
+  answerIds: string
+  answerCellRefs: string
 } {
   const bindings =
     lane.feeBindings.length > 0
@@ -80,10 +90,15 @@ function bindingsToDraftFields(lane: RfpMappedLaneView): {
       : lane.surchargeSlots.map((heading) => ({
           heading,
           columnKey: null as string | null,
+          cellRef: null as string | null,
         }))
+  const answers = lane.answerBindings ?? []
   return {
     feeSlots: bindings.map((b) => b.heading).join(", "),
     feeColumnKeys: bindings.map((b) => b.columnKey ?? "").join(", "),
+    feeCellRefs: bindings.map((b) => b.cellRef ?? "").join(", "),
+    answerIds: answers.map((b) => b.answerId).join(", "),
+    answerCellRefs: answers.map((b) => b.cellRef ?? "").join(", "),
   }
 }
 
@@ -93,10 +108,27 @@ function draftFeeBindings(draft: LaneDraft): FeeBinding[] {
     .map((s) => s.trim())
     .filter(Boolean)
   const columns = draft.feeColumnKeys.split(",").map((s) => s.trim())
+  const cells = draft.feeCellRefs.split(",").map((s) => s.trim())
   return headings.map((heading, i) => {
     const binding: FeeBinding = { heading }
     const columnKey = columns[i]
     if (columnKey) binding.columnKey = columnKey
+    const cellRef = cells[i]
+    if (cellRef) binding.cellRef = cellRef
+    return binding
+  })
+}
+
+function draftAnswerBindings(draft: LaneDraft): AnswerBinding[] {
+  const ids = draft.answerIds
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+  const cells = draft.answerCellRefs.split(",").map((s) => s.trim())
+  return ids.map((answerId, i) => {
+    const binding: AnswerBinding = { answerId }
+    const cellRef = cells[i]
+    if (cellRef) binding.cellRef = cellRef
     return binding
   })
 }
@@ -116,6 +148,9 @@ function viewToDraft(lane: RfpMappedLaneView, index: number): LaneDraft {
     rowIndex: lane.rowIndex != null ? String(lane.rowIndex) : "",
     feeSlots: fees.feeSlots,
     feeColumnKeys: fees.feeColumnKeys,
+    feeCellRefs: fees.feeCellRefs,
+    answerIds: fees.answerIds,
+    answerCellRefs: fees.answerCellRefs,
   }
 }
 
@@ -133,6 +168,9 @@ function emptyDraft(index: number): LaneDraft {
     rowIndex: "",
     feeSlots: "",
     feeColumnKeys: "",
+    feeCellRefs: "",
+    answerIds: "",
+    answerCellRefs: "",
   }
 }
 
@@ -172,6 +210,10 @@ function draftsToMappedLanes(drafts: LaneDraft[]): MappedLane[] {
     if (feeBindings.length > 0) {
       lane.feeBindings = feeBindings
       lane.surchargeSlots = feeBindings.map((b) => b.heading)
+    }
+    const answerBindings = draftAnswerBindings(draft)
+    if (answerBindings.length > 0) {
+      lane.answerBindings = answerBindings
     }
     return lane
   })
@@ -316,9 +358,10 @@ export function FillMapPanel({
             Schema confirm
           </h2>
           <p className="text-sm text-muted-foreground">
-            Review and confirm O-D / equipment lanes and fee columns (BAF, THC,
-            …). Rates resolve reads only this confirmed store; pending map
-            reviews block resolve.
+            Review and confirm O-D / equipment lanes, fee columns (BAF, LSS,
+            …), and answer columns (carrier, transit, free days, all-in). Rates
+            resolve reads only this confirmed store; pending map reviews block
+            resolve.
           </p>
           {stepHint ? (
             <p className="mt-1 text-xs text-muted-foreground">
@@ -458,6 +501,9 @@ export function FillMapPanel({
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
                 Fee columns
               </TableHead>
+              <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
+                Answer columns
+              </TableHead>
               <TableHead className="h-[38px] w-10 text-xs font-medium text-muted-foreground">
                 <span className="sr-only">Remove</span>
               </TableHead>
@@ -536,7 +582,7 @@ export function FillMapPanel({
                   <div className="flex min-w-[140px] flex-col gap-1">
                     <Input
                       value={draft.feeSlots}
-                      placeholder="BAF, THC, AMS"
+                      placeholder="BAF, LSS"
                       disabled={pending}
                       onChange={(e) =>
                         updateDraft(draft.key, { feeSlots: e.target.value })
@@ -555,6 +601,54 @@ export function FillMapPanel({
                       }
                       className="h-8 text-xs"
                       aria-label="Fee column keys"
+                    />
+                    <Input
+                      value={draft.feeCellRefs}
+                      placeholder="Fee cell refs (e.g. M3)"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, {
+                          feeCellRefs: e.target.value,
+                        })
+                      }
+                      className="h-8 font-mono text-xs"
+                      aria-label="Fee cell refs"
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="align-top">
+                  <div className="flex min-w-[160px] flex-col gap-1">
+                    <Input
+                      value={draft.answerIds}
+                      placeholder="carrier_name, transit_days, all_in"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, { answerIds: e.target.value })
+                      }
+                      className="h-8 font-mono text-xs"
+                      aria-label="Answer ids"
+                    />
+                    <Input
+                      value={draft.answerCellRefs}
+                      placeholder="A3, P3, L3"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, {
+                          answerCellRefs: e.target.value,
+                        })
+                      }
+                      className="h-8 font-mono text-xs"
+                      aria-label="Answer cell refs"
+                    />
+                    <Input
+                      value={draft.cellRef}
+                      placeholder="Base cell ref (e.g. K3)"
+                      disabled={pending}
+                      onChange={(e) =>
+                        updateDraft(draft.key, { cellRef: e.target.value })
+                      }
+                      className="h-8 font-mono text-xs"
+                      aria-label="Base cell ref"
                     />
                   </div>
                 </TableCell>

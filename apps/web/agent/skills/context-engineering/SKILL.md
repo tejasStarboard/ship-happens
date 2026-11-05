@@ -19,6 +19,12 @@ Adapted from common agent context-engineering practice (selective include, budge
 4. **Lookup results** — `sb-client` JSON for the lanes you need (not every rate search ever).
 5. **Conversation** — compress old exploration; don’t replay full dumps.
 
+## User-facing replies
+
+Keep chat replies for a freight-forwarder audience: brief, friendly, no paths/CLI/JSON.
+Point them to Reviews or Files with product links when they need to act. Internal
+task briefs (above) stay in your working notes — don’t paste them into chat.
+
 ## Packing strategies
 
 ### Selective include
@@ -28,8 +34,8 @@ Only what this task needs:
 ```
 TASK: Fill ocean FCL sell rates on sheet Rates for CNSHA→USLAX
 FILE: /workspace/rfp.xlsx (sheet Rates)
-PATTERN: probe → search lane cols → rates resolve → write cells
-CONSTRAINT: no invented money cells; ask if origin/dest unclear
+PATTERN: probe headers → sh-client mapping propose/put (cellRef+fee+answer bindings) → rates resolve once → export
+CONSTRAINT: no invented money/free days/SCAC; do not hand-write Excel as fill path; ask if origin/dest unclear
 ```
 
 ### Hierarchical summary

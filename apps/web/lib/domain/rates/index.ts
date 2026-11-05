@@ -7,7 +7,6 @@
 export {
   buildContractSearchInput,
   buildSmokeLane,
-  buildSpotSearchInput,
   mapRateSearchResultToRows,
   parseEquipmentTypes,
   parseLocodeList,

@@ -26,6 +26,7 @@ import {
 } from "@ship-happens/ui/components/table"
 import { cn } from "@ship-happens/ui/lib/utils"
 import { FILLS_WORST_CASE } from "@/components/rfp/fills-break-fixtures"
+import { FillManageMenu } from "@/components/rfp/fill-manage-menu"
 import { NewFillDialog } from "@/components/rfp/new-fill-dialog"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
 import {
@@ -60,6 +61,7 @@ const BOARD_COLUMNS: {
   { status: "needs_review", hint: "Human check" },
   { status: "done", hint: "Ready to download" },
   { status: "failed", hint: "Needs retry" },
+  { status: "cancelled", hint: "Cancelled" },
 ]
 
 function statusPillClass(status: RfpStatus) {
@@ -67,6 +69,7 @@ function statusPillClass(status: RfpStatus) {
     case "done":
       return "status-pill status-pill-positive"
     case "failed":
+    case "cancelled":
       return "status-pill status-pill-negative"
     case "running":
     case "needs_review":
@@ -120,9 +123,23 @@ function FillCard({
             <span className="status-pill status-pill-warning">Due</span>
           ) : null}
         </div>
-        <span className="tabular shrink-0 text-[11px] text-muted-foreground">
-          {formatDateTime(rfp.updatedAt)}
-        </span>
+        {!disabled ? (
+          <div
+            className="relative z-10 -mr-1.5 -mt-1 shrink-0"
+            onClick={(event) => {
+              event.preventDefault()
+              event.stopPropagation()
+            }}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <FillManageMenu
+              fillId={rfp.id}
+              name={rfp.name}
+              customer={rfp.customer}
+              status={rfp.status}
+            />
+          </div>
+        ) : null}
       </div>
       <div className="min-w-0">
         <h3
@@ -136,6 +153,12 @@ function FillCard({
           title={rfp.customer || undefined}
         >
           {rfp.customer || "No customer"}
+        </p>
+        <p
+          className="mt-1 truncate text-[11px] text-muted-foreground tabular"
+          title={formatDateTime(rfp.updatedAt)}
+        >
+          {formatDateTime(rfp.updatedAt)}
         </p>
         {rfp.emailRef ? (
           <p
@@ -384,6 +407,9 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                 <TableHead className="h-[38px] text-right text-xs font-medium text-muted-foreground">
                   Updated
                 </TableHead>
+                <TableHead className="h-[38px] w-10 text-right text-xs font-medium text-muted-foreground">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -446,6 +472,22 @@ export function FillDeskBoard({ rfps }: { rfps: RfpListItem[] }) {
                   </TableCell>
                   <TableCell className="tabular text-right text-muted-foreground">
                     {formatDateTime(rfp.updatedAt)}
+                  </TableCell>
+                  <TableCell
+                    className="text-right"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }}
+                  >
+                    {!worstCase ? (
+                      <FillManageMenu
+                        fillId={rfp.id}
+                        name={rfp.name}
+                        customer={rfp.customer}
+                        status={rfp.status}
+                      />
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}

@@ -159,5 +159,36 @@ describe("lane-price-audit", () => {
     expect(view.audit.starboard.channel).toBe("contract")
     expect(view.audit.pick.confidence).toBe(0.6)
     expect(view.audit.pick.reason).toBe("projected_overlay")
+    expect(view.cellRole).toBeNull()
+  })
+
+  it("surfaces cellRole fee and answer from metadata", () => {
+    const fee = toFillReportCellView({
+      id: "fcel_fee",
+      sheetName: "Rates",
+      cellRef: "E3",
+      rowIndex: 2,
+      columnKey: "lss",
+      outcome: "filled",
+      value: "45",
+      reason: null,
+      metadata: { cellRole: "fee", feeHeading: "LSS", laneId: "lane_1" },
+    })
+    expect(fee.cellRole).toBe("fee")
+    expect(fee.feeHeading).toBe("LSS")
+
+    const answer = toFillReportCellView({
+      id: "fcel_ans",
+      sheetName: "Rates",
+      cellRef: "F3",
+      rowIndex: 2,
+      columnKey: "transit",
+      outcome: "filled",
+      value: "18",
+      reason: null,
+      metadata: { cellRole: "answer", answerId: "transit_days", laneId: "lane_1" },
+    })
+    expect(answer.cellRole).toBe("answer")
+    expect(answer.answerId).toBe("transit_days")
   })
 })

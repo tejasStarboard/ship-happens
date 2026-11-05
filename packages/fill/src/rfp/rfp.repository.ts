@@ -112,6 +112,31 @@ export class RfpRepository {
       .where(eq(rfps.id, rfpId))
   }
 
+  /** Desk rename / customer edit — always overwrites provided fields. */
+  async updateIdentity(
+    rfpId: string,
+    input: { name?: string; customer?: string | null }
+  ) {
+    const patch: {
+      name?: string
+      customer?: string | null
+      updatedAt: Date
+    } = { updatedAt: new Date() }
+    if (input.name !== undefined) {
+      patch.name = input.name.trim()
+    }
+    if (input.customer !== undefined) {
+      patch.customer = input.customer?.trim() || null
+    }
+    await this.db.update(rfps).set(patch).where(eq(rfps.id, rfpId))
+  }
+
+  async deleteForOrganization(organizationId: string, rfpId: string) {
+    await this.db
+      .delete(rfps)
+      .where(and(eq(rfps.id, rfpId), eq(rfps.organizationId, organizationId)))
+  }
+
   async mergeMetadata(rfpId: string, patch: Record<string, unknown>) {
     const current = await this.db
       .select({ metadata: rfps.metadata })

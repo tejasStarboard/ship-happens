@@ -60,7 +60,9 @@ function CommandDialog({
         )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        <Command className="max-h-[min(70vh,28rem)] **:[[cmdk-group-heading]]:scroll-mt-0">
+          {children}
+        </Command>
       </DialogContent>
     </Dialog>
   )

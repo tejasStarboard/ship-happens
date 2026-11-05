@@ -2,6 +2,7 @@ import { resolveAuthSession } from "./auth/resolveSession.js"
 import type { AuthSession } from "./auth/types.js"
 import { loadConfig, type Config } from "./config.js"
 import { StarboardHttp } from "./http/starboardHttp.js"
+import { CarriersModule } from "./modules/carriers/index.js"
 import { GlobalsModule } from "./modules/globals/index.js"
 import { LocationsModule } from "./modules/locations/index.js"
 import { MarginsModule } from "./modules/margins/index.js"
@@ -24,12 +25,14 @@ export class StarboardClient {
   readonly globals: GlobalsModule
   readonly locations: LocationsModule
   readonly margins: MarginsModule
+  readonly carriers: CarriersModule
 
   constructor(private readonly http: StarboardHttp) {
     this.rates = new RatesModule(http)
     this.globals = new GlobalsModule(http)
     this.locations = new LocationsModule(http)
     this.margins = new MarginsModule()
+    this.carriers = new CarriersModule(http)
   }
 
   get companyId(): string {

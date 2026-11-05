@@ -32,6 +32,7 @@ export async function POST(
       // optional body
     }
 
+    // One chat per fill — idempotent create-if-missing.
     const chat = await addWorkspaceChat(organizationId, workspaceId, title)
     return NextResponse.json(chat)
   } catch (error) {

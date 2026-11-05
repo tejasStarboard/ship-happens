@@ -3,9 +3,23 @@ import type { FillReportCellView } from "../rates/lane-price-audit"
 import type { RfpBidOutcome } from "./fill-bid-outcome"
 
 export type RfpStatus =
-  "queued" | "running" | "needs_review" | "done" | "failed"
+  | "queued"
+  | "running"
+  | "needs_review"
+  | "done"
+  | "failed"
+  | "cancelled"
 
 export type { RfpBidOutcome }
+
+export const RFP_STATUSES = [
+  "queued",
+  "running",
+  "needs_review",
+  "done",
+  "failed",
+  "cancelled",
+] as const satisfies readonly RfpStatus[]
 
 export const RFP_STATUS_LABEL: Record<RfpStatus, string> = {
   queued: "Queued",
@@ -13,6 +27,7 @@ export const RFP_STATUS_LABEL: Record<RfpStatus, string> = {
   needs_review: "Needs review",
   done: "Done",
   failed: "Failed",
+  cancelled: "Cancelled",
 }
 
 /** Email provenance when the fill was created via mailbox intake. */
@@ -117,6 +132,14 @@ export type RfpFeeBindingView = {
   confidence: number | null
 }
 
+export type RfpAnswerBindingView = {
+  answerId: string
+  columnKey: string | null
+  cellRef: string | null
+  sheetName: string | null
+  confidence: number | null
+}
+
 export type RfpMappedLaneView = {
   laneId: string
   originLocode: string
@@ -129,6 +152,7 @@ export type RfpMappedLaneView = {
   cellRef: string | null
   surchargeSlots: string[]
   feeBindings: RfpFeeBindingView[]
+  answerBindings: RfpAnswerBindingView[]
 }
 
 export type RfpDetailView = RfpListItem & {
@@ -164,10 +188,13 @@ export function asRfpStatus(value: string): RfpStatus {
     case "needs_review":
     case "done":
     case "failed":
-      return value
     case "cancelled":
-      return "failed"
+      return value
     default:
       return "queued"
   }
+}
+
+export function isRfpStatus(value: string): value is RfpStatus {
+  return (RFP_STATUSES as readonly string[]).includes(value)
 }

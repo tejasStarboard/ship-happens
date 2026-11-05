@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import type { UnexpectedFeeWarningPayload } from "@ship-happens/fill/browser"
 import { Button } from "@ship-happens/ui/components/button"
@@ -22,10 +22,15 @@ export function ExportWorkbookButton({
   fillId,
   pendingReviewCount,
   disabled,
+  hideTrigger = false,
+  openSignal = 0,
 }: {
   fillId: string
   pendingReviewCount: number
   disabled?: boolean
+  /** When true, no visible button — bump `openSignal` to start export. */
+  hideTrigger?: boolean
+  openSignal?: number
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -57,6 +62,7 @@ export function ExportWorkbookButton({
   }
 
   function onClick() {
+    if (pending || disabled) return
     if (pendingReviewCount > 0) {
       setConfirmOpen(true)
       return
@@ -64,16 +70,24 @@ export function ExportWorkbookButton({
     runExport(false)
   }
 
+  useEffect(() => {
+    if (!hideTrigger || openSignal <= 0) return
+    onClick()
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional signal trigger
+  }, [openSignal])
+
   return (
     <>
-      <Button
-        variant="secondary"
-        size="sm"
-        disabled={disabled || pending}
-        onClick={onClick}
-      >
-        {pending ? "Exporting…" : "Export filled"}
-      </Button>
+      {hideTrigger ? null : (
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={disabled || pending}
+          onClick={onClick}
+        >
+          {pending ? "Exporting…" : "Export filled"}
+        </Button>
+      )}
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -2,7 +2,10 @@ import { access, readFile } from "node:fs/promises"
 import { dirname, join } from "node:path"
 import { fileURLToPath } from "node:url"
 import { env } from "@/env"
-import { createFillAgentApiKey } from "@/lib/auth/sh-api-key"
+import {
+  createFillAgentApiKey,
+  createOrgAgentApiKey,
+} from "@/lib/auth/sh-api-key"
 import { createAppContext } from "@/lib/di/create-app-context"
 import { DomainError } from "@/lib/domain/errors"
 
@@ -21,6 +24,10 @@ type SandboxHandle = {
     stderr: string
   }>
 }
+
+export type ShClientInjectOptions =
+  | { kind: "fill"; fillId: string }
+  | { kind: "account-rules"; organizationId: string; userId: string }
 
 export const SH_CLIENT_WORKSPACE_JS = ".eve/bin/sh-client.js"
 export const SH_CLIENT_WORKSPACE_BIN = ".eve/bin/sh-client"
@@ -93,79 +100,12 @@ fi
 exec node ${SH_CLIENT_SANDBOX_JS} "$@"
 `
 
-/**
- * Ensure sandbox has an executable sh-client and env matching current APP_URL.
- * Re-injects when missing or when SH_APP_URL is stale (e.g. localhost → ngrok).
- */
-export async function ensureShClientCli(
+async function installShClientBinary(
   sandbox: SandboxHandle,
-  options: { fillId: string }
+  envFile: string
 ): Promise<void> {
-  const appUrl = env.APP_URL.replace(/\/$/, "")
-  const probe = await sandbox.run({
-    command: [
-      "set +e",
-      "if [[ ! -f /workspace/.eve/sh-client.env ]]; then",
-      "  echo __SH_ENV_MISSING__",
-      `elif grep -F ${shellSingleQuote(appUrl)} /workspace/.eve/sh-client.env >/dev/null 2>&1; then`,
-      "  echo __SH_ENV_CURRENT__",
-      "else",
-      "  echo __SH_ENV_STALE__",
-      "fi",
-      `if [[ -x ${SH_CLIENT_SANDBOX_BIN} ]] && command -v sh-client >/dev/null 2>&1; then`,
-      "  echo __SH_BIN_OK__",
-      "else",
-      "  echo __SH_BIN_BAD__",
-      "fi",
-    ].join("\n"),
-  })
-  const out = probe.stdout
-  const needsInject =
-    out.includes("__SH_ENV_MISSING__") || out.includes("__SH_ENV_STALE__")
-  if (needsInject) {
-    await injectShClientCli(sandbox, options)
-    return
-  }
-  if (out.includes("__SH_BIN_BAD__")) {
-    const fix = await sandbox.run({
-      command: [
-        `chmod +x ${SH_CLIENT_SANDBOX_BIN} ${SH_CLIENT_SANDBOX_JS} 2>/dev/null || true`,
-        `if [[ -f ${SH_CLIENT_SANDBOX_BIN} ]]; then sudo cp ${SH_CLIENT_SANDBOX_BIN} /usr/local/bin/sh-client && sudo chmod +x /usr/local/bin/sh-client; fi`,
-        "command -v sh-client",
-      ].join(" && "),
-    })
-    if (fix.exitCode !== 0) {
-      await injectShClientCli(sandbox, options)
-    }
-  }
-}
-
-/**
- * Install sh-client on PATH and write fill-scoped API key env for the sandbox.
- */
-export async function injectShClientCli(
-  sandbox: SandboxHandle,
-  options: { fillId: string }
-): Promise<void> {
-  const app = createAppContext()
-  const fill = await app.repos.rfps.findById(options.fillId)
-  if (!fill) {
-    throw new DomainError(`Fill not found: ${options.fillId}`, "NOT_FOUND")
-  }
-
-  const { key } = await createFillAgentApiKey({
-    userId: fill.ownerUserId,
-    organizationId: fill.organizationId,
-    fillId: fill.id,
-  })
-
   const cliPath = await resolveShClientCliPath()
   const bytes = await readFile(cliPath)
-  const envFile = formatEnvFile({
-    SH_APP_URL: env.APP_URL,
-    SH_API_KEY: key,
-    SH_FILL_ID: fill.id,
-  })
 
   await sandbox.run({ command: "mkdir -p /workspace/.eve/bin" })
   await sandbox.writeBinaryFile({
@@ -195,4 +135,100 @@ export async function injectShClientCli(
       `Failed to install sh-client in sandbox: ${install.stderr || install.stdout}`
     )
   }
+}
+
+/**
+ * Ensure sandbox has an executable sh-client and env matching current APP_URL.
+ * Re-injects when missing or when SH_APP_URL is stale (e.g. localhost → ngrok).
+ */
+export async function ensureShClientCli(
+  sandbox: SandboxHandle,
+  options: ShClientInjectOptions | { fillId: string }
+): Promise<void> {
+  const normalized: ShClientInjectOptions =
+    "kind" in options
+      ? options
+      : { kind: "fill", fillId: options.fillId }
+
+  const appUrl = env.APP_URL.replace(/\/$/, "")
+  const probe = await sandbox.run({
+    command: [
+      "set +e",
+      "if [[ ! -f /workspace/.eve/sh-client.env ]]; then",
+      "  echo __SH_ENV_MISSING__",
+      `elif grep -F ${shellSingleQuote(appUrl)} /workspace/.eve/sh-client.env >/dev/null 2>&1; then`,
+      "  echo __SH_ENV_CURRENT__",
+      "else",
+      "  echo __SH_ENV_STALE__",
+      "fi",
+      `if [[ -x ${SH_CLIENT_SANDBOX_BIN} ]] && command -v sh-client >/dev/null 2>&1; then`,
+      "  echo __SH_BIN_OK__",
+      "else",
+      "  echo __SH_BIN_BAD__",
+      "fi",
+    ].join("\n"),
+  })
+  const out = probe.stdout
+  const needsInject =
+    out.includes("__SH_ENV_MISSING__") || out.includes("__SH_ENV_STALE__")
+  if (needsInject) {
+    await injectShClientCli(sandbox, normalized)
+    return
+  }
+  if (out.includes("__SH_BIN_BAD__")) {
+    const fix = await sandbox.run({
+      command: [
+        `chmod +x ${SH_CLIENT_SANDBOX_BIN} ${SH_CLIENT_SANDBOX_JS} 2>/dev/null || true`,
+        `if [[ -f ${SH_CLIENT_SANDBOX_BIN} ]]; then sudo cp ${SH_CLIENT_SANDBOX_BIN} /usr/local/bin/sh-client && sudo chmod +x /usr/local/bin/sh-client; fi`,
+        "command -v sh-client",
+      ].join(" && "),
+    })
+    if (fix.exitCode !== 0) {
+      await injectShClientCli(sandbox, normalized)
+    }
+  }
+}
+
+/**
+ * Install sh-client on PATH and write fill- or org-scoped API key env.
+ */
+export async function injectShClientCli(
+  sandbox: SandboxHandle,
+  options: ShClientInjectOptions | { fillId: string }
+): Promise<void> {
+  const normalized: ShClientInjectOptions =
+    "kind" in options
+      ? options
+      : { kind: "fill", fillId: options.fillId }
+
+  let envVars: Record<string, string>
+
+  if (normalized.kind === "fill") {
+    const app = createAppContext()
+    const fill = await app.repos.rfps.findById(normalized.fillId)
+    if (!fill) {
+      throw new DomainError(`Fill not found: ${normalized.fillId}`, "NOT_FOUND")
+    }
+    const { key } = await createFillAgentApiKey({
+      userId: fill.ownerUserId,
+      organizationId: fill.organizationId,
+      fillId: fill.id,
+    })
+    envVars = {
+      SH_APP_URL: env.APP_URL,
+      SH_API_KEY: key,
+      SH_FILL_ID: fill.id,
+    }
+  } else {
+    const { key } = await createOrgAgentApiKey({
+      userId: normalized.userId,
+      organizationId: normalized.organizationId,
+    })
+    envVars = {
+      SH_APP_URL: env.APP_URL,
+      SH_API_KEY: key,
+    }
+  }
+
+  await installShClientBinary(sandbox, formatEnvFile(envVars))
 }

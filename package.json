@@ -5,6 +5,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --filter=web",
+    "start": "turbo start --filter=web",
     "lint": "turbo lint",
     "format": "turbo format",
     "format:check": "turbo format:check",

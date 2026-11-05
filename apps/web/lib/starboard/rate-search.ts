@@ -6,7 +6,6 @@ import {
   paginationFromSearchBody,
   type ContractSearchInput,
   type SearchRateHit,
-  type SpotSearchInput,
 } from "@ship-happens/sb-client"
 import { ZodError } from "zod"
 import {
@@ -45,8 +44,6 @@ export {
 export const DEFAULT_SMOKE_ORIGIN = "CNSHA"
 export const DEFAULT_SMOKE_DESTINATION = "USLAX"
 export const DEFAULT_SMOKE_EQUIPMENT = "40HC" as const
-/** Spot search requires a carrier slug; CMA is the documented CLI example. */
-export const DEFAULT_SMOKE_SPOT_CARRIER = "cma"
 
 const OCEAN_EQUIPMENT_SET = new Set<string>(OCEAN_EQUIPMENT_TYPES)
 
@@ -83,7 +80,6 @@ export type RateSearchLane = {
   equipmentTypes: OceanEquipmentType[]
   /** Joined equipmentTypes for display / legacy empty-state copy. */
   equipment: string
-  spotCarrier: string
   serviceType: ContractSearchInput["service_type"]
   validFrom: string
   validTo: string
@@ -94,9 +90,8 @@ export type RateSearchSuccess = {
   status: "ok" | "empty"
   companyId: string
   lane: RateSearchLane
-  /** Per-channel outcomes; overall `ok` if either side has hits (contract and/or spot). */
+  /** Contract search outcome. */
   contract: RateSearchChannelResult
-  spot: RateSearchChannelResult
   /** Present when contract search used Starboard `page` / `page_size`. */
   pagination?: RateSearchPagination | null
 }
@@ -109,7 +104,6 @@ export type RateSearchFailure = {
   companyId?: string
   lane?: RateSearchLane
   contract?: RateSearchChannelResult
-  spot?: RateSearchChannelResult
   pagination?: RateSearchPagination | null
 }
 
@@ -122,7 +116,6 @@ export type SearchRatesReadOnlyInput = {
   equipmentTypes?: string[] | string
   /** Legacy single equipment — used when equipmentTypes omitted. */
   equipment?: string
-  spotCarrier?: string
   serviceType?: ContractSearchInput["service_type"]
   validFrom?: string
   validTo?: string
@@ -131,8 +124,7 @@ export type SearchRatesReadOnlyInput = {
   transitTimeMax?: number | null
   /**
    * When set, contract search uses Starboard Qv2 pagination
-   * (`page` / `page_size` / `cache_key`). Spot is only requested on page 1
-   * (spot carrier APIs are not paginated the same way).
+   * (`page` / `page_size` / `cache_key`).
    */
   page?: number
   pageSize?: number
@@ -215,7 +207,6 @@ export function buildSmokeLane(
     destinationVia: parseLocodeList(input.destinationVia),
     equipmentTypes,
     equipment: equipmentTypes.join(", "),
-    spotCarrier: input.spotCarrier?.trim() || DEFAULT_SMOKE_SPOT_CARRIER,
     serviceType: input.serviceType ?? "ocean_fcl",
     validFrom,
     validTo,
@@ -258,16 +249,6 @@ export function buildContractSearchInput(
     body.cache_key = pagination.cacheKey
   }
   return body
-}
-
-export function buildSpotSearchInput(lane: RateSearchLane): SpotSearchInput {
-  return {
-    carrier: lane.spotCarrier,
-    origin_locodes: lane.originLocodes,
-    destination_locodes: lane.destinationLocodes,
-    container_types: lane.equipmentTypes,
-    departure_date: lane.validFrom,
-  }
 }
 
 export function channelFromSearchBody(
@@ -320,26 +301,20 @@ export function mapStarboardError(err: unknown): RateSearchChannelError {
   }
 }
 
-function overallFromChannels(
-  contract: RateSearchChannelResult,
-  spot: RateSearchChannelResult
+function overallFromContract(
+  contract: RateSearchChannelResult
 ): "ok" | "empty" | "error" {
-  // Ticket: contract and/or spot — one successful hit list is enough for smoke ok.
-  if (contract.status === "ok" || spot.status === "ok") {
-    return "ok"
-  }
-  if (contract.status === "empty" && spot.status === "empty") {
-    return "empty"
-  }
+  if (contract.status === "ok") return "ok"
+  if (contract.status === "empty") return "empty"
   return "error"
 }
 
 /**
- * Read-only contract + spot rate search for server routes/actions.
+ * Read-only contract rate search for server routes/actions.
  * Empty (HTTP 200, zero hits) is distinct from auth/config/API failures.
  *
  * Pass `page` / `pageSize` to use Starboard contract pagination (avoids loading
- * the full rate pool into one serverless response). Spot runs on page 1 only.
+ * the full rate pool into one serverless response).
  */
 export async function searchRatesReadOnly(
   input: SearchRatesReadOnlyInput = {}
@@ -369,55 +344,33 @@ export async function searchRatesReadOnly(
     }
   }
 
-  const contractPromise = client.rates.searchContract(
-    buildContractSearchInput(lane, paginationInput)
-  )
-  // Spot carrier APIs are not Starboard-paginated; only hit them on page 1.
-  const spotPromise =
-    !paginated || page === 1
-      ? client.rates.searchSpot(buildSpotSearchInput(lane))
-      : Promise.resolve({ rates: [] as unknown[] })
+  let contract: RateSearchChannelResult
+  let pagination: RateSearchPagination | null = null
+  try {
+    const raw = await client.rates.searchContract(
+      buildContractSearchInput(lane, paginationInput)
+    )
+    contract = channelFromSearchBody(raw)
+    pagination = paginationFromSearchBody(raw)
+  } catch (err: unknown) {
+    contract = mapStarboardError(err)
+  }
 
-  const [contractSettled, spotSettled] = await Promise.allSettled([
-    contractPromise,
-    spotPromise,
-  ])
-
-  const contract: RateSearchChannelResult =
-    contractSettled.status === "fulfilled"
-      ? channelFromSearchBody(contractSettled.value)
-      : mapStarboardError(contractSettled.reason)
-
-  const spot: RateSearchChannelResult =
-    spotSettled.status === "fulfilled"
-      ? channelFromSearchBody(spotSettled.value)
-      : mapStarboardError(spotSettled.reason)
-
-  const pagination =
-    contractSettled.status === "fulfilled"
-      ? paginationFromSearchBody(contractSettled.value)
-      : null
-
-  const overall = overallFromChannels(contract, spot)
+  const overall = overallFromContract(contract)
 
   if (overall === "error") {
-    const firstError =
-      contract.status === "error"
-        ? contract
-        : spot.status === "error"
-          ? spot
-          : null
     return {
       status: "error",
-      kind: firstError?.kind ?? "api",
+      kind: contract.status === "error" ? contract.kind : "api",
       message:
-        firstError?.message ??
-        "Contract and/or spot rate search failed against Starboard",
-      statusCode: firstError?.statusCode,
+        contract.status === "error"
+          ? contract.message
+          : "Contract rate search failed against Starboard",
+      statusCode:
+        contract.status === "error" ? contract.statusCode : undefined,
       companyId: client.companyId,
       lane,
       contract,
-      spot,
       pagination,
     }
   }
@@ -427,12 +380,11 @@ export async function searchRatesReadOnly(
     companyId: client.companyId,
     lane,
     contract,
-    spot,
     pagination,
   }
 }
 
-/** SB-6652 smoke: CNSHA → USLAX 40HC contract + spot. */
+/** SB-6652 smoke: CNSHA → USLAX 40HC contract search. */
 export async function runStarboardRateSearchSmoke(
   input: SearchRatesReadOnlyInput = {}
 ): Promise<RateSearchResult> {
@@ -581,12 +533,9 @@ function rowsFromChannel(
   )
 }
 
-/** Flatten contract + spot channel bodies into Rates table rows. */
+/** Flatten contract channel body into Rates table rows. */
 export function mapRateSearchResultToRows(
   result: RateSearchSuccess
 ): RateResultRow[] {
-  return [
-    ...rowsFromChannel("contract", result.contract, result.lane),
-    ...rowsFromChannel("spot", result.spot, result.lane),
-  ]
+  return rowsFromChannel("contract", result.contract, result.lane)
 }

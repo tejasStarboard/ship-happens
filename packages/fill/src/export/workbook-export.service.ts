@@ -33,6 +33,8 @@ export type ExportWorkbookResult = {
   fillId: string
   filledFileUrl: string
   filledBlobPathname: string
+  /** Workspace-relative path to the filled workbook (versioned under filled/). */
+  workspacePath: string
   writtenCount: number
   skippedMissingRef: number
   skippedOther: number
@@ -41,6 +43,13 @@ export type ExportWorkbookResult = {
   unexpectedFeeWarning: UnexpectedFeeWarningPayload | null
   detail: string
 }
+
+/** Filesystem-safe UTC run folder under `filled/` (e.g. `2026-11-05T18-30-22Z`). */
+export function filledExportRunId(now = new Date()): string {
+  return now.toISOString().replaceAll(":", "-").replace(/\.\d{3}Z$/, "Z")
+}
+
+export const FILLED_EXPORT_META_NAME = "meta.json"
 
 export class WorkbookExportService {
   constructor(
@@ -116,9 +125,12 @@ export class WorkbookExportService {
       const filledName = safeName.toLowerCase().startsWith("filled-")
         ? safeName
         : `filled-${safeName}`
+      const runId = filledExportRunId()
+      const workspaceDir = `filled/${runId}`
+      const workspacePath = `${workspaceDir}/${filledName}`
 
       const uploaded = await this.blob.upload({
-        pathname: `fills/${input.organizationId}/${input.fillId}/${filledName}`,
+        pathname: `fills/${input.organizationId}/${input.fillId}/${runId}/${filledName}`,
         body: filledBytes,
         contentType: source.mimeType,
         addRandomSuffix: true,
@@ -132,8 +144,22 @@ export class WorkbookExportService {
       try {
         await this.workspace.writeWorkspaceFile(
           input.fillId,
-          `filled/${filledName}`,
+          workspacePath,
           filledBytes
+        )
+        await this.workspace.writeWorkspaceFile(
+          input.fillId,
+          `${workspaceDir}/${FILLED_EXPORT_META_NAME}`,
+          JSON.stringify(
+            {
+              filledFileUrl: uploaded.url,
+              filledBlobPathname: uploaded.pathname,
+              exportedAt: new Date().toISOString(),
+              runId,
+            },
+            null,
+            2
+          )
         )
       } catch (error) {
         await this.pipeline.appendLog({
@@ -170,6 +196,7 @@ export class WorkbookExportService {
           skippedMissingRef: plan.skippedMissingRef,
           skippedOther: plan.skippedOther,
           filledBlobPathname: uploaded.pathname,
+          workspacePath,
         },
       })
 
@@ -200,6 +227,7 @@ export class WorkbookExportService {
         fillId: input.fillId,
         filledFileUrl: uploaded.url,
         filledBlobPathname: uploaded.pathname,
+        workspacePath,
         writtenCount: plan.writes.length,
         skippedMissingRef: plan.skippedMissingRef,
         skippedOther: plan.skippedOther,

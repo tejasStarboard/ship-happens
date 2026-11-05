@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest"
 import {
   asRateList,
   assembleResolvedRate,
+  contractFactsFromSearchHit,
   countRateSearchHits,
 } from "./resolveFullRate.js"
 import { priceGlobalBuy } from "./priceGlobal.js"
@@ -159,5 +160,51 @@ describe("assembleResolvedRate", () => {
         .sort((a, b) => (a ?? 0) - (b ?? 0))
     ).toEqual([15, 100, 110])
     expect(resolved.resolved_buy_total).toBe(3663)
+  })
+})
+
+describe("contractFactsFromSearchHit", () => {
+  it("keeps transit_time and origin_free_time free_usage from the hit", () => {
+    const facts = contractFactsFromSearchHit({
+      id: "hit_1",
+      carrier_name: "MSC",
+      transit_time: 18,
+      service_name: "Pendulum",
+      effective_from: "2024-01-01",
+      expires_on: "2024-12-31",
+      rate_items: [
+        {
+          name: "origin_free_time",
+          free_usage: 7,
+          usage_unit: "day",
+        },
+        {
+          name: "destination_free_time",
+          free_usage: 5,
+          usage_unit: "day",
+        },
+      ],
+    })
+    expect(facts.transit_time_days).toBe(18)
+    expect(facts.service_name).toBe("Pendulum")
+    expect(facts.effective_from).toBe("2024-01-01")
+    expect(facts.expires_on).toBe("2024-12-31")
+    expect(facts.free_time).toEqual({
+      originDays: 7,
+      destDays: 5,
+      detentionOrigin: null,
+      detentionDest: null,
+      demurrageOrigin: null,
+      demurrageDest: null,
+    })
+  })
+
+  it("returns null free_time when hit has no free-time items", () => {
+    const facts = contractFactsFromSearchHit({
+      transit_time: 0,
+      rate_items: [{ name: "BAF", amount: 100 }],
+    })
+    expect(facts.transit_time_days).toBeNull()
+    expect(facts.free_time).toBeNull()
   })
 })

@@ -22,3 +22,22 @@ export async function decideReviewItem(
     session.user.id
   )
 }
+
+export async function decideReviewItemsBulk(
+  fillId: string,
+  input: {
+    decision: "approved" | "rejected"
+    decisionNote?: string
+    ids?: string[]
+    stepKey?: string | null
+  }
+) {
+  const { organizationId, session } = await requireOrgSession()
+  const ctx = createAppContext()
+  return ctx.reviews.decideMany(
+    organizationId,
+    fillId,
+    input,
+    session.user.id
+  )
+}

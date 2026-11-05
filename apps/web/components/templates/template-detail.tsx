@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@ship-happens/ui/components/card"
 import { OfficeSpreadsheetViewer } from "@/components/shared/office-spreadsheet-viewer"
+import { TemplateManageMenu } from "@/components/templates/template-manage-menu"
 import { UseTemplateFillButton } from "@/components/templates/use-template-fill-button"
 import type { TemplateListItem } from "@/lib/domain/templates/template.types"
 import { formatBytes } from "@/lib/shared/format-bytes"
@@ -48,6 +49,12 @@ export function TemplateDetail({ template }: { template: TemplateListItem }) {
             <IconDownload data-icon="inline-start" />
             Download
           </Button>
+          <TemplateManageMenu
+            templateId={template.id}
+            name={template.name}
+            customer={template.customer}
+            size="default"
+          />
         </div>
       </div>
 

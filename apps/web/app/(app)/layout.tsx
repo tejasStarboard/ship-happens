@@ -5,6 +5,7 @@ import {
   SidebarProvider,
 } from "@ship-happens/ui/components/sidebar"
 import { AppSidebar } from "@/components/app-sidebar"
+import { BreadcrumbLeafProvider } from "@/components/breadcrumb-leaf"
 import { SiteHeader } from "@/components/site-header"
 import { getSession, listOrganizations } from "@/lib/auth/session"
 
@@ -52,10 +53,12 @@ export default async function AppLayout({
         }}
       />
       <SidebarInset className="flex max-h-svh flex-col overflow-hidden">
-        <SiteHeader />
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {children}
-        </div>
+        <BreadcrumbLeafProvider>
+          <SiteHeader organizationId={activeOrgId} userId={user.id} />
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            {children}
+          </div>
+        </BreadcrumbLeafProvider>
       </SidebarInset>
     </SidebarProvider>
   )

@@ -52,7 +52,7 @@ const PIPELINE = [
 const RATE_HITS = [
   { lane: "CNSHA–USLAX", buy: "$2,450", src: "Contract · OOCL" },
   { lane: "CNNGB–USLGB", buy: "$2,310", src: "Contract · MSC" },
-  { lane: "KRPUS–USSEA", buy: "$2,180", src: "Spot · ONE" },
+  { lane: "KRPUS–USSEA", buy: "$2,180", src: "Contract · ONE" },
 ] as const
 
 function Glass({

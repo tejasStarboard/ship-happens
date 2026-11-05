@@ -30,6 +30,41 @@ export const SB_CLIENT_SANDBOX_BIN = `/workspace/${SB_CLIENT_WORKSPACE_BIN}`
 export const SB_CLIENT_ENV_FILE = "/workspace/.eve/sb-client.env"
 
 /**
+ * Writable home for uv/agent-xlsx under `.eve` so tool caches never land in the
+ * user-visible workspace root (Vercel image `$HOME` is often not writable).
+ */
+export const SANDBOX_WORKSPACE_HOME = "/workspace/.eve/home"
+export const SANDBOX_UV_CACHE_DIR = "/workspace/.eve/uv-cache"
+export const SANDBOX_UV_TOOL_DIR = "/workspace/.eve/uv-tools"
+export const AGENT_XLSX_WORKSPACE_BIN = ".eve/bin/agent-xlsx"
+export const AGENT_XLSX_SANDBOX_BIN = `/workspace/${AGENT_XLSX_WORKSPACE_BIN}`
+
+/**
+ * Env so `uv` / `uvx` / `agent-xlsx` write under `/workspace` instead of a
+ * read-only `/home/vercel-sandbox`.
+ */
+export function sandboxWritableHomeEnv(): Record<string, string> {
+  return {
+    HOME: SANDBOX_WORKSPACE_HOME,
+    UV_CACHE_DIR: SANDBOX_UV_CACHE_DIR,
+    UV_TOOL_DIR: SANDBOX_UV_TOOL_DIR,
+    XDG_CACHE_HOME: "/workspace/.eve/xdg-cache",
+    XDG_DATA_HOME: "/workspace/.eve/xdg-data",
+  }
+}
+
+const SANDBOX_PATH_EXPORT =
+  'export PATH="/workspace/.eve/home/.local/bin:/usr/local/bin:/usr/bin:/bin:$PATH"'
+
+function sandboxHomeExports(): string {
+  const env = sandboxWritableHomeEnv()
+  return Object.entries(env)
+    .map(([key, value]) => `export ${key}=${shellSingleQuote(value)}`)
+    .concat(SANDBOX_PATH_EXPORT)
+    .join("; ")
+}
+
+/**
  * Starboard env for microsandbox command environment / env file.
  * Omits unset keys so we don't pass empty strings.
  */
@@ -41,7 +76,7 @@ export function starboardSandboxEnv(): Record<string, string> {
     ["SB_CLIENT_CLIENT_SECRET", env.SB_CLIENT_CLIENT_SECRET],
     ["SB_CLIENT_COMPANY_ID", env.SB_CLIENT_COMPANY_ID],
   ]
-  const out: Record<string, string> = {}
+  const out: Record<string, string> = { ...sandboxWritableHomeEnv() }
   for (const [key, value] of entries) {
     if (value) out[key] = value
   }
@@ -111,6 +146,8 @@ export async function resolveSbClientCliPath(): Promise<string> {
 const MISSING_NODE = "__NODE_MISSING__"
 const MISSING_UVX = "__UVX_MISSING__"
 const UV_INSTALL_FAILED = "__UV_INSTALL_FAILED__"
+const MISSING_AGENT_XLSX = "__AGENT_XLSX_MISSING__"
+const AGENT_XLSX_INSTALL_FAILED = "__AGENT_XLSX_INSTALL_FAILED__"
 
 /**
  * Install Node into the sandbox image/snapshot when missing (eve base image
@@ -143,14 +180,14 @@ export async function ensureSandboxNode(sandbox: SandboxHandle): Promise<void> {
 }
 
 /**
- * Install Astral `uv`/`uvx` when missing so `uvx agent-xlsx` works without a
- * global Python install. Best-effort: never fail sandbox prepare (sb-client
- * still works without uv).
+ * Install Astral `uv`/`uvx` when missing. Uses writable `/workspace` home —
+ * Vercel sandbox `$HOME` often cannot create `~/.local/share/uv`.
+ * Best-effort: never fail sandbox prepare (sb-client still works without uv).
  */
 export async function ensureSandboxUv(sandbox: SandboxHandle): Promise<void> {
-  const pathPrefix = 'export PATH="$HOME/.local/bin:/usr/local/bin:$PATH"'
+  const home = sandboxHomeExports()
   const existing = await sandbox.run({
-    command: `${pathPrefix}; if command -v uvx >/dev/null 2>&1; then uvx --version; else echo "${MISSING_UVX}"; fi`,
+    command: `${home}; if command -v uvx >/dev/null 2>&1; then uvx --version; else echo "${MISSING_UVX}"; fi`,
   })
   if (!existing.stdout.includes(MISSING_UVX)) return
 
@@ -158,28 +195,122 @@ export async function ensureSandboxUv(sandbox: SandboxHandle): Promise<void> {
   const install = await sandbox.run({
     command: [
       "set +e",
-      pathPrefix,
+      home,
+      "mkdir -p /workspace/.eve/home/.local/bin /workspace/.eve/uv-cache /workspace/.eve/uv-tools /workspace/.eve/xdg-cache /workspace/.eve/xdg-data",
       "curl -LsSf https://astral.sh/uv/install.sh | sh",
-      pathPrefix,
-      'if [[ -x "$HOME/.local/bin/uv" ]]; then sudo ln -sfn "$HOME/.local/bin/uv" /usr/local/bin/uv; fi',
-      'if [[ -x "$HOME/.local/bin/uvx" ]]; then sudo ln -sfn "$HOME/.local/bin/uvx" /usr/local/bin/uvx; fi',
+      home,
+      'if [[ -x /workspace/.eve/home/.local/bin/uv ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uv /usr/local/bin/uv; fi',
+      'if [[ -x /workspace/.eve/home/.local/bin/uvx ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uvx /usr/local/bin/uvx; fi',
       `if command -v uvx >/dev/null 2>&1; then uvx --version; else echo "${UV_INSTALL_FAILED}"; fi`,
       "exit 0",
     ].join("; "),
   })
   if (install.stdout.includes(UV_INSTALL_FAILED)) {
     console.warn(
-      `[sandbox] uv/uvx install failed (agent-xlsx via uvx unavailable): ${install.stderr || install.stdout}`
+      `[sandbox] uv/uvx install failed (agent-xlsx unavailable): ${install.stderr || install.stdout}`
     )
   }
 }
 
-/** Node (sb-client) + uv (agent-xlsx) for the RFP sandbox. */
+const AGENT_XLSX_WRAPPER = `#!/usr/bin/env bash
+set -euo pipefail
+export HOME=${SANDBOX_WORKSPACE_HOME}
+export UV_CACHE_DIR=${SANDBOX_UV_CACHE_DIR}
+export UV_TOOL_DIR=${SANDBOX_UV_TOOL_DIR}
+export XDG_CACHE_HOME=/workspace/.eve/xdg-cache
+export XDG_DATA_HOME=/workspace/.eve/xdg-data
+export PATH="/workspace/.eve/home/.local/bin:/usr/local/bin:/usr/bin:/bin:\${PATH:-}"
+# Prefer the tool install from sandbox prepare (no per-turn download).
+if [[ -x /workspace/.eve/home/.local/bin/agent-xlsx ]]; then
+  exec /workspace/.eve/home/.local/bin/agent-xlsx "$@"
+fi
+# Fallback: click is required by current agent-xlsx wheels but often undeclared.
+exec uvx --with click agent-xlsx "$@"
+`
+
+/**
+ * Pre-install `agent-xlsx` into `/workspace` during prepare so agent turns do
+ * not pay for a ~150MB uvx download. Soft-fail — never abort prepare.
+ */
+export async function ensureSandboxAgentXlsx(
+  sandbox: SandboxHandle
+): Promise<void> {
+  const home = sandboxHomeExports()
+
+  await sandbox.writeTextFile({
+    path: AGENT_XLSX_WORKSPACE_BIN,
+    content: AGENT_XLSX_WRAPPER,
+  })
+  await sandbox.run({
+    command: [
+      `chmod +x ${AGENT_XLSX_SANDBOX_BIN}`,
+      `sudo cp ${AGENT_XLSX_SANDBOX_BIN} /usr/local/bin/agent-xlsx`,
+      "sudo chmod +x /usr/local/bin/agent-xlsx",
+    ].join(" && "),
+  })
+
+  const existing = await sandbox.run({
+    command: [
+      home,
+      // Smoke: help must exit 0 (avoids click import failures).
+      `if command -v agent-xlsx >/dev/null 2>&1 && agent-xlsx probe -h >/dev/null 2>&1; then echo ready; else echo "${MISSING_AGENT_XLSX}"; fi`,
+    ].join("; "),
+  })
+  if (!existing.stdout.includes(MISSING_AGENT_XLSX)) return
+
+  const install = await sandbox.run({
+    command: [
+      "set +e",
+      home,
+      "mkdir -p /workspace/.eve/home/.local/bin /workspace/.eve/uv-cache /workspace/.eve/uv-tools",
+      // click is required but often undeclared on the published wheel.
+      "uv tool install --force --with click agent-xlsx",
+      home,
+      `if [[ -x /workspace/.eve/home/.local/bin/agent-xlsx ]] && agent-xlsx probe -h >/dev/null 2>&1; then agent-xlsx probe -h | head -5; else echo "${AGENT_XLSX_INSTALL_FAILED}"; fi`,
+      "exit 0",
+    ].join("; "),
+  })
+  if (install.stdout.includes(AGENT_XLSX_INSTALL_FAILED)) {
+    console.warn(
+      `[sandbox] agent-xlsx install failed: ${install.stderr || install.stdout}`
+    )
+  }
+}
+
+/**
+ * Re-install the PATH wrapper on each sandbox open (prepare may be cached;
+ * `/usr/local/bin` may not persist the tool, but `/workspace/.eve` does).
+ */
+export async function injectAgentXlsxCli(sandbox: SandboxHandle): Promise<void> {
+  await sandbox.run({
+    command:
+      "mkdir -p /workspace/.eve/bin /workspace/.eve/home/.local/bin /workspace/.eve/uv-cache /workspace/.eve/uv-tools /workspace/.eve/xdg-cache /workspace/.eve/xdg-data",
+  })
+  await sandbox.writeTextFile({
+    path: AGENT_XLSX_WORKSPACE_BIN,
+    content: AGENT_XLSX_WRAPPER,
+  })
+  await sandbox.run({
+    command: [
+      `chmod +x ${AGENT_XLSX_SANDBOX_BIN}`,
+      `sudo cp ${AGENT_XLSX_SANDBOX_BIN} /usr/local/bin/agent-xlsx`,
+      "sudo chmod +x /usr/local/bin/agent-xlsx",
+      // If prepare already installed the tool under .eve/home, we're done.
+      // Otherwise best-effort install (may download once per fresh workspace).
+      sandboxHomeExports(),
+      'if [[ ! -x /workspace/.eve/home/.local/bin/agent-xlsx ]]; then uv tool install --force --with click agent-xlsx || true; fi',
+      "exit 0",
+    ].join("; "),
+  })
+}
+
+/** Node (sb-client) + uv + agent-xlsx for the RFP sandbox. */
 export async function prepareStarboardSandbox(
   sandbox: SandboxHandle
 ): Promise<void> {
   await ensureSandboxNode(sandbox)
   await ensureSandboxUv(sandbox)
+  await ensureSandboxAgentXlsx(sandbox)
 }
 
 const SB_CLIENT_WRAPPER = `#!/usr/bin/env bash

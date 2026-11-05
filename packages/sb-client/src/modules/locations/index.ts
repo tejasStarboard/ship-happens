@@ -1,5 +1,20 @@
 import type { StarboardHttp } from "../../http/starboardHttp.js"
 import { splitVia, splitViaAlternates } from "../../lib/laneText.js"
+import {
+  canonicalizeLocode,
+  resolveLaneLocodesForFill,
+  type CanonicalizeResult,
+  type ResolveLaneForFillResult,
+} from "./locodeAliases.js"
+
+export {
+  canonicalizeLocode,
+  resolveLaneLocodesForFill,
+  LOCODE_ALIASES,
+  NAME_TO_LOCODES,
+  type CanonicalizeResult,
+  type ResolveLaneForFillResult,
+} from "./locodeAliases.js"
 
 function topLocodes(option: Record<string, unknown>): string[] {
   const unlocodes = option.unlocodes
@@ -86,6 +101,90 @@ export class LocationsModule {
           .map((v) => v.best_locode)
           .filter((c): c is string => Boolean(c)),
       },
+    }
+  }
+
+  /**
+   * Sheet code/label → locode list via alias table; falls back to geo search
+   * only when alias/name miss and query is not an empty reason.
+   */
+  async canonicalize(
+    codeOrLabel: string,
+    opts?: { include_airports?: boolean; geoFallback?: boolean }
+  ): Promise<CanonicalizeResult & { geo_best?: string | null }> {
+    const local = canonicalizeLocode(codeOrLabel)
+    if (local.locodes.length) return local
+    if (opts?.geoFallback === false) return local
+    if (!codeOrLabel.trim()) return local
+    try {
+      const r = await this.resolve(codeOrLabel, {
+        include_airports: opts?.include_airports,
+      })
+      if (r.best_locode) {
+        return {
+          query: codeOrLabel.trim(),
+          locodes: [r.best_locode],
+          source: "unlocode",
+          geo_best: r.best_locode,
+        }
+      }
+    } catch {
+      /* keep empty */
+    }
+    return local
+  }
+
+  /**
+   * Origin/destination sheet labels → locode arrays for `rates.resolve`.
+   * Alias-first; optional geo fallback per side when alias misses.
+   */
+  async resolveLaneForFill(args: {
+    origin: string
+    destination: string
+    geoFallback?: boolean
+    include_airports?: boolean
+  }): Promise<ResolveLaneForFillResult> {
+    const base = resolveLaneLocodesForFill({
+      origin: args.origin,
+      destination: args.destination,
+    })
+    if (base.ok || args.geoFallback === false) return base
+
+    const [o, d] = await Promise.all([
+      base.origin_locodes.length
+        ? Promise.resolve(base.origin)
+        : this.canonicalize(args.origin, {
+            geoFallback: true,
+            include_airports: args.include_airports,
+          }),
+      base.destination_locodes.length
+        ? Promise.resolve(base.destination)
+        : this.canonicalize(args.destination, {
+            geoFallback: true,
+            include_airports: args.include_airports,
+          }),
+    ])
+    const origin_locodes = o.locodes
+    const destination_locodes = d.locodes
+    const ok = origin_locodes.length > 0 && destination_locodes.length > 0
+    return {
+      origin: o,
+      destination: d,
+      origin_locodes,
+      destination_locodes,
+      ok,
+      reason: ok
+        ? undefined
+        : [
+            !origin_locodes.length
+              ? `origin:${o.reason ?? "empty"}`
+              : null,
+            !destination_locodes.length
+              ? `destination:${d.reason ?? "empty"}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(";"),
     }
   }
 }

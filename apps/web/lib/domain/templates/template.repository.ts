@@ -23,4 +23,32 @@ export class TemplateRepository {
       .limit(1)
       .then((rows) => rows[0] ?? null)
   }
+
+  async updateIdentity(
+    organizationId: string,
+    id: string,
+    input: { name?: string; customer?: string | null }
+  ) {
+    const patch: {
+      name?: string
+      customer?: string | null
+      updatedAt: Date
+    } = { updatedAt: new Date() }
+    if (input.name !== undefined) patch.name = input.name
+    if (input.customer !== undefined) patch.customer = input.customer
+    await this.db
+      .update(templates)
+      .set(patch)
+      .where(
+        and(eq(templates.id, id), eq(templates.organizationId, organizationId))
+      )
+  }
+
+  async deleteForOrganization(organizationId: string, id: string) {
+    await this.db
+      .delete(templates)
+      .where(
+        and(eq(templates.id, id), eq(templates.organizationId, organizationId))
+      )
+  }
 }

@@ -15,6 +15,7 @@ import {
   sanitizeFileName,
 } from "@/lib/storage/spreadsheet-constants"
 import {
+  deleteWorkspacePath,
   ensureWorkspace,
   isValidSessionId,
   mergeWorkspaceFiles,
@@ -250,30 +251,13 @@ export async function listWorkspaces(
     .where(eq(rfps.organizationId, organizationId))
     .orderBy(desc(rfps.updatedAt))
 
-  const chatCounts = await db
-    .select({
-      rfpId: rfpChats.rfpId,
-      // drizzle count would need sql`count(*)` — approximate via group later
-      id: rfpChats.id,
-    })
-    .from(rfpChats)
-    .where(eq(rfpChats.organizationId, organizationId))
-
-  const countByRfp = new Map<string, number>()
-  for (const chat of chatCounts) {
-    countByRfp.set(chat.rfpId, (countByRfp.get(chat.rfpId) ?? 0) + 1)
-  }
-
-  return rows.map((row) => {
-    const fromMeta = chatsFromMetadata(row.id, row.metadata as RfpMetadata)
-    const chatCount = Math.max(countByRfp.get(row.id) ?? 0, fromMeta.length, 1)
-    return {
-      id: row.id,
-      title: row.name,
-      createdAt: row.createdAt.getTime(),
-      chatCount,
-    }
-  })
+  // One chat per fill (ensureRfpWorkspace creates if missing).
+  return rows.map((row) => ({
+    id: row.id,
+    title: row.name,
+    createdAt: row.createdAt.getTime(),
+    chatCount: 1,
+  }))
 }
 
 export async function pruneMissingWorkspaceFolders(
@@ -411,6 +395,20 @@ export async function ensureRfpWorkspace(input: {
   return (await getWorkspace(rfp.id, organizationId))!
 }
 
+/** Prefer session-bound chat, else most recently updated — one chat per fill. */
+function preferSingleChat(
+  chats: WorkspaceChatRecord[]
+): WorkspaceChatRecord[] {
+  if (chats.length <= 1) return chats
+  const sorted = [...chats].sort((a, b) => {
+    const aSession = a.sessionId ? 0 : 1
+    const bSession = b.sessionId ? 0 : 1
+    if (aSession !== bSession) return aSession - bSession
+    return b.updatedAt - a.updatedAt || b.createdAt - a.createdAt
+  })
+  return [sorted[0]!]
+}
+
 export async function getWorkspace(
   workspaceId: string,
   organizationId: string
@@ -429,8 +427,8 @@ export async function getWorkspace(
   if (chats.length === 0) {
     const legacy = chatsFromMetadata(row.id, row.metadata as RfpMetadata)
     if (legacy.length > 0) {
-      await writeChats(row.id, legacy)
-      chats = legacy
+      chats = preferSingleChat(legacy)
+      await writeChats(row.id, chats)
     }
   }
 
@@ -455,6 +453,11 @@ export async function getWorkspace(
     }
   }
 
+  if (chats.length > 1) {
+    chats = preferSingleChat(chats)
+    await writeChats(row.id, chats)
+  }
+
   return {
     id: row.id,
     title: row.name,
@@ -463,6 +466,10 @@ export async function getWorkspace(
   }
 }
 
+/**
+ * One chat per fill — returns the existing chat (optionally retitled) instead
+ * of creating another.
+ */
 export async function addWorkspaceChat(
   organizationId: string,
   workspaceId: string,
@@ -471,19 +478,29 @@ export async function addWorkspaceChat(
   const workspace = await getWorkspace(workspaceId, organizationId)
   if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
 
+  const existing = workspace.chats[0]
+  if (existing) {
+    if (title && title !== existing.title) {
+      const updated = { ...existing, title, updatedAt: Date.now() }
+      await writeChats(workspaceId, [updated])
+      return updated
+    }
+    return existing
+  }
+
   const now = Date.now()
   const record: WorkspaceChatRecord = {
     id: chatId(),
     workspaceId,
     sessionId: null,
-    title: title ?? `Chat ${workspace.chats.length + 1}`,
+    title: title ?? "Fill agent",
     createdAt: now,
     updatedAt: now,
     hiddenFromTabs: false,
     events: [],
     priorMessages: [],
   }
-  await writeChats(workspaceId, [...workspace.chats, record])
+  await writeChats(workspaceId, [record])
   return record
 }
 
@@ -586,9 +603,11 @@ export async function saveChatEvents(
 /**
  * Re-seed `source/` files from durable Blob URLs when the host workspace
  * mirror is empty (common on Vercel `/tmp` after cold starts).
+ * Pass `force: true` to overwrite existing host copies (sheet reset).
  */
 export async function hydrateWorkspaceFromSourceFiles(
-  workspaceId: string
+  workspaceId: string,
+  options?: { force?: boolean }
 ): Promise<number> {
   if (!isValidWorkspaceId(workspaceId)) return 0
 
@@ -612,7 +631,12 @@ export async function hydrateWorkspaceFromSourceFiles(
       `workbook${extensionForMime(source.mimeType, source.fileName)}`
     const relativePath = `source/${safeName}`
 
-    if (await workspaceFileExists(workspaceId, relativePath)) continue
+    if (
+      !options?.force &&
+      (await workspaceFileExists(workspaceId, relativePath))
+    ) {
+      continue
+    }
 
     try {
       const response = await fetch(source.fileUrl)
@@ -640,6 +664,43 @@ export async function hydrateWorkspaceFromSourceFiles(
   }
 
   return written
+}
+
+/**
+ * Wipe host `source/` and re-copy from durable Blob URLs (intake / last persist).
+ */
+export async function restoreWorkspaceSheetFromSources(
+  workspaceId: string
+): Promise<number> {
+  if (!isValidWorkspaceId(workspaceId)) return 0
+  await ensureWorkspace(workspaceId)
+  try {
+    await deleteWorkspacePath(workspaceId, "source")
+  } catch {
+    // source/ may not exist yet
+  }
+  return hydrateWorkspaceFromSourceFiles(workspaceId, { force: true })
+}
+
+/**
+ * Clear eve session + transcript for every chat on this fill so the UI can remount fresh.
+ */
+export async function resetWorkspaceAgentChats(
+  organizationId: string,
+  workspaceId: string
+): Promise<number> {
+  const workspace = await getWorkspace(workspaceId, organizationId)
+  if (!workspace) throw new DomainError("Workspace not found", "NOT_FOUND")
+  const now = Date.now()
+  const chats = workspace.chats.map((chat) => ({
+    ...chat,
+    sessionId: null,
+    events: [] as unknown[],
+    priorMessages: [] as unknown[],
+    updatedAt: now,
+  }))
+  await writeChats(workspaceId, chats)
+  return chats.length
 }
 
 export async function reconcileWorkspaceFiles(

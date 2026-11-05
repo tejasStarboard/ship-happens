@@ -1,5 +1,5 @@
-/** Contract vs spot source for a mapped Rates-page row. */
-export type RateResultChannel = "contract" | "spot"
+/** Source channel for a mapped Rates-page row (contract only today). */
+export type RateResultChannel = "contract"
 
 /**
  * Surcharge line from Starboard `Qv2RateSearchResult.surcharges`
@@ -19,7 +19,7 @@ export type RateResultSurcharge = {
 }
 
 /**
- * UI row mapped from Starboard Qv2 / spot search hits (Phase 2a Rates page).
+ * UI row mapped from Starboard Qv2 contract search hits (Rates page).
  * Field names follow starboard-2 `Qv2RateSearchResult` where applicable.
  */
 export type RateResultRow = {
@@ -30,7 +30,7 @@ export type RateResultRow = {
   destinationName: string | null
   originVia: string | null
   destinationVia: string | null
-  /** Pre-formatted spot route string when present. */
+  /** Pre-formatted route string when present. */
   route: string | null
   carrier: string
   vendorName: string | null
@@ -82,7 +82,6 @@ export type RateSearchLaneSummary = {
   equipmentTypes: string[]
   /** Display helper — joined equipmentTypes (legacy single-eq callers). */
   equipment: string
-  spotCarrier: string
   serviceType: string
   validFrom: string | null
   validTo: string | null
@@ -91,7 +90,7 @@ export type RateSearchLaneSummary = {
   transitTimeMax: number | null
 }
 
-/** Contract-channel pagination from Starboard Qv2 (spot is not paginated). */
+/** Contract-channel pagination from Starboard Qv2. */
 export type RateSearchPagination = {
   page: number
   pageSize: number

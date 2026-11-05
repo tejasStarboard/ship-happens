@@ -16,6 +16,7 @@ import {
   EmptyTitle,
 } from "@ship-happens/ui/components/empty"
 import { Skeleton } from "@ship-happens/ui/components/skeleton"
+import { cn } from "@/lib/utils"
 
 type OfficeSpreadsheetViewerProps = {
   /** Public HTTPS URL to an .xls / .xlsx file (required by Office Online Viewer). */
@@ -96,10 +97,10 @@ function PreviewErrorEmpty({
 function PreviewSkeleton({ className }: { className?: string }) {
   return (
     <div
-      className={
-        className ??
-        "relative flex min-h-[min(70vh,720px)] flex-col gap-3 overflow-hidden rounded-xl border bg-muted/20 p-4"
-      }
+      className={cn(
+        "relative flex min-h-[min(70vh,720px)] flex-col gap-3 overflow-hidden rounded-xl border bg-muted/20 p-4",
+        className
+      )}
     >
       <Skeleton className="h-8 w-1/3" />
       <Skeleton className="min-h-0 w-full flex-1" />
@@ -182,10 +183,10 @@ export function OfficeSpreadsheetViewer({
 
   return (
     <div
-      className={
-        className ??
-        "relative min-h-[min(70vh,720px)] overflow-hidden rounded-xl border bg-muted/20"
-      }
+      className={cn(
+        "relative min-h-[min(40vh,420px)] overflow-hidden rounded-xl border bg-muted/20",
+        className
+      )}
     >
       {phase === "embedding" ? (
         <div className="absolute inset-0 z-10 flex flex-col gap-3 p-4">
@@ -200,7 +201,6 @@ export function OfficeSpreadsheetViewer({
         className="absolute inset-0 size-full border-0 bg-background"
         onLoad={() => setPhase("ready")}
         onError={() => setPhase("error")}
-        allow="fullscreen"
       />
     </div>
   )

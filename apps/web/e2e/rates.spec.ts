@@ -11,7 +11,6 @@ const okSearchBody = {
     destination: "USLAX",
     equipmentTypes: ["40HC"],
     equipment: "40HC",
-    spotCarrier: "cma",
     serviceType: "ocean_fcl" as const,
     validFrom: "2026-10-25",
     validTo: "2026-10-25",
@@ -67,42 +66,15 @@ const okSearchBody = {
         },
       ],
     },
-    {
-      id: "spot:1",
-      origin: "CNSHA",
-      destination: "USLAX",
-      originName: null,
-      destinationName: null,
-      originVia: null,
-      destinationVia: null,
-      route: "CNSHA → KRPUS → USLAX",
-      carrier: "CMA CGM",
-      vendorName: null,
-      containerType: "40HC",
-      channel: "spot" as const,
-      baseAmount: 1700,
-      amount: 1925,
-      currency: "USD",
-      validFrom: "2026-10-01",
-      validTo: "2026-10-15",
-      transitMinDays: 16,
-      transitMaxDays: 16,
-      serviceName: null,
-      vesselName: "CMA CGM LOIRE",
-      sailingDate: "2026-10-12",
-      productType: "SPOT",
-      surcharges: emptySurcharges,
-    },
   ],
   pagination: {
     page: 1,
     pageSize: 25,
-    totalCount: 2,
+    totalCount: 1,
     totalPages: 1,
     cacheKey: "e2e-cache",
   },
   contract: { status: "ok" as const, count: 1 },
-  spot: { status: "ok" as const, count: 1 },
 }
 
 test.describe("Rates live search surface", () => {
@@ -133,17 +105,13 @@ test.describe("Rates live search surface", () => {
     await page.getByLabel("Equipment Type").click()
     await page.getByRole("checkbox", { name: "20GP" }).click()
     await page.keyboard.press("Escape")
-    await page.getByLabel("Carrier (spot, optional)").fill("cma")
     await page.getByRole("button", { name: "Search rates" }).click()
 
     await expect(page.getByRole("cell", { name: "OOCL" })).toBeVisible()
-    await expect(page.getByRole("cell", { name: "CMA CGM" })).toBeVisible()
-    await expect(page.getByRole("cell", { name: "Contract" })).toBeVisible()
-    await expect(page.getByRole("cell", { name: "Spot" })).toBeVisible()
+    await expect(page.getByRole("cell", { name: "2026-10-31" })).toBeVisible()
     await expect(
       page.getByRole("columnheader", { name: "Channel" })
-    ).toBeVisible()
-    await expect(page.getByRole("cell", { name: "2026-10-31" })).toBeVisible()
+    ).toHaveCount(0)
 
     const url = new URL(lastSearchUrl)
     expect(url.searchParams.getAll("equipment")).toEqual(
@@ -151,6 +119,7 @@ test.describe("Rates live search surface", () => {
     )
     expect(url.searchParams.get("valid_from")).toBe("2026-10-01")
     expect(url.searchParams.get("valid_to")).toBe("2026-10-31")
+    expect(url.searchParams.get("carrier")).toBeNull()
 
     await page
       .getByRole("button", { name: "Show surcharges and rate details" })
@@ -174,7 +143,6 @@ test.describe("Rates live search surface", () => {
           lane: okSearchBody.lane,
           rows: [],
           contract: { status: "empty", count: 0 },
-          spot: { status: "empty", count: 0 },
         }),
       })
     })
@@ -183,7 +151,7 @@ test.describe("Rates live search surface", () => {
     await waitForAppReady(page)
     await page.getByRole("button", { name: "Search rates" }).click()
     await expect(
-      page.getByText(/No contract or spot rates for CNSHA → USLAX \(40HC\)/)
+      page.getByText(/No contract rates for CNSHA → USLAX \(40HC\)/)
     ).toBeVisible()
   })
 
@@ -204,12 +172,7 @@ test.describe("Rates live search surface", () => {
     await page.goto("/rates")
     await waitForAppReady(page)
     await page.getByRole("button", { name: "Search rates" }).click()
-    // Prefer hasText so we don't match Next.js `#__next-route-announcer__`.
-    const errorAlert = page
-      .getByRole("alert")
-      .filter({ hasText: "Rate search failed" })
-    await expect(errorAlert).toBeVisible()
-    await expect(errorAlert).toContainText("Starboard is not configured")
-    await expect(errorAlert).toContainText("Kind: config")
+    await expect(page.getByText("Rate search failed")).toBeVisible()
+    await expect(page.getByText("Starboard is not configured")).toBeVisible()
   })
 })

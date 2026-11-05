@@ -58,9 +58,9 @@ function collectEquipmentParams(url: URL): string[] {
 }
 
 /**
- * Auth’d Rates page search: contract + spot via searchRatesReadOnly.
- * Contract uses Starboard Qv2 pagination (`page` / `page_size` / `cache_key`).
- * Spot is only requested on page 1. Does not expose secrets.
+ * Auth’d Rates page search: contract via searchRatesReadOnly.
+ * Uses Starboard Qv2 pagination (`page` / `page_size` / `cache_key`).
+ * Does not expose secrets.
  */
 export async function GET(request: Request) {
   try {
@@ -88,7 +88,6 @@ export async function GET(request: Request) {
     origin: url.searchParams.get("origin") ?? undefined,
     destination: url.searchParams.get("destination") ?? undefined,
     equipmentTypes: parseEquipmentTypes(collectEquipmentParams(url)),
-    spotCarrier: url.searchParams.get("carrier") ?? undefined,
     validFrom: url.searchParams.get("valid_from") ?? undefined,
     validTo: url.searchParams.get("valid_to") ?? undefined,
     originVia: url.searchParams.get("origin_via") ?? undefined,
@@ -121,7 +120,6 @@ export async function GET(request: Request) {
         contract: result.contract
           ? summarizeChannel(result.contract)
           : undefined,
-        spot: result.spot ? summarizeChannel(result.spot) : undefined,
       },
       { status: httpStatusFor(result), headers }
     )
@@ -135,7 +133,6 @@ export async function GET(request: Request) {
       rows: mapRateSearchResultToRows(result),
       pagination: result.pagination ?? null,
       contract: summarizeChannel(result.contract),
-      spot: summarizeChannel(result.spot),
     },
     { status: 200, headers }
   )

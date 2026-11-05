@@ -179,8 +179,20 @@ describe("WorkbookExportService", () => {
     })
     expect(workspace.writeWorkspaceFile).toHaveBeenCalledWith(
       "fill_1",
-      "filled/filled-bid.xlsx",
+      expect.stringMatching(
+        /^filled\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z\/filled-bid\.xlsx$/
+      ),
       Buffer.from("filled-bytes")
+    )
+    expect(workspace.writeWorkspaceFile).toHaveBeenCalledWith(
+      "fill_1",
+      expect.stringMatching(
+        /^filled\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z\/meta\.json$/
+      ),
+      expect.stringContaining("https://blob.example/filled.xlsx")
+    )
+    expect(result.workspacePath).toMatch(
+      /^filled\/\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}Z\/filled-bid\.xlsx$/
     )
     expect(pipeline.completeStep).not.toHaveBeenCalled()
     expect(reviews.create).toHaveBeenCalledWith(

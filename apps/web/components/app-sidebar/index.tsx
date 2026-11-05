@@ -7,7 +7,6 @@ import {
   IconFileSpreadsheet,
   IconHelp,
   IconLayersSubtract,
-  IconPlugConnected,
   IconSettings,
   IconTemplate,
 } from "@tabler/icons-react"
@@ -49,15 +48,7 @@ const navMain = [
     url: "/analytics",
     icon: IconChartBar,
   },
-  {
-    title: "Integrations",
-    url: "/integrations",
-    icon: IconPlugConnected,
-    items: [
-      { title: "Gmail", url: "/integrations#gmail" },
-      { title: "Outlook", url: "/integrations#outlook" },
-    ],
-  },
+  // Integrations (Gmail / Outlook) hidden for demo — re-enable when ready.
 ]
 
 type AppSidebarProps = React.ComponentProps<typeof Sidebar> & {

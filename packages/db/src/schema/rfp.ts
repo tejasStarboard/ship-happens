@@ -387,8 +387,10 @@ export const rfpMappedLanes = pgTable(
     columnKey: text("column_key"),
     cellRef: text("cell_ref"),
     /**
-     * Fee column bindings. Legacy rows may be `string[]` headings;
-     * SB-7088 stores `{ heading, columnKey?, cellRef?, sheetName?, confidence? }[]`.
+     * Fee + answer column bindings. Legacy rows may be `string[]` headings;
+     * SB-7088 stores `{ heading, columnKey?, cellRef?, sheetName?, confidence? }[]`;
+     * M3 stores answer rows as `{ answerId, cellRef?, sheetName?, columnKey? }[]`
+     * in the same jsonb array.
      */
     surchargeSlots: jsonb("surcharge_slots")
       .$type<Array<string | Record<string, unknown>>>()
@@ -466,7 +468,7 @@ export const rfpReviewItems = pgTable(
 )
 
 /**
- * Agent chat thread for an RFP (1:1).
+ * Agent chat thread for an RFP — exactly one chat per fill (`rfp_id` unique).
  * Active SSE stream bytes live in Redis (`resumable-stream`); Postgres only
  * stores the pointer (`activeStreamId`) plus completed UIMessages.
  */
@@ -474,7 +476,7 @@ export const rfpChats = pgTable(
   "rfp_chats",
   {
     id: text("id").primaryKey(),
-    /** Workspace / RFP id — multiple chats per RFP are allowed. */
+    /** Workspace / RFP id — one chat per fill. */
     rfpId: text("rfp_id")
       .notNull()
       .references(() => rfps.id, { onDelete: "cascade" }),
@@ -499,8 +501,8 @@ export const rfpChats = pgTable(
       .notNull(),
   },
   (table) => [
+    uniqueIndex("rfp_chats_rfp_id_unique").on(table.rfpId),
     index("rfp_chats_organization_id_idx").on(table.organizationId),
-    index("rfp_chats_rfp_id_idx").on(table.rfpId),
   ]
 )
 

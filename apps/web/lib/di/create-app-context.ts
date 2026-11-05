@@ -6,6 +6,7 @@ import {
   FillOrgSettingsRepository,
   FillOrgSettingsService,
   FillBidOutcomeService,
+  FillDeskOpsService,
   FillPipelineManager,
   FillReportRepository,
   IntakeService,
@@ -168,6 +169,7 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     mappingReuse
   )
   const fillBidOutcomes = new FillBidOutcomeService(rfpRepo, pipeline)
+  const fillDeskOps = new FillDeskOpsService(rfpRepo, pipeline)
   const emailIntegrations = new EmailIntegrationRepository(database)
   const emailIntake = new EmailIntakeService(
     database,
@@ -180,13 +182,14 @@ export function createAppContext(deps?: Partial<AppDeps>) {
     blob,
     createStarboardClient: starboardFactory,
     rfps: new RfpService(rfpRepo, pipeline, reviews, fillReports, mappingStore),
-    templates: new TemplateService(templateRepo),
+    templates: new TemplateService(templateRepo, asBlobStore(blob)),
     intake,
     mappingReuse,
     emailIntake,
     pipeline,
     reviews,
     fillBidOutcomes,
+    fillDeskOps,
     mapping,
     placeMapping,
     rates,

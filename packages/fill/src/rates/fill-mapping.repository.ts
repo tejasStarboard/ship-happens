@@ -7,6 +7,11 @@ import {
   normalizeFeeBindings,
   type FeeBinding,
 } from "./fee-bindings"
+import {
+  normalizeAnswerBindings,
+  normalizeOneAnswerBinding,
+  type AnswerBinding,
+} from "./answer-bindings"
 import type { MappedLane } from "./mapped-lane"
 
 function mappingRowId() {
@@ -15,7 +20,11 @@ function mappingRowId() {
 
 function parseStoredSlots(
   raw: Array<string | Record<string, unknown>> | null | undefined
-): { surchargeSlots: string[]; feeBindings: FeeBinding[] } {
+): {
+  surchargeSlots: string[]
+  feeBindings: FeeBinding[]
+  answerBindings: AnswerBinding[]
+} {
   const laneStub = {
     laneId: "_",
     originLocode: "XX",
@@ -23,27 +32,41 @@ function parseStoredSlots(
     equipmentType: "40HC",
     surchargeSlots: [] as string[],
     feeBindings: [] as FeeBinding[],
+    answerBindings: [] as AnswerBinding[],
   } satisfies MappedLane
 
   if (!raw || raw.length === 0) {
-    return { surchargeSlots: [], feeBindings: [] }
+    return { surchargeSlots: [], feeBindings: [], answerBindings: [] }
   }
 
   const strings: string[] = []
-  const objects: FeeBinding[] = []
+  const feeObjects: FeeBinding[] = []
+  const answerObjects: AnswerBinding[] = []
   for (const item of raw) {
     if (typeof item === "string") {
       if (item.trim()) strings.push(item.trim())
       continue
     }
-    if (item && typeof item === "object" && "heading" in item) {
-      objects.push(item as FeeBinding)
+    if (!item || typeof item !== "object") continue
+    if ("answerId" in item) {
+      const binding = normalizeOneAnswerBinding(item as AnswerBinding)
+      if (binding) answerObjects.push(binding)
+      continue
+    }
+    if ("heading" in item) {
+      feeObjects.push(item as FeeBinding)
     }
   }
   laneStub.surchargeSlots = strings
-  laneStub.feeBindings = objects
-  const bindings = normalizeFeeBindings(laneStub)
-  return feeBindingsForPersist(bindings)
+  laneStub.feeBindings = feeObjects
+  laneStub.answerBindings = answerObjects
+  const fees = feeBindingsForPersist(normalizeFeeBindings(laneStub))
+  const answers = normalizeAnswerBindings(laneStub)
+  return {
+    surchargeSlots: fees.surchargeSlots,
+    feeBindings: fees.feeBindings,
+    answerBindings: answers,
+  }
 }
 
 function toMappedLane(row: typeof rfpMappedLanes.$inferSelect): MappedLane {
@@ -67,12 +90,14 @@ function toMappedLane(row: typeof rfpMappedLanes.$inferSelect): MappedLane {
     lane.feeBindings = parsed.feeBindings
     lane.surchargeSlots = parsed.surchargeSlots
   }
+  if (parsed.answerBindings.length > 0) {
+    lane.answerBindings = parsed.answerBindings
+  }
   return lane
 }
 
 function slotsForDb(lane: MappedLane): Array<Record<string, unknown>> {
-  const bindings = normalizeFeeBindings(lane)
-  return bindings.map((b) => {
+  const feeRows = normalizeFeeBindings(lane).map((b) => {
     const row: Record<string, unknown> = { heading: b.heading }
     if (b.columnKey) row.columnKey = b.columnKey
     if (b.cellRef) row.cellRef = b.cellRef
@@ -80,6 +105,15 @@ function slotsForDb(lane: MappedLane): Array<Record<string, unknown>> {
     if (b.confidence != null) row.confidence = b.confidence
     return row
   })
+  const answerRows = normalizeAnswerBindings(lane).map((b) => {
+    const row: Record<string, unknown> = { answerId: b.answerId }
+    if (b.columnKey) row.columnKey = b.columnKey
+    if (b.cellRef) row.cellRef = b.cellRef
+    if (b.sheetName) row.sheetName = b.sheetName
+    if (b.confidence != null) row.confidence = b.confidence
+    return row
+  })
+  return [...feeRows, ...answerRows]
 }
 
 export class FillMappingRepository {
