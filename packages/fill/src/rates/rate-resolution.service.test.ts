@@ -160,6 +160,77 @@ describe("RateResolutionService", () => {
     expect(reviews?.create).toHaveBeenCalled()
   })
 
+  it("emits answer binding cells for transit/carrier/free days/all_in", async () => {
+    const { service, reports } = createService({
+      lanes: [
+        {
+          ...lane,
+          cellRef: "K3",
+          feeBindings: [{ heading: "LSS", columnKey: "lss", cellRef: "M3" }],
+          answerBindings: [
+            { answerId: "carrier_name", cellRef: "A3" },
+            { answerId: "transit_days", cellRef: "P3" },
+            { answerId: "free_time.origin_days", cellRef: "U3" },
+            { answerId: "all_in", cellRef: "L3" },
+          ],
+        },
+      ],
+      resolve: vi.fn().mockResolvedValue([
+        {
+          id: "hit_1",
+          carrier_name: "MSC",
+          resolved_buy_total: 1700,
+          resolved_currency: "USD",
+          transit_time_days: 18,
+          free_time: {
+            originDays: 7,
+            destDays: 5,
+            detentionOrigin: null,
+            detentionDest: null,
+            demurrageOrigin: null,
+            demurrageDest: null,
+          },
+          resolved_surcharges: [
+            { name: "ocean_freight", amount: 1500, currency: "USD" },
+            { name: "LSS", amount: 200, currency: "USD" },
+          ],
+        },
+      ]),
+    })
+
+    await service.resolveMappedLanes({
+      organizationId: "org_1",
+      fillId: "fill_1",
+    })
+
+    const cells = (reports.replaceLaneCells as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[1] as Array<{
+      cellRef: string | null
+      value: string | null
+      outcome: string
+      metadata?: Record<string, unknown>
+    }>
+    expect(
+      cells.some(
+        (c) =>
+          c.cellRef === "A3" &&
+          c.value === "MSC" &&
+          c.metadata?.cellRole === "answer"
+      )
+    ).toBe(true)
+    expect(cells.some((c) => c.cellRef === "P3" && c.value === "18")).toBe(true)
+    expect(cells.some((c) => c.cellRef === "U3" && c.value === "7")).toBe(true)
+    expect(cells.some((c) => c.cellRef === "L3" && c.value === "1700")).toBe(
+      true
+    )
+    expect(cells.some((c) => c.cellRef === "M3" && c.value === "200")).toBe(
+      true
+    )
+    expect(cells.some((c) => c.cellRef === "K3" && c.value === "1500")).toBe(
+      true
+    )
+  })
+
   it("resolves hits, persists cells, and completes rates step", async () => {
     const { service, pipeline, reports, starboard } = createService({})
     const result = await service.resolveMappedLanes({

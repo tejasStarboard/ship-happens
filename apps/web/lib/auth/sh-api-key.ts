@@ -129,3 +129,37 @@ export async function createFillAgentApiKey(input: {
 
   return { key: data.key, id: data.id }
 }
+
+/**
+ * Mint a short-lived org-scoped agent API key (account-rules / Mira).
+ * No fill lock — overlays, floors, and locations only.
+ */
+export async function createOrgAgentApiKey(input: {
+  userId: string
+  organizationId: string
+  /** Seconds until expiry. Default 24h. */
+  expiresIn?: number
+}): Promise<{ key: string; id: string }> {
+  const data = await auth.api.createApiKey({
+    body: {
+      configId: SH_AGENT_API_KEY_CONFIG_ID,
+      userId: input.userId,
+      name: `org-rules-${input.organizationId.slice(0, 20)}`,
+      expiresIn: input.expiresIn ?? 60 * 60 * 24,
+      metadata: {
+        organizationId: input.organizationId,
+      },
+      permissions: {
+        overlays: ["read", "write"],
+        floors: ["read", "write"],
+        locations: ["read"],
+      },
+    },
+  })
+
+  if (!data?.key) {
+    throw new DomainError("Failed to create API key", "VALIDATION")
+  }
+
+  return { key: data.key, id: data.id }
+}

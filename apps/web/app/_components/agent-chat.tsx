@@ -1,6 +1,6 @@
 "use client"
 
-import type { UserContent, UIMessage } from "ai"
+import type { UserContent } from "ai"
 import type { MessageStreamEvent } from "eve/client"
 import { useEveAgent, type EveMessage } from "eve/react"
 import {
@@ -22,7 +22,6 @@ import {
 import {
   Conversation,
   ConversationContent,
-  ConversationDownload,
   ConversationEmptyState,
   ConversationScrollButton,
   ConversationTopFade,
@@ -88,11 +87,24 @@ const SUGGESTIONS = [
   "How to optimize database queries?",
 ]
 
+const RFP_SUGGESTIONS = [
+  "Fill this RFP with max coverage — don't invent rates",
+  "Probe the workbook headers and list bindable columns",
+  "Map lanes then open Reviews for me to confirm",
+  "Run rates resolve once and summarize filled vs skipped",
+  "List pending reviews and what I should Confirm",
+]
+
 export type WorkspaceChatContext = {
   readonly workspaceId?: string
   readonly workspaceFiles: readonly string[]
   readonly openTabs: readonly string[]
   readonly activeTab: string | null
+}
+
+export type AccountRulesContext = {
+  readonly organizationId: string
+  readonly userId: string
 }
 
 type PendingRetry = {
@@ -114,6 +126,10 @@ export function AgentChat({
   sessionless = false,
   variant = "page",
   workspaceContext,
+  accountRulesContext,
+  suggestionOverrides,
+  emptyTitle,
+  emptyDescription,
   onSessionId,
   onIdle,
   onTitleHint,
@@ -129,6 +145,11 @@ export function AgentChat({
   readonly sessionless?: boolean
   readonly variant?: "page" | "panel"
   readonly workspaceContext?: WorkspaceChatContext
+  /** Org-wide overlays / floor-margins chat (no fill workspace). */
+  readonly accountRulesContext?: AccountRulesContext
+  readonly suggestionOverrides?: readonly string[]
+  readonly emptyTitle?: string
+  readonly emptyDescription?: string
   readonly onSessionId?: (sessionId: string) => void
   readonly onIdle?: () => void
   readonly onTitleHint?: (title: string) => void
@@ -305,6 +326,10 @@ export function AgentChat({
       syncUrl={syncUrl}
       variant={variant}
       workspaceContext={workspaceContext}
+      accountRulesContext={accountRulesContext}
+      suggestionOverrides={suggestionOverrides}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
     />
   )
 }
@@ -314,6 +339,10 @@ function AgentChatSession({
   sessionless = false,
   variant = "page",
   workspaceContext,
+  accountRulesContext,
+  suggestionOverrides,
+  emptyTitle,
+  emptyDescription,
   onSessionId,
   onIdle,
   onTitleHint,
@@ -335,6 +364,10 @@ function AgentChatSession({
   readonly sessionless?: boolean
   readonly variant?: "page" | "panel"
   readonly workspaceContext?: WorkspaceChatContext
+  readonly accountRulesContext?: AccountRulesContext
+  readonly suggestionOverrides?: readonly string[]
+  readonly emptyTitle?: string
+  readonly emptyDescription?: string
   readonly onSessionId?: (sessionId: string) => void
   readonly onIdle?: () => void
   readonly onTitleHint?: (title: string) => void
@@ -464,6 +497,14 @@ function AgentChatSession({
               note: "A prior durable session for this chat was restarted. Continue from the priorConversation transcript below; the user already sees those messages in the UI.",
             }
           : {}),
+        ...(accountRulesContext
+          ? {
+              scope: "account-rules",
+              organizationId: accountRulesContext.organizationId,
+              userId: accountRulesContext.userId,
+              note: "Account rules mode: load account-rules + sh-client. Manage overlays and floor margins via bash sh-client (overlays/floors/locations). No RFP workbook fill.",
+            }
+          : {}),
         ...(workspaceContext
           ? {
               workspace: {
@@ -474,14 +515,35 @@ function AgentChatSession({
                 files: [...workspaceContext.workspaceFiles],
                 openTabs: [...workspaceContext.openTabs],
                 activeTab: workspaceContext.activeTab,
-                note: "The IDE mirrors /workspace. Prefer read_file/write_file/bash on these paths. Open tabs are what the user is viewing now. Multiple chats share this workspace.",
+                note: accountRulesContext
+                  ? "Account-rules sandbox under /workspace. Prefer bash sh-client for overlays, floors, and locations search. Do not use fill/mapping/rates/export commands."
+                  : "Files live under /workspace for this fill. Prefer read_file/write_file/bash on these paths. Open tabs are what the user is viewing now. One chat per fill.",
               },
             }
           : {}),
       },
     }),
-    [model, priorTranscript, useWebSearch, workspaceContext]
+    [
+      accountRulesContext,
+      model,
+      priorTranscript,
+      useWebSearch,
+      workspaceContext,
+    ]
   )
+
+  const activeSuggestions: readonly string[] = suggestionOverrides
+    ? [...suggestionOverrides]
+    : accountRulesContext
+      ? [
+          "Add 8% markup on Asia→US ocean buys",
+          "Set a $150/FEU floor margin org-wide",
+          "List my overlay rules",
+          "List my floor margins",
+        ]
+      : workspaceContext?.workspaceId
+        ? RFP_SUGGESTIONS
+        : SUGGESTIONS
 
   const wasBusyRef = useRef(false)
   useEffect(() => {
@@ -697,8 +759,6 @@ function AgentChatSession({
     void sendText(suggestion)
   }
 
-  const downloadMessages = displayMessages as unknown as UIMessage[]
-
   const composer = (
     <PromptInput
       accept="image/*,application/pdf,text/*"
@@ -832,14 +892,28 @@ function AgentChatSession({
         <ConversationEmptyState
           className={isPanel ? "py-10" : undefined}
           description={
-            isPanel
-              ? "Ask about workspace files, or attach something to edit."
-              : "Ask a question, attach a file, or pick a suggestion below."
+            emptyDescription ??
+            (isPanel
+              ? workspaceContext?.workspaceId
+                ? "Ask to fill this RFP, probe the sheet, or open Reviews. Toggle Search for live web context."
+                : accountRulesContext
+                  ? "I can help set markups, projected sell prices, and floor margins for your account. Tell me what you’d like changed."
+                  : "Ask about workspace files, or attach something to edit."
+              : "Ask a question, attach a file, or pick a suggestion below.")
           }
           icon={
             <MessageSquareIcon className={isPanel ? "size-7" : "size-10"} />
           }
-          title={isPanel ? "Agent" : `Chat with ${AGENT_NAME}`}
+          title={
+            emptyTitle ??
+            (isPanel
+              ? workspaceContext?.workspaceId
+                ? "Fill agent"
+                : accountRulesContext
+                  ? "Hi, I’m Mira"
+                  : "Agent"
+              : `Chat with ${AGENT_NAME}`)
+          }
         />
       ) : null}
       {displayMessages.map((message, index) =>
@@ -883,20 +957,6 @@ function AgentChatSession({
   if (isPanel) {
     return (
       <div className="flex h-full min-h-0 flex-col bg-background">
-        <div className="flex h-8 shrink-0 items-center justify-between gap-2 border-b border-border px-2">
-          <span className="truncate px-1 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-            {selectedModel.name}
-          </span>
-          {downloadMessages && !isEmpty ? (
-            <ConversationDownload
-              className="size-7 text-muted-foreground"
-              messages={downloadMessages}
-              size="sm"
-              variant="ghost"
-            />
-          ) : null}
-        </div>
-
         <Conversation
           className="min-h-0 flex-1"
           initial={sessionId === undefined ? undefined : false}
@@ -907,14 +967,27 @@ function AgentChatSession({
               : `eve:web-chat-scroll:${activeSessionId}`
           }
         >
-          <ConversationContent className="gap-4 px-3 pt-3 pb-4">
+          <ConversationContent className="mx-auto w-full max-w-3xl gap-4 px-4 pt-3 pb-4 sm:px-6">
             {messages}
           </ConversationContent>
           <ConversationScrollButton />
         </Conversation>
 
-        <div className="shrink-0 border-t border-border bg-background p-2">
-          {composer}
+        <div className="shrink-0 border-t border-border bg-background px-2 py-2 sm:px-4">
+          <div className="mx-auto w-full max-w-3xl space-y-2">
+            {isEmpty && !errorMessage ? (
+              <Suggestions className="px-0.5">
+                {activeSuggestions.map((suggestion) => (
+                  <Suggestion
+                    key={suggestion}
+                    onClick={handleSuggestion}
+                    suggestion={suggestion}
+                  />
+                ))}
+              </Suggestions>
+            ) : null}
+            {composer}
+          </div>
         </div>
       </div>
     )
@@ -925,7 +998,6 @@ function AgentChatSession({
       {showConversationLayout ? (
         <ChatHeader
           canStartNewChat={activeSessionId !== undefined}
-          downloadMessages={isEmpty ? undefined : downloadMessages}
           modelName={selectedModel.name}
         />
       ) : null}
@@ -968,7 +1040,7 @@ function AgentChatSession({
               </p>
             </div>
             <Suggestions className="px-1">
-              {SUGGESTIONS.map((suggestion) => (
+              {activeSuggestions.map((suggestion) => (
                 <Suggestion
                   key={suggestion}
                   onClick={handleSuggestion}
@@ -981,7 +1053,7 @@ function AgentChatSession({
         <div className="w-full space-y-3">
           {showConversationLayout && isEmpty && !errorMessage ? (
             <Suggestions className="px-1">
-              {SUGGESTIONS.map((suggestion) => (
+              {activeSuggestions.map((suggestion) => (
                 <Suggestion
                   key={suggestion}
                   onClick={handleSuggestion}
@@ -1107,11 +1179,9 @@ function ErrorMessage({
 
 function ChatHeader({
   canStartNewChat,
-  downloadMessages,
   modelName,
 }: {
   readonly canStartNewChat: boolean
-  readonly downloadMessages?: UIMessage[]
   readonly modelName: string
 }) {
   return (
@@ -1124,16 +1194,6 @@ function ChatHeader({
           <span className="truncate text-xs text-muted-foreground/80">
             {modelName}
           </span>
-        </div>
-        <div className="pointer-events-auto fixed top-3 left-6 flex items-center gap-1">
-          {downloadMessages ? (
-            <ConversationDownload
-              className="text-muted-foreground"
-              messages={downloadMessages}
-              size="sm"
-              variant="ghost"
-            />
-          ) : null}
         </div>
         {canStartNewChat ? (
           <Button

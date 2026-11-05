@@ -13,10 +13,16 @@ sh-client mapping propose --body '{"lanes":[{"laneId":"lane_1","originLabel":"Sh
 sh-client reviews list
 sh-client reviews create --body '{"title":"Map column X","proposal":{}}'
 sh-client reviews resolve --id rev_… --body '{"resolution":{}}'
+
+# Org rules (account-rules / Mira — no SH_FILL_ID)
+sh-client overlays list
+sh-client overlays create --body '{"name":"Asia→US +8%","mode":"markup","markupPct":"8"}'
+sh-client floors list
+sh-client locations search --query shanghai
 ```
 
 Env:
 
 - `SH_APP_URL` — Ship Happens base URL (e.g. `http://localhost:3000`)
 - `SH_API_KEY` — Better Auth API key (`sh_…`)
-- `SH_FILL_ID` — default fill / workspace id when `--fill` is omitted
+- `SH_FILL_ID` — default fill / workspace id when `--fill` is omitted (fill commands only)

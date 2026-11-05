@@ -23,7 +23,7 @@ function formatPct(rate: number | null): string {
 function formatWindowLabel(view: OpsAnalyticsView): string {
   const start = new Date(view.windowStartedAt)
   return `Last ${view.windowDays} days · since ${start.toLocaleDateString(
-    undefined,
+    "en-US",
     {
       month: "short",
       day: "numeric",

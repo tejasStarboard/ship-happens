@@ -16,6 +16,17 @@ export const FeeBindingSchema = z.object({
 
 export type FeeBindingDoc = z.infer<typeof FeeBindingSchema>
 
+/** PRD answer id → sheet cell (non-money or derived money like all_in). */
+export const AnswerBindingSchema = z.object({
+  answerId: z.string().min(1),
+  cellRef: z.string().min(1).optional(),
+  sheetName: z.string().min(1).optional(),
+  columnKey: z.string().min(1).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+})
+
+export type AnswerBindingDoc = z.infer<typeof AnswerBindingSchema>
+
 export const MappedLaneSchema = z.object({
   laneId: z.string().min(1),
   originLocode: z.string().min(1),
@@ -42,6 +53,8 @@ export const MappedLaneSchema = z.object({
   surchargeSlots: z.array(z.string().min(1)).optional(),
   /** Structured BCO fee column → Starboard charge/heading bindings (SB-7088). */
   feeBindings: z.array(FeeBindingSchema).optional(),
+  /** PRD answer columns (carrier, transit, free_time, all_in, …) — M3 T2. */
+  answerBindings: z.array(AnswerBindingSchema).optional(),
 })
 
 export type MappedLane = z.infer<typeof MappedLaneSchema>

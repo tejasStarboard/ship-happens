@@ -35,7 +35,7 @@ function httpStatusFor(result: RateSearchResult): number {
 }
 
 /**
- * Dev smoke: read-only contract + spot search (default CNSHA→USLAX 40HC).
+ * Dev smoke: read-only contract search (default CNSHA→USLAX 40HC).
  * Requires an authenticated org session. Does not expose secrets.
  */
 export async function GET(request: Request) {
@@ -50,7 +50,6 @@ export async function GET(request: Request) {
     origin: url.searchParams.get("origin") ?? undefined,
     destination: url.searchParams.get("destination") ?? undefined,
     equipment: url.searchParams.get("equipment") ?? undefined,
-    spotCarrier: url.searchParams.get("carrier") ?? undefined,
   })
 
   // Omit bulky raw payloads from the HTTP response; keep counts + status.
@@ -65,14 +64,12 @@ export async function GET(request: Request) {
           contract: result.contract
             ? summarizeChannel(result.contract)
             : undefined,
-          spot: result.spot ? summarizeChannel(result.spot) : undefined,
         }
       : {
           status: result.status,
           companyId: result.companyId,
           lane: result.lane,
           contract: summarizeChannel(result.contract),
-          spot: summarizeChannel(result.spot),
         }
 
   return NextResponse.json(body, { status: httpStatusFor(result) })

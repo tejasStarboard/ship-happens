@@ -33,6 +33,7 @@ import {
 } from "@ship-happens/ui/components/empty"
 import { Input } from "@ship-happens/ui/components/input"
 import { Label } from "@ship-happens/ui/components/label"
+import { LocodeCombobox } from "@/components/shared/locode-combobox"
 import {
   Select,
   SelectContent,
@@ -196,22 +197,20 @@ function RuleFormFields({
       <div className="grid grid-cols-3 gap-3">
         <div className="grid gap-2">
           <Label htmlFor="overlay-origin">Origin</Label>
-          <Input
+          <LocodeCombobox
             id="overlay-origin"
             value={form.originLocode}
-            onChange={(e) =>
-              onChange({ ...form, originLocode: e.target.value })
-            }
-            placeholder="Any"
+            onChange={(originLocode) => onChange({ ...form, originLocode })}
+            placeholder="Any port"
           />
         </div>
         <div className="grid gap-2">
           <Label htmlFor="overlay-dest">Dest</Label>
-          <Input
+          <LocodeCombobox
             id="overlay-dest"
             value={form.destLocode}
-            onChange={(e) => onChange({ ...form, destLocode: e.target.value })}
-            placeholder="Any"
+            onChange={(destLocode) => onChange({ ...form, destLocode })}
+            placeholder="Any port"
           />
         </div>
         <div className="grid gap-2">

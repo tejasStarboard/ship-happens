@@ -28,7 +28,9 @@ export {
   type ExportDownloadGate,
 } from "./export/export-signoff"
 export {
+  FILLED_EXPORT_META_NAME,
   WorkbookExportService,
+  filledExportRunId,
   type ExportWorkbookResult,
 } from "./export/workbook-export.service"
 
@@ -80,12 +82,19 @@ export {
   type SetFillDueAtInput,
 } from "./rfp/fill-bid-outcome.service"
 export {
+  FillDeskOpsService,
+  type UpdateFillIdentityInput,
+} from "./rfp/fill-desk-ops.service"
+export {
   asRfpStatus,
+  isRfpStatus,
   RFP_STATUS_LABEL,
+  RFP_STATUSES,
   type RfpDetailView,
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
+  type RfpAnswerBindingView,
   type RfpFeeBindingView,
   type RfpMappedLaneView,
   type RfpPendingReviewView,
@@ -129,12 +138,14 @@ export {
 export { checksumSha256, discoverWorkbookSheets } from "./workbook-parse"
 
 export {
+  AnswerBindingSchema,
   FeeBindingSchema,
   MappedLaneSchema,
   MappingDocumentSchema,
   parseMappingDocument,
   parseMappingJson,
   SMOKE_MAPPING_FIXTURE,
+  type AnswerBindingDoc,
   type FeeBindingDoc,
   type MappedLane,
   type MappingDocument,
@@ -154,6 +165,17 @@ export {
   type UnexpectedFeeLine,
   type UnexpectedFeeMode,
 } from "./rates/fee-bindings"
+export {
+  CONTRACT_ANSWER_IDS,
+  deriveAllInAmount,
+  emitAnswerCells,
+  isContractAnswerId,
+  normalizeAnswerBindings,
+  resolveAnswerValue,
+  type AnswerBinding,
+  type AnswerCellEmit,
+  type ContractAnswerId,
+} from "./rates/answer-bindings"
 export {
   encodeUnexpectedFeeSoftWarn,
   parseUnexpectedFeeSoftWarn,
@@ -243,6 +265,7 @@ export {
   withOverlayAuditMetadata,
   withPickConfidenceMetadata,
   type FillAuditCellOutcome,
+  type FillCellRole,
   type FillReportCellView,
   type FillReportView,
   type LaneOverlayAudit,
@@ -284,6 +307,7 @@ export type {
   MappingFileReader,
   MappingStore,
   RateResolveSearchInput,
+  ResolvedFreeTimeCandidate,
   ResolvedRateCandidate,
   ResolvedSurchargeCandidate,
   StarboardRatesPort,

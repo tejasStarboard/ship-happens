@@ -218,6 +218,13 @@ export class RfpService {
             sheetName: b.sheetName ?? null,
             confidence: b.confidence ?? null,
           })),
+          answerBindings: (lane.answerBindings ?? []).map((b) => ({
+            answerId: b.answerId,
+            columnKey: b.columnKey ?? null,
+            cellRef: b.cellRef ?? null,
+            sheetName: b.sheetName ?? null,
+            confidence: b.confidence ?? null,
+          })),
         })),
         error: null,
       }

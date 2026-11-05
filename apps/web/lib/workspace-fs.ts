@@ -11,6 +11,13 @@ import {
 import path from "node:path"
 import { isTextPath, type WorkspaceEntry } from "@/lib/workspace-types"
 import {
+  createWorkspaceIgnoreMatcher,
+  DEFAULT_WORKSPACE_IGNORE,
+  defaultWorkspaceIgnoreMatcher,
+  WORKSPACE_IGNORE_FILE,
+  type WorkspaceIgnoreMatcher,
+} from "@/lib/workspace-ignore"
+import {
   isAgentPrivateWorkspacePath,
   toInternalWorkspacePath,
   toUserFacingWorkspacePath,
@@ -129,17 +136,68 @@ export function toWorkspaceRelative(
 export async function ensureWorkspace(sessionId: string): Promise<string> {
   const root = workspaceRoot(sessionId)
   await mkdir(/*turbopackIgnore: true*/ root, { recursive: true })
+  await ensureDefaultWorkspaceIgnore(root)
   return root
+}
+
+async function ensureDefaultWorkspaceIgnore(root: string): Promise<void> {
+  const ignorePath = path.join(
+    /*turbopackIgnore: true*/ root,
+    WORKSPACE_IGNORE_FILE
+  )
+  try {
+    const existing = await readFile(
+      /*turbopackIgnore: true*/ ignorePath,
+      "utf8"
+    )
+    // Drop legacy un-ignore so `.workspaceignore` stays internal-only.
+    if (existing.includes("!.workspaceignore")) {
+      await writeFile(
+        /*turbopackIgnore: true*/ ignorePath,
+        existing
+          .split(/\r?\n/)
+          .filter((line) => line.trim() !== "!.workspaceignore")
+          .join("\n"),
+        "utf8"
+      )
+    }
+  } catch {
+    await writeFile(
+      /*turbopackIgnore: true*/ ignorePath,
+      DEFAULT_WORKSPACE_IGNORE,
+      "utf8"
+    )
+  }
+}
+
+export async function loadWorkspaceIgnoreMatcher(
+  sessionId: string
+): Promise<WorkspaceIgnoreMatcher> {
+  const root = workspaceRoot(sessionId)
+  try {
+    const content = await readFile(
+      /*turbopackIgnore: true*/ path.join(root, WORKSPACE_IGNORE_FILE),
+      "utf8"
+    )
+    return createWorkspaceIgnoreMatcher([content])
+  } catch {
+    return defaultWorkspaceIgnoreMatcher()
+  }
 }
 
 export async function listWorkspaceTree(
   sessionId: string
 ): Promise<WorkspaceEntry[]> {
   const root = await ensureWorkspace(sessionId)
-  return walkDir(root, root)
+  const ignore = await loadWorkspaceIgnoreMatcher(sessionId)
+  return walkDir(root, root, ignore)
 }
 
-async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
+async function walkDir(
+  root: string,
+  dir: string,
+  ignore: WorkspaceIgnoreMatcher
+): Promise<WorkspaceEntry[]> {
   const names = await readdir(/*turbopackIgnore: true*/ dir)
   names.sort((a, b) => a.localeCompare(b))
   const entries: WorkspaceEntry[] = []
@@ -167,7 +225,7 @@ async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
             type: "dir",
             name: "attachments",
             path: "attachments",
-            children: await walkDirMapped(root, attachmentsAbs),
+            children: await walkDirMapped(root, attachmentsAbs, ignore),
           })
         }
       } catch {
@@ -177,13 +235,14 @@ async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
     }
 
     if (isAgentPrivateWorkspacePath(relative)) continue
+    if (ignore.ignores(relative, info.isDirectory())) continue
 
     if (info.isDirectory()) {
       entries.push({
         type: "dir",
         name,
         path: toUserFacingWorkspacePath(relative),
-        children: await walkDir(root, absolute),
+        children: await walkDir(root, absolute, ignore),
       })
     } else if (info.isFile()) {
       entries.push({
@@ -201,7 +260,8 @@ async function walkDir(root: string, dir: string): Promise<WorkspaceEntry[]> {
 /** Walk under `.eve/attachments` emitting user-facing `attachments/…` paths. */
 async function walkDirMapped(
   root: string,
-  dir: string
+  dir: string,
+  ignore: WorkspaceIgnoreMatcher
 ): Promise<WorkspaceEntry[]> {
   const names = await readdir(/*turbopackIgnore: true*/ dir)
   names.sort((a, b) => a.localeCompare(b))
@@ -215,12 +275,13 @@ async function walkDirMapped(
       .split(path.sep)
       .join("/")
     const facing = toUserFacingWorkspacePath(relative)
+    if (ignore.ignores(facing, info.isDirectory())) continue
     if (info.isDirectory()) {
       entries.push({
         type: "dir",
         name,
         path: facing,
-        children: await walkDirMapped(root, absolute),
+        children: await walkDirMapped(root, absolute, ignore),
       })
     } else if (info.isFile()) {
       entries.push({
@@ -337,8 +398,9 @@ export async function collectSyncFiles(
   sessionId: string
 ): Promise<Array<{ path: string; bytes: Buffer }>> {
   const root = await ensureWorkspace(sessionId)
+  const ignore = await loadWorkspaceIgnoreMatcher(sessionId)
   const out: Array<{ path: string; bytes: Buffer }> = []
-  await collectFiles(root, root, out)
+  await collectFiles(root, root, out, ignore)
   return out
 }
 
@@ -380,7 +442,8 @@ export async function mergeWorkspaceFiles(
 async function collectFiles(
   root: string,
   dir: string,
-  out: Array<{ path: string; bytes: Buffer }>
+  out: Array<{ path: string; bytes: Buffer }>,
+  ignore: WorkspaceIgnoreMatcher
 ): Promise<void> {
   let names: string[]
   try {
@@ -392,15 +455,16 @@ async function collectFiles(
     if (SKIP_DIR_NAMES.has(name)) continue
     const absolute = path.join(/*turbopackIgnore: true*/ dir, name)
     const info = await stat(/*turbopackIgnore: true*/ absolute)
-    if (info.isDirectory()) {
-      await collectFiles(root, absolute, out)
-      continue
-    }
-    if (!info.isFile() || info.size > MAX_SYNC_FILE_BYTES) continue
     const relative = path
       .relative(/*turbopackIgnore: true*/ root, absolute)
       .split(path.sep)
       .join("/")
+    if (ignore.ignores(relative, info.isDirectory())) continue
+    if (info.isDirectory()) {
+      await collectFiles(root, absolute, out, ignore)
+      continue
+    }
+    if (!info.isFile() || info.size > MAX_SYNC_FILE_BYTES) continue
     if (isAgentPrivateEvePath(relative)) continue
     out.push({
       path: relative,

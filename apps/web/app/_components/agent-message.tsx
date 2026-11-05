@@ -8,10 +8,11 @@ import type {
   EveMessageInputRequest,
   EveMessagePart,
 } from "eve/react"
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import {
   IconArrowRight as ArrowRightIcon,
+  IconChevronRight as ChevronRightIcon,
   IconCircleCheck as CheckCircleIcon,
   IconCheck as CheckIcon,
   IconExternalLink as ExternalLinkIcon,
@@ -21,6 +22,11 @@ import {
   IconClipboardList as ClipboardListIcon,
   IconCircleX as XCircleIcon,
 } from "@tabler/icons-react"
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@ship-happens/ui/components/collapsible"
 import {
   Confirmation,
   ConfirmationAction,
@@ -50,6 +56,12 @@ import {
   ReasoningContent,
   ReasoningTrigger,
 } from "@ship-happens/ui/ai-elements/reasoning"
+import {
+  Source,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from "@ship-happens/ui/ai-elements/sources"
 import {
   Task,
   TaskContent,
@@ -107,14 +119,44 @@ export function AgentMessage({
       (part) => part.type === "text" && part.text.length > 0
     )
 
+  const sources = collectMessageSources(safeMessage.parts)
+  const { tools, visible } = splitUserFacingParts(
+    safeMessage.parts,
+    questionsFor
+  )
+
   return (
     <Message
       data-optimistic={safeMessage.metadata?.optimistic ? "true" : undefined}
       from={safeMessage.role}
     >
       <MessageContent>
-        {safeMessage.parts.map((part, index) =>
-          hasAssistantText && part.type === "reasoning" ? null : (
+        {sources.length > 0 ? (
+          <Sources>
+            <SourcesTrigger count={sources.length} />
+            <SourcesContent>
+              {sources.map((source) => (
+                <Source
+                  href={source.href}
+                  key={source.href}
+                  title={source.title}
+                />
+              ))}
+            </SourcesContent>
+          </Sources>
+        ) : null}
+        {tools.length > 0 ? (
+          <ToolWorkGroup
+            canRespond={canRespond}
+            messageId={safeMessage.id}
+            onInputResponses={onInputResponses}
+            parts={tools}
+            questionsFor={questionsFor}
+          />
+        ) : null}
+        {visible.map(({ part, index }) => {
+          if (hasAssistantText && part.type === "reasoning") return null
+          return (
             <AgentMessagePart
               canRespond={canRespond}
               key={partKey(part, index)}
@@ -128,10 +170,246 @@ export function AgentMessage({
               }
             />
           )
-        )}
+        })}
       </MessageContent>
     </Message>
   )
+}
+
+function isFoldableTool(
+  part: EveMessagePart,
+  questionsFor: (callId: string) => readonly ConversationInput[]
+): part is EveDynamicToolPart {
+  if (part.type !== "dynamic-tool") return false
+  if (questionsFor(part.toolCallId).length > 0) return false
+  if (part.state === "approval-requested") return false
+  if (
+    part.toolMetadata?.eve?.inputRequest &&
+    part.state !== "output-available"
+  ) {
+    if (part.state === "approval-responded" || part.state === "output-denied") {
+      return false
+    }
+  }
+  return true
+}
+
+/**
+ * One work collapsible for every non-HITL tool in the message; everything else
+ * (text, files, approvals) stays in the user-facing stream.
+ */
+function splitUserFacingParts(
+  parts: readonly EveMessagePart[],
+  questionsFor: (callId: string) => readonly ConversationInput[]
+): {
+  tools: EveDynamicToolPart[]
+  visible: Array<{ part: EveMessagePart; index: number }>
+} {
+  const tools: EveDynamicToolPart[] = []
+  const visible: Array<{ part: EveMessagePart; index: number }> = []
+  parts.forEach((part, index) => {
+    if (part.type === "step-start") return
+    if (isFoldableTool(part, questionsFor)) {
+      tools.push(part)
+      return
+    }
+    visible.push({ part, index })
+  })
+  return { tools, visible }
+}
+
+function toolsStillWorking(parts: readonly EveDynamicToolPart[]): boolean {
+  return parts.some(
+    (part) =>
+      part.state === "input-streaming" ||
+      part.state === "input-available" ||
+      part.state === "approval-responded" ||
+      (part.state === "output-available" && part.partial === true)
+  )
+}
+
+/** Persist finished durations across remounts within the tab session. */
+const workedSecondsByMessageId = new Map<string, number>()
+
+function humanizeWorkedDuration(totalSeconds: number): string {
+  const s = Math.max(1, Math.round(totalSeconds))
+  if (s < 60) {
+    return s === 1 ? "1 second" : `${s} seconds`
+  }
+  const minutes = Math.floor(s / 60)
+  const rem = s % 60
+  if (minutes < 60) {
+    if (rem === 0) {
+      return minutes === 1 ? "1 minute" : `${minutes} minutes`
+    }
+    return `${minutes}m ${rem}s`
+  }
+  const hours = Math.floor(minutes / 60)
+  const remMin = minutes % 60
+  if (remMin === 0) {
+    return hours === 1 ? "1 hour" : `${hours} hours`
+  }
+  return `${hours}h ${remMin}m`
+}
+
+function useWorkedSeconds(messageId: string, active: boolean): number {
+  const startedAt = useRef<number | null>(null)
+  const [seconds, setSeconds] = useState(
+    () => workedSecondsByMessageId.get(messageId) ?? 0
+  )
+
+  useEffect(() => {
+    if (!active) {
+      if (startedAt.current != null) {
+        const final = Math.max(
+          1,
+          Math.round((Date.now() - startedAt.current) / 1000)
+        )
+        workedSecondsByMessageId.set(messageId, final)
+        setSeconds(final)
+        startedAt.current = null
+      }
+      return
+    }
+    startedAt.current ??= Date.now()
+    const tick = () => {
+      const start = startedAt.current
+      if (start == null) return
+      const next = Math.max(1, Math.round((Date.now() - start) / 1000))
+      setSeconds(next)
+    }
+    tick()
+    const id = window.setInterval(tick, 500)
+    return () => window.clearInterval(id)
+  }, [active, messageId])
+
+  return seconds
+}
+
+function ToolWorkGroup({
+  canRespond,
+  messageId,
+  onInputResponses,
+  parts,
+  questionsFor,
+}: {
+  readonly canRespond: (requestId: string) => boolean
+  readonly messageId: string
+  readonly onInputResponses: (
+    responses: readonly AgentInputResponse[]
+  ) => void | Promise<void>
+  readonly parts: readonly EveDynamicToolPart[]
+  readonly questionsFor: (callId: string) => readonly ConversationInput[]
+}) {
+  // Time tool execution only — don't keep ticking through the final reply stream.
+  const toolsActive = toolsStillWorking(parts)
+  const elapsed = useWorkedSeconds(messageId, toolsActive)
+  const [open, setOpen] = useState(false)
+
+  const title = toolsActive
+    ? elapsed > 0
+      ? `Working for ${humanizeWorkedDuration(elapsed)}`
+      : "Working…"
+    : elapsed > 0
+      ? `Worked for ${humanizeWorkedDuration(elapsed)}`
+      : "Worked"
+
+  const reviewCards = parts
+    .map((part) =>
+      part.toolName === "bash"
+        ? parseReviewCreatedFromBash(part.input, part.output, part.errorText)
+        : null
+    )
+    .filter((review): review is ReviewCreatedNotify => review != null)
+
+  return (
+    <div className="space-y-2">
+      <Collapsible open={open} onOpenChange={setOpen}>
+        <CollapsibleTrigger className="flex w-fit max-w-full items-center gap-1 py-0.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground">
+          <span>{title}</span>
+          <ChevronRightIcon
+            className={cn(
+              "size-3.5 shrink-0 transition-transform",
+              open && "rotate-90"
+            )}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="mt-2 space-y-1 border-l border-border/70 pl-3">
+          {parts.map((part) => (
+            <AgentMessagePart
+              canRespond={canRespond}
+              key={part.toolCallId}
+              onInputResponses={onInputResponses}
+              part={part}
+              questionsFor={questionsFor}
+              showCaret={false}
+              suppressReviewCard
+            />
+          ))}
+        </CollapsibleContent>
+      </Collapsible>
+      {reviewCards.map((review) => (
+        <ReviewCreatedCard key={review.id} review={review} />
+      ))}
+    </div>
+  )
+}
+
+type ChatSource = { href: string; title: string }
+
+function collectMessageSources(parts: readonly EveMessagePart[]): ChatSource[] {
+  const byHref = new Map<string, ChatSource>()
+
+  for (const part of parts) {
+    const type = (part as { type?: string }).type
+    if (type === "source-url" || type === "source") {
+      const row = part as {
+        url?: unknown
+        href?: unknown
+        title?: unknown
+        source?: { url?: unknown; title?: unknown }
+      }
+      const href =
+        (typeof row.url === "string" && row.url) ||
+        (typeof row.href === "string" && row.href) ||
+        (typeof row.source?.url === "string" && row.source.url) ||
+        null
+      if (!href || !/^https?:\/\//i.test(href)) continue
+      const title =
+        (typeof row.title === "string" && row.title) ||
+        (typeof row.source?.title === "string" && row.source.title) ||
+        href
+      byHref.set(href, { href, title })
+      continue
+    }
+
+    if (type !== "dynamic-tool") continue
+    const toolPart = part as EveDynamicToolPart
+    const name = toolPart.toolName.toLowerCase()
+    if (
+      !name.includes("web_fetch") &&
+      !name.includes("webfetch") &&
+      name !== "web-fetch"
+    ) {
+      continue
+    }
+    const input = toolPart.input
+    const record =
+      input !== null && typeof input === "object" && !Array.isArray(input)
+        ? (input as Record<string, unknown>)
+        : null
+    const href =
+      (typeof record?.url === "string" && record.url) ||
+      (typeof record?.href === "string" && record.href) ||
+      null
+    if (!href || !/^https?:\/\//i.test(href)) continue
+    byHref.set(href, {
+      href,
+      title: typeof record?.title === "string" ? record.title : href,
+    })
+  }
+
+  return [...byHref.values()]
 }
 
 function redactEveMessage(message: EveMessage): EveMessage {
@@ -163,6 +441,7 @@ function AgentMessagePart({
   part,
   questionsFor,
   showCaret,
+  suppressReviewCard = false,
 }: {
   readonly canRespond: (requestId: string) => boolean
   readonly onInputResponses: (
@@ -171,6 +450,7 @@ function AgentMessagePart({
   readonly part: EveMessagePart
   readonly questionsFor: (callId: string) => readonly ConversationInput[]
   readonly showCaret: boolean
+  readonly suppressReviewCard?: boolean
 }) {
   switch (part.type) {
     case "step-start":
@@ -211,13 +491,13 @@ function AgentMessagePart({
       }
 
       const reviewCreated =
-        part.toolName === "bash"
+        !suppressReviewCard && part.toolName === "bash"
           ? parseReviewCreatedFromBash(part.input, part.output, part.errorText)
           : null
 
       return (
         <>
-          <Tool>
+          <Tool defaultOpen={false}>
             <ToolHeader
               state={part.state}
               title={part.toolName}
@@ -254,7 +534,7 @@ function AgentMessagePart({
 
 function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
   const router = useRouter()
-  const href = `/rfp/${review.rfpId}?review=${encodeURIComponent(review.id)}`
+  const href = `/rfp/${review.rfpId}?tab=reviews&review=${encodeURIComponent(review.id)}`
 
   return (
     <div className="space-y-3 rounded-md border border-blue-500/30 bg-blue-500/5 p-3">
@@ -266,8 +546,8 @@ function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
           <p className="text-sm font-medium">Review waiting on you</p>
           <p className="text-sm text-muted-foreground">{review.title}</p>
           <p className="text-xs text-muted-foreground">
-            Open Overview to Confirm, Edit, or Reject. Chat alone does not
-            decide this item.
+            Open Reviews to Confirm, Edit, or Reject. Chat alone does not decide
+            this item.
           </p>
           <Button
             size="sm"
@@ -277,7 +557,7 @@ function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
               router.refresh()
             }}
           >
-            Open in Overview
+            Open in Reviews
             <ExternalLinkIcon className="size-3.5" />
           </Button>
         </div>

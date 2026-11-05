@@ -1,8 +1,8 @@
-import path from "node:path"
 import {
   collectSyncFiles,
   ensureWorkspace,
   isAgentPrivateEvePath,
+  loadWorkspaceIgnoreMatcher,
   MAX_SYNC_FILE_BYTES,
   SKIP_DIR_NAMES,
   writeWorkspaceFile,
@@ -59,6 +59,7 @@ export async function pullSandboxToWorkspace(
     throw new Error(listed.stderr || "Failed to list sandbox files")
   }
 
+  const ignore = await loadWorkspaceIgnoreMatcher(sessionId)
   const paths = listed.stdout
     .split("\n")
     .map((line) => line.trim())
@@ -68,17 +69,12 @@ export async function pullSandboxToWorkspace(
       (relative) =>
         relative.length > 0 &&
         !relative.split("/").some((part) => SKIP_DIR_NAMES.has(part)) &&
-        !isAgentPrivateEvePath(relative)
+        !isAgentPrivateEvePath(relative) &&
+        !ignore.ignores(relative, false)
     )
 
   let written = 0
   for (const relative of paths) {
-    if (
-      path.basename(relative).startsWith(".") &&
-      relative.startsWith(".eve/") === false
-    ) {
-      // allow .eve/attachments; skip other dotfiles at root that are noisy
-    }
     const bytes = await sandbox.readBinaryFile({ path: relative })
     if (!bytes || bytes.byteLength === 0) continue
     if (bytes.byteLength > MAX_SYNC_FILE_BYTES) continue

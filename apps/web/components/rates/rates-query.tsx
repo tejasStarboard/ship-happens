@@ -38,6 +38,7 @@ import {
   TableRow,
 } from "@ship-happens/ui/components/table"
 import { cn } from "@ship-happens/ui/lib/utils"
+import { LocodeCombobox } from "@/components/shared/locode-combobox"
 import type {
   RateResultRow,
   RateResultSurcharge,
@@ -60,7 +61,6 @@ type QueryFields = {
   validFrom: string
   validTo: string
   transitTimeMax: string
-  carrier: string
 }
 
 type SearchUiState =
@@ -99,7 +99,7 @@ type SearchApiResponse = {
 }
 
 const SKELETON_ROW_COUNT = 5
-const TABLE_COL_COUNT = 9
+const TABLE_COL_COUNT = 8
 
 function money(
   amount: number | null,
@@ -108,10 +108,6 @@ function money(
   if (amount == null) return "—"
   const formatted = amount.toLocaleString()
   return currency ? `${formatted} ${currency}` : formatted
-}
-
-function channelLabel(channel: RateResultRow["channel"]): string {
-  return channel === "contract" ? "Contract" : "Spot"
 }
 
 function portLabel(code: string, name: string | null): string {
@@ -145,7 +141,6 @@ function RatesTableHeader() {
         <TableHead>Destination</TableHead>
         <TableHead>Carrier</TableHead>
         <TableHead>Container</TableHead>
-        <TableHead>Channel</TableHead>
         <TableHead>Total</TableHead>
         <TableHead>Valid to</TableHead>
         <TableHead>Transit</TableHead>
@@ -358,7 +353,6 @@ function RateResultRowView({ row }: { row: RateResultRow }) {
         <TableCell>{portLabel(row.destination, row.destinationName)}</TableCell>
         <TableCell>{row.carrier}</TableCell>
         <TableCell>{row.containerType}</TableCell>
-        <TableCell>{channelLabel(row.channel)}</TableCell>
         <TableCell className="tabular-nums">
           {money(row.amount, row.currency)}
         </TableCell>
@@ -426,7 +420,6 @@ function RatesPagination({
       <p className="text-sm text-muted-foreground">
         Page {pagination.page} of {pagination.totalPages} ·{" "}
         {pagination.totalCount.toLocaleString()} contract rates
-        {pagination.page === 1 ? " (spot on page 1)" : ""}
       </p>
       <Pagination className="mx-0 w-auto justify-end">
         <PaginationContent>
@@ -555,7 +548,6 @@ function normalizeLane(
     destination: lane.destination || fallback.destination,
     equipmentTypes,
     equipment: equipmentTypes.join(", "),
-    spotCarrier: lane.spotCarrier || fallback.spotCarrier,
     serviceType: lane.serviceType || fallback.serviceType,
     validFrom: lane.validFrom ?? fallback.validFrom,
     validTo: lane.validTo ?? fallback.validTo,
@@ -568,6 +560,10 @@ function normalizeLane(
 export function RatesQuery() {
   const today = todayYmd()
   const [state, setState] = React.useState<SearchUiState>({ status: "idle" })
+  const [origin, setOrigin] = React.useState("")
+  const [destination, setDestination] = React.useState("")
+  const [originVia, setOriginVia] = React.useState("")
+  const [destinationVia, setDestinationVia] = React.useState("")
   const [equipmentTypes, setEquipmentTypes] = React.useState<string[]>(["40HC"])
   const [validFrom, setValidFrom] = React.useState(today)
   const [validTo, setValidTo] = React.useState(today)
@@ -584,7 +580,6 @@ export function RatesQuery() {
       destination: query.destination || "USLAX",
       equipmentTypes: equipment,
       equipment: equipment.join(", "),
-      spotCarrier: query.carrier || "cma",
       serviceType: "ocean_fcl",
       validFrom: query.validFrom || today,
       validTo: query.validTo || today,
@@ -610,7 +605,6 @@ export function RatesQuery() {
     if (query.validTo) params.set("valid_to", query.validTo)
     if (query.transitTimeMax)
       params.set("transit_time_max", query.transitTimeMax)
-    if (query.carrier) params.set("carrier", query.carrier)
     params.set("page", String(page))
     params.set("page_size", String(RATES_SEARCH_PAGE_SIZE))
     if (page > 1 && cacheKey) params.set("cache_key", cacheKey)
@@ -674,15 +668,14 @@ export function RatesQuery() {
     const form = new FormData(event.currentTarget)
     runSearch(
       {
-        origin: String(form.get("origin") ?? "").trim(),
-        destination: String(form.get("destination") ?? "").trim(),
-        originVia: String(form.get("origin_via") ?? "").trim(),
-        destinationVia: String(form.get("destination_via") ?? "").trim(),
+        origin: origin.trim(),
+        destination: destination.trim(),
+        originVia: originVia.trim(),
+        destinationVia: destinationVia.trim(),
         equipmentTypes,
         validFrom,
         validTo,
         transitTimeMax: String(form.get("transit_time_max") ?? "").trim(),
-        carrier: String(form.get("carrier") ?? "").trim(),
       },
       1,
       null
@@ -716,8 +709,8 @@ export function RatesQuery() {
             Starboard rates
           </h1>
           <p className="mt-1 max-w-xl text-sm text-muted-foreground">
-            Live contract and spot lookup — the same path fills use when they
-            write cells.
+            Live contract lookup — the same path fills use when they write
+            cells.
           </p>
         </div>
       </div>
@@ -726,9 +719,8 @@ export function RatesQuery() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold">Query</CardTitle>
           <CardDescription>
-            Ocean FCL search aligned with Starboard Vendor Rate Query: multi
-            equipment, validity window, optional vias and max transit. Spot runs
-            on page 1 (carrier slug defaults to CMA when empty).
+            Ocean FCL contract search aligned with Starboard Vendor Rate Query:
+            multi equipment, validity window, optional vias and max transit.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -736,40 +728,48 @@ export function RatesQuery() {
             <FieldGroup className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <Field>
                 <FieldLabel htmlFor="origin">Origin</FieldLabel>
-                <Input
+                <LocodeCombobox
                   id="origin"
-                  name="origin"
-                  placeholder="CNSHA"
+                  value={origin}
+                  onChange={setOrigin}
+                  placeholder="Search origin port…"
                   disabled={showLoading}
+                  allowClear={false}
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor="origin_via">Origin via Port</FieldLabel>
-                <Input
+                <LocodeCombobox
                   id="origin_via"
-                  name="origin_via"
-                  placeholder="Optional UNLOCODE"
+                  value={originVia}
+                  onChange={setOriginVia}
+                  placeholder="Optional via…"
                   disabled={showLoading}
+                  clearHint="Leave empty if no via"
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor="destination_via">
                   Destination via Port
                 </FieldLabel>
-                <Input
+                <LocodeCombobox
                   id="destination_via"
-                  name="destination_via"
-                  placeholder="Optional UNLOCODE"
+                  value={destinationVia}
+                  onChange={setDestinationVia}
+                  placeholder="Optional via…"
                   disabled={showLoading}
+                  clearHint="Leave empty if no via"
                 />
               </Field>
               <Field>
                 <FieldLabel htmlFor="destination">Destination</FieldLabel>
-                <Input
+                <LocodeCombobox
                   id="destination"
-                  name="destination"
-                  placeholder="USLAX"
+                  value={destination}
+                  onChange={setDestination}
+                  placeholder="Search destination port…"
                   disabled={showLoading}
+                  allowClear={false}
                 />
               </Field>
               <Field>
@@ -819,17 +819,6 @@ export function RatesQuery() {
                   disabled={showLoading}
                 />
               </Field>
-              <Field>
-                <FieldLabel htmlFor="carrier">
-                  Carrier (spot, optional)
-                </FieldLabel>
-                <Input
-                  id="carrier"
-                  name="carrier"
-                  placeholder="cma"
-                  disabled={showLoading}
-                />
-              </Field>
             </FieldGroup>
             <div>
               <Button type="submit" size="sm" disabled={showLoading}>
@@ -873,7 +862,7 @@ export function RatesQuery() {
 
       {state.status === "empty" ? (
         <p className="text-sm text-muted-foreground" role="status">
-          No contract or spot rates for {laneDisplayLabel(state.lane)}.
+          No contract rates for {laneDisplayLabel(state.lane)}.
         </p>
       ) : null}
 

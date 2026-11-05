@@ -41,6 +41,223 @@ export type ResolvedRate = SearchRateHit & {
   resolved_currency: string | null
 }
 
+/** Free-time days parsed from contract hit `rate_items` (SB-4132 names). */
+export type ResolvedFreeTime = {
+  originDays: number | null
+  destDays: number | null
+  detentionOrigin: number | null
+  detentionDest: number | null
+  demurrageOrigin: number | null
+  demurrageDest: number | null
+}
+
+/** Non-money service facts already present on a qv2 search hit. */
+export type ContractServiceFacts = {
+  transit_time_days: number | null
+  service_name: string | null
+  effective_from: string | null
+  expires_on: string | null
+  free_time: ResolvedFreeTime | null
+}
+
+const FREE_TIME_ITEM_NAMES = new Set([
+  "free_time",
+  "combined_free_time",
+  "detention_free_time",
+  "demurrage_free_time",
+  "origin_free_time",
+  "origin_combined_free_time",
+  "origin_detention_free_time",
+  "origin_demurrage_free_time",
+  "destination_free_time",
+  "destination_combined_free_time",
+  "destination_detention_free_time",
+  "destination_demurrage_free_time",
+])
+
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value
+  if (typeof value === "string" && value.trim()) {
+    const n = Number(value)
+    if (Number.isFinite(n)) return n
+  }
+  return null
+}
+
+function asNonEmptyString(value: unknown): string | null {
+  if (typeof value !== "string") return null
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function isFreeTimeRateItemName(name: string | null | undefined): boolean {
+  return name != null && FREE_TIME_ITEM_NAMES.has(name)
+}
+
+function freeUsageDays(item: Record<string, unknown>): number | null {
+  const raw = item.free_usage ?? item.free_allowance
+  const n = finiteNumber(raw)
+  return n != null && n >= 0 ? n : null
+}
+
+/**
+ * Pull transit / free-time / validity / service from a contract search hit.
+ * Mirrors starboard-2 free-time item names; never invents values.
+ */
+export function contractFactsFromSearchHit(
+  hit: SearchRateHit | Record<string, unknown>
+): ContractServiceFacts {
+  const row = hit as Record<string, unknown>
+
+  let transit_time_days = finiteNumber(row.transit_time)
+  if (transit_time_days != null && transit_time_days === 0) {
+    transit_time_days = null
+  }
+  if (transit_time_days == null) {
+    const nested = row.transit_time_days
+    if (nested && typeof nested === "object") {
+      const t = nested as Record<string, unknown>
+      transit_time_days =
+        finiteNumber(t.min) ?? finiteNumber(t.max) ?? finiteNumber(t.days)
+    } else {
+      transit_time_days = finiteNumber(nested)
+    }
+  }
+
+  const service_name =
+    asNonEmptyString(row.service_name) ?? asNonEmptyString(row.service) ?? null
+
+  const effective_from =
+    asNonEmptyString(row.effective_from) ??
+    asNonEmptyString(row.valid_from) ??
+    null
+  const expires_on =
+    asNonEmptyString(row.expires_on) ??
+    asNonEmptyString(row.effective_to) ??
+    asNonEmptyString(row.valid_to) ??
+    null
+
+  const free_time = freeTimeFromHit(row)
+
+  return {
+    transit_time_days,
+    service_name,
+    effective_from,
+    expires_on,
+    free_time,
+  }
+}
+
+function freeTimeFromHit(
+  row: Record<string, unknown>
+): ResolvedFreeTime | null {
+  const items = Array.isArray(row.rate_items)
+    ? (row.rate_items as unknown[])
+    : Array.isArray(row.free_time_items)
+      ? (row.free_time_items as unknown[])
+      : []
+
+  let originDays: number | null = null
+  let destDays: number | null = null
+  let detentionOrigin: number | null = null
+  let detentionDest: number | null = null
+  let demurrageOrigin: number | null = null
+  let demurrageDest: number | null = null
+  let any = false
+
+  for (const raw of items) {
+    if (!raw || typeof raw !== "object") continue
+    const item = raw as Record<string, unknown>
+    const name = typeof item.name === "string" ? item.name : null
+    if (!isFreeTimeRateItemName(name)) continue
+    const days = freeUsageDays(item)
+    if (days == null) continue
+    any = true
+    switch (name) {
+      case "origin_free_time":
+      case "origin_combined_free_time":
+        originDays = days
+        break
+      case "destination_free_time":
+      case "destination_combined_free_time":
+        destDays = days
+        break
+      case "origin_detention_free_time":
+        detentionOrigin = days
+        break
+      case "destination_detention_free_time":
+        detentionDest = days
+        break
+      case "origin_demurrage_free_time":
+        demurrageOrigin = days
+        break
+      case "destination_demurrage_free_time":
+        demurrageDest = days
+        break
+      case "free_time":
+      case "combined_free_time":
+        if (originDays == null) originDays = days
+        if (destDays == null) destDays = days
+        break
+      case "detention_free_time":
+        if (detentionOrigin == null) detentionOrigin = days
+        if (detentionDest == null) detentionDest = days
+        break
+      case "demurrage_free_time":
+        if (demurrageOrigin == null) demurrageOrigin = days
+        if (demurrageDest == null) demurrageDest = days
+        break
+      default:
+        break
+    }
+  }
+
+  // Top-level route fields (when search still surfaces them beside rate_items).
+  for (const [key, setter] of [
+    ["origin_free_time", (n: number) => { originDays = originDays ?? n }],
+    ["destination_free_time", (n: number) => { destDays = destDays ?? n }],
+    [
+      "origin_detention_free_time",
+      (n: number) => {
+        detentionOrigin = detentionOrigin ?? n
+      },
+    ],
+    [
+      "destination_detention_free_time",
+      (n: number) => {
+        detentionDest = detentionDest ?? n
+      },
+    ],
+    [
+      "origin_demurrage_free_time",
+      (n: number) => {
+        demurrageOrigin = demurrageOrigin ?? n
+      },
+    ],
+    [
+      "destination_demurrage_free_time",
+      (n: number) => {
+        demurrageDest = demurrageDest ?? n
+      },
+    ],
+  ] as const) {
+    const n = finiteNumber(row[key])
+    if (n == null) continue
+    any = true
+    setter(n)
+  }
+
+  if (!any) return null
+  return {
+    originDays,
+    destDays,
+    detentionOrigin,
+    detentionDest,
+    demurrageOrigin,
+    demurrageDest,
+  }
+}
+
 /**
  * Normalize contract/spot search JSON into a rate hit list.
  * Supports legacy `{ rates }` and Starboard paginated

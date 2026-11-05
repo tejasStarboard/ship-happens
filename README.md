@@ -101,6 +101,9 @@ These values are already in `.env.example`. **Do not** point local tools at `loc
 | `pnpm lint` | ESLint via turbo |
 | `pnpm typecheck` | Typecheck via turbo |
 | `pnpm build` | Production build (needs compose URLs in env) |
+| `pnpm ci:check` | Local mirror of GitHub `format · lint · typecheck · build` |
+| `pnpm ci:e2e` | Local mirror of GitHub `e2e` (compose + `db:push` + Playwright) |
+| `pnpm ci:all` | `pnpm ci:check` then `pnpm ci:e2e` |
 | `pnpm test:e2e` | Playwright against `apps/web` |
 | `pnpm --filter web sb-client -- …` | Starboard CLI |
 | `pnpm --filter web starboard:smoke-rates` | Read-only contract+spot smoke |
@@ -108,11 +111,18 @@ These values are already in `.env.example`. **Do not** point local tools at `loc
 
 ## Local CI mirror
 
-Before handing off a ticket PR, agents should run the same checks as GitHub’s required job (`format · lint · typecheck · build`). Full command list and env rules live in:
+Before handing off a ticket PR, run the same checks as GitHub:
 
-**`.agents/skills/development-workflow/SKILL.md`** (section 6)
+```bash
+docker compose up -d   # if not already running
+pnpm ci:check          # required: format · lint · typecheck · build
+pnpm ci:e2e            # when UI/auth/flows changed (also a merge gate)
+# or: pnpm ci:all
+```
 
-Summary: keep `POSTGRES_URL` / `REDIS_URL` on **compose host ports** (`54325` / `63799`); never export Actions ports `5432` / `6379` on a laptop with `docker compose` running.
+Script: [`scripts/ci-mirror.sh`](scripts/ci-mirror.sh). Env/port rules: **`.agents/skills/development-workflow/SKILL.md`** (section 6).
+
+Keep `POSTGRES_URL` / `REDIS_URL` on **compose host ports** (`54325` / `63799`); never export Actions ports `5432` / `6379` on a laptop with `docker compose` running. The mirror script refuses those CI ports. Do not use bare `pnpm ci` — that is pnpm’s clean-install.
 
 ## Starboard client
 

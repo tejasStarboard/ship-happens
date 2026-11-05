@@ -5,6 +5,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev --filter=web",
+    "start": "turbo start --filter=web",
     "lint": "turbo lint",
     "format": "turbo format",
     "format:check": "turbo format:check",
@@ -12,6 +13,9 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
+    "ci:check": "bash scripts/ci-mirror.sh check",
+    "ci:e2e": "bash scripts/ci-mirror.sh e2e",
+    "ci:all": "bash scripts/ci-mirror.sh all",
     "test:e2e": "pnpm --filter web test:e2e",
     "test:e2e:ui": "pnpm --filter web test:e2e:ui",
     "dev:web": "pnpm --filter web dev"

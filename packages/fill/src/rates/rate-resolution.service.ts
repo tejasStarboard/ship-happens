@@ -26,6 +26,7 @@ import {
   UNEXPECTED_FEE_REVIEW_SOURCE,
   type UnexpectedFeeLine,
 } from "./fee-bindings"
+import { emitAnswerCells } from "./answer-bindings"
 
 const DEFAULT_CONCURRENCY = 3
 const MAP_STEP_KEY = "map"
@@ -158,7 +159,8 @@ export class RateResolutionService {
               message: `Lane ${lane.laneId} (${lane.originLocode}→${lane.destLocode} ${lane.equipmentType}): ${reason}`,
               metadata: { laneId: lane.laneId, hitCount: rates.length },
             })
-            return [
+            const missMeta = buildRateAuditMetadata(lane, null, reason, pick)
+            const missCells: UpsertLaneCellInput[] = [
               {
                 sheetName: lane.sheetName ?? null,
                 cellRef: lane.cellRef ?? null,
@@ -167,9 +169,29 @@ export class RateResolutionService {
                 outcome: "skipped",
                 value: null,
                 reason,
-                metadata: buildRateAuditMetadata(lane, null, reason, pick),
+                metadata: missMeta,
               },
             ]
+            for (const answer of emitAnswerCells({
+              lane,
+              candidate: null,
+            })) {
+              missCells.push({
+                sheetName: answer.binding.sheetName ?? lane.sheetName ?? null,
+                cellRef: answer.binding.cellRef ?? null,
+                rowIndex: lane.rowIndex ?? null,
+                columnKey: answer.binding.columnKey ?? answer.binding.answerId,
+                outcome: "skipped",
+                value: null,
+                reason: answer.reason ?? reason,
+                metadata: {
+                  ...missMeta,
+                  cellRole: "answer",
+                  answerId: answer.binding.answerId,
+                },
+              })
+            }
+            return missCells
           }
 
           const allocation = allocateLaneFees({
@@ -195,7 +217,16 @@ export class RateResolutionService {
               constituents: f.constituents,
             })),
             unexpectedFees: allocation.unexpected,
+            transitTimeDays: chosen.transit_time_days ?? null,
+            freeTime: chosen.free_time ?? null,
+            serviceName: chosen.service_name ?? null,
           }
+
+          const answerEmits = emitAnswerCells({
+            lane,
+            candidate: chosen,
+            allocation,
+          })
 
           await this.pipeline.appendLog({
             rfpId: input.fillId,
@@ -205,6 +236,10 @@ export class RateResolutionService {
               `Lane ${lane.laneId}: buy ${baseValue} ${chosen.resolved_currency ?? ""}${
                 allocation.feeCells.length > 0
                   ? `; ${allocation.feeCells.length} fee column(s)`
+                  : ""
+              }${
+                answerEmits.filter((a) => a.outcome === "filled").length > 0
+                  ? `; ${answerEmits.filter((a) => a.outcome === "filled").length} answer column(s)`
                   : ""
               }${
                 allocation.unexpected.length > 0
@@ -219,6 +254,7 @@ export class RateResolutionService {
               pickConfidence: pick.confidence,
               pickConfidenceReason: pick.reason,
               feeCellCount: allocation.feeCells.length,
+              answerCellCount: answerEmits.length,
               unexpectedFeeCount: allocation.unexpected.length,
             },
           })
@@ -260,6 +296,23 @@ export class RateResolutionService {
             })
           }
 
+          for (const answer of answerEmits) {
+            cells.push({
+              sheetName: answer.binding.sheetName ?? lane.sheetName ?? null,
+              cellRef: answer.binding.cellRef ?? null,
+              rowIndex: lane.rowIndex ?? null,
+              columnKey: answer.binding.columnKey ?? answer.binding.answerId,
+              outcome: answer.outcome,
+              value: answer.value,
+              reason: answer.reason,
+              metadata: {
+                ...baseMeta,
+                cellRole: "answer",
+                answerId: answer.binding.answerId,
+              },
+            })
+          }
+
           return cells
         } catch (error) {
           const reason =
@@ -289,7 +342,9 @@ export class RateResolutionService {
     )
 
     const cells = cellGroups.flat()
-    const baseCells = cells.filter((c) => c.metadata?.cellRole !== "fee")
+    const baseCells = cells.filter(
+      (c) => c.metadata?.cellRole !== "fee" && c.metadata?.cellRole !== "answer"
+    )
     const hitCount = baseCells.filter((c) => c.outcome === "filled").length
     const noHitCount = baseCells.filter((c) => c.outcome === "skipped").length
     const errorCount = baseCells.filter((c) => c.outcome === "error").length

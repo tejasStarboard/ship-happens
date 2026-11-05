@@ -467,6 +467,67 @@ export class ReviewItemService {
   }
 
   /**
+   * Bulk Confirm or Reject pending reviews (Approve all / Cancel all).
+   * Optional `ids` or `stepKey` scopes the set; defaults to all pending.
+   */
+  async decideMany(
+    organizationId: string,
+    fillId: string,
+    input: {
+      decision: "approved" | "rejected"
+      decisionNote?: string
+      ids?: string[]
+      stepKey?: string | null
+    },
+    decidedByUserId: string
+  ): Promise<{ decided: ReviewItemView[]; skipped: number }> {
+    if (input.decision === "rejected" && !input.decisionNote?.trim()) {
+      throw new DomainError(
+        "decisionNote is required when rejecting reviews",
+        "VALIDATION"
+      )
+    }
+    await this.requireFill(organizationId, fillId)
+    const pending = await this.repo.listForFill(organizationId, fillId, {
+      status: "pending",
+    })
+    let targets = pending
+    if (input.ids?.length) {
+      const idSet = new Set(input.ids)
+      targets = pending.filter((row) => idSet.has(row.id))
+    } else if (input.stepKey !== undefined) {
+      targets = pending.filter((row) =>
+        input.stepKey == null
+          ? row.stepKey == null
+          : row.stepKey === input.stepKey
+      )
+    }
+
+    const decided: ReviewItemView[] = []
+    let skipped = 0
+    for (const row of targets) {
+      try {
+        const view = await this.decide(
+          organizationId,
+          fillId,
+          row.id,
+          input.decision === "approved"
+            ? { decision: "approved" }
+            : {
+                decision: "rejected",
+                decisionNote: input.decisionNote!.trim(),
+              },
+          decidedByUserId
+        )
+        decided.push(view)
+      } catch {
+        skipped += 1
+      }
+    }
+    return { decided, skipped }
+  }
+
+  /**
    * Persist a lane-shaped map proposal into Postgres confirmed mapping.
    * Incomplete proposals skip upsert (Map UI can still confirm manually).
    */

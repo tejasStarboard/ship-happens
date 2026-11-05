@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import { IconSearch } from "@tabler/icons-react"
 import {
   Breadcrumb,
@@ -15,8 +15,9 @@ import {
 import { Button } from "@ship-happens/ui/components/button"
 import { Separator } from "@ship-happens/ui/components/separator"
 import { SidebarTrigger } from "@ship-happens/ui/components/sidebar"
-import { Fragment } from "react"
+import { useBreadcrumbLeafLabel } from "@/components/breadcrumb-leaf"
 import { CommandPalette } from "@/components/command/command-palette"
+import { RulesAgentSheet } from "@/components/rules/rules-agent-sheet"
 
 const SEGMENT_LABELS: Record<string, string> = {
   rfp: "Fill desk",
@@ -56,9 +57,20 @@ function crumbsFromPath(pathname: string) {
   return crumbs
 }
 
-export function SiteHeader() {
+export function SiteHeader({
+  organizationId,
+  userId,
+}: {
+  organizationId: string
+  userId: string
+}) {
   const pathname = usePathname()
-  const crumbs = crumbsFromPath(pathname)
+  const leafLabel = useBreadcrumbLeafLabel()
+  const crumbs = crumbsFromPath(pathname).map((crumb, index, list) =>
+    index === list.length - 1 && leafLabel
+      ? { ...crumb, label: leafLabel }
+      : crumb
+  )
   const [commandOpen, setCommandOpen] = useState(false)
 
   return (
@@ -98,7 +110,7 @@ export function SiteHeader() {
             type="button"
             variant="outline"
             size="sm"
-            className="ml-2 hidden h-8 gap-2 border-border/80 bg-muted/40 text-muted-foreground sm:inline-flex"
+            className="ml-1 hidden h-8 gap-2 border-border/80 bg-muted/40 text-muted-foreground sm:inline-flex"
             onClick={() => setCommandOpen(true)}
           >
             <IconSearch className="size-3.5" />
@@ -120,6 +132,7 @@ export function SiteHeader() {
         </div>
       </header>
       <CommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
+      <RulesAgentSheet organizationId={organizationId} userId={userId} />
     </>
   )
 }

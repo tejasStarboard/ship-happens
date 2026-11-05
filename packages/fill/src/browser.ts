@@ -17,12 +17,15 @@ export {
 } from "./mapping/mapping-reuse"
 export {
   asRfpStatus,
+  isRfpStatus,
   RFP_STATUS_LABEL,
+  RFP_STATUSES,
   type RfpDetailView,
   type RfpEmailRef,
   type RfpFillReportView,
   type RfpListItem,
   type RfpLogView,
+  type RfpAnswerBindingView,
   type RfpFeeBindingView,
   type RfpMappedLaneView,
   type RfpPendingReviewView,
@@ -42,6 +45,7 @@ export {
 } from "./rfp/fill-bid-outcome"
 
 export type {
+  AnswerBindingDoc,
   FeeBindingDoc,
   MappedLane,
   MappingDocument,
@@ -61,6 +65,11 @@ export {
   type UnexpectedFeeMode,
 } from "./rates/fee-bindings"
 export {
+  CONTRACT_ANSWER_IDS,
+  type AnswerBinding,
+  type ContractAnswerId,
+} from "./rates/answer-bindings"
+export {
   parseUnexpectedFeeSoftWarn,
   type UnexpectedFeeWarningPayload,
 } from "./rates/unexpected-fee-gate"
@@ -73,6 +82,7 @@ export {
   lanePriceAuditFromMetadata,
   toFillReportCellView,
   type FillAuditCellOutcome,
+  type FillCellRole,
   type FillReportCellView,
   type LaneOverlayAudit,
   type LaneOverlayMode,

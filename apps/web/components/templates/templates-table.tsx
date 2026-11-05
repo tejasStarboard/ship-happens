@@ -18,6 +18,7 @@ import {
   TableRow,
 } from "@ship-happens/ui/components/table"
 import { DataTableShell, PageChrome } from "@/components/shared/page-chrome"
+import { TemplateManageMenu } from "@/components/templates/template-manage-menu"
 import { UploadTemplateDialog } from "@/components/templates/upload-template-dialog"
 import { formatBytes } from "@/lib/shared/format-bytes"
 import type { TemplateListItem } from "@/lib/domain/templates/template.types"
@@ -80,6 +81,9 @@ export function TemplatesTable({
                 <TableHead className="h-[38px] text-right text-xs font-medium text-muted-foreground">
                   Uploaded
                 </TableHead>
+                <TableHead className="h-[38px] w-10 text-right text-xs font-medium text-muted-foreground">
+                  <span className="sr-only">Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -99,6 +103,19 @@ export function TemplatesTable({
                   </TableCell>
                   <TableCell className="tabular text-right text-muted-foreground">
                     {formatDateTime(template.uploadedAt)}
+                  </TableCell>
+                  <TableCell
+                    className="text-right"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      event.stopPropagation()
+                    }}
+                  >
+                    <TemplateManageMenu
+                      templateId={template.id}
+                      name={template.name}
+                      customer={template.customer}
+                    />
                   </TableCell>
                 </TableRow>
               ))}

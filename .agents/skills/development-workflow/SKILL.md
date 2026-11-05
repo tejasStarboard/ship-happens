@@ -156,51 +156,29 @@ Compose must be up. Prefer existing `.env` / `.env.local`. Only stub missing
 non-DB secrets. **Never** export Actions `5432` / `6379` over compose URLs.
 
 ```bash
-# From repo root — ensure compose URLs (README), then:
+# From repo root — ensure compose is up (README ports), then:
 docker compose up -d
-
-# Unset stale CI-port exports if a prior shell forced 5432/6379
-unset POSTGRES_URL REDIS_URL 2>/dev/null || true
-# Load .env if present; otherwise fall back to compose host ports from README
-set -a && [ -f .env ] && . ./.env; set +a
-export POSTGRES_SSL="${POSTGRES_SSL:-false}"
-export POSTGRES_URL="${POSTGRES_URL:-postgresql://postgres:postgres@127.0.0.1:54325/ship_happens}"
-export REDIS_URL="${REDIS_URL:-redis://127.0.0.1:63799}"
-export BETTER_AUTH_SECRET="${BETTER_AUTH_SECRET:-ci-better-auth-secret-min-32-characters-long}"
-export BETTER_AUTH_DOMAIN="${BETTER_AUTH_DOMAIN:-localhost}"
-export APP_URL="${APP_URL:-http://127.0.0.1:3000}"
-export NEXT_PUBLIC_APP_URL="${NEXT_PUBLIC_APP_URL:-http://127.0.0.1:3000}"
-export RESEND_API_KEY="${RESEND_API_KEY:-re_ci_placeholder}"
-export EMAIL_SENDER_NAME="${EMAIL_SENDER_NAME:-Ship Happens CI}"
-export EMAIL_SENDER_ADDRESS="${EMAIL_SENDER_ADDRESS:-noreply@example.com}"
-export BLOB_STORE_ID="${BLOB_STORE_ID:-local}"
-export BLOB_READ_WRITE_TOKEN="${BLOB_READ_WRITE_TOKEN:-vercel_blob_local_placeholder}"
-
-# Reject accidental CI ports (common agent mistake)
-case "$REDIS_URL" in *://127.0.0.1:6379|*://localhost:6379)
-  echo "Refuse: REDIS_URL uses CI port 6379; use 63799 (see README)" >&2; exit 1 ;;
-esac
-case "$POSTGRES_URL" in *://127.0.0.1:5432*|*://localhost:5432*)
-  echo "Refuse: POSTGRES_URL uses CI port 5432; use 54325 (see README)" >&2; exit 1 ;;
-esac
-
 pnpm format          # optional autofix (CI only runs format:check)
-pnpm format:check
-pnpm lint
-pnpm typecheck
-pnpm build
+pnpm ci:check        # mirrors format · lint · typecheck · build
+pnpm ci:e2e          # when UI/auth/flows touched (also a merge gate)
+# or: pnpm ci:all
 ```
+
+`pnpm ci:check` / `ci:e2e` / `ci:all` run [`scripts/ci-mirror.sh`](../../../scripts/ci-mirror.sh):
+loads `.env` with compose-port fallbacks, **refuses** Actions ports `5432` /
+`6379`, then executes the same steps as `.github/workflows/ci.yml`.
+Do **not** use bare `pnpm ci` (pnpm clean-install).
 
 GitHub Actions still uses `127.0.0.1:5432` / `:6379` via workflow `services:` —
 correct **in CI only**.
 
 | Step | Command | CI job |
 |------|---------|--------|
-| Format | `pnpm format:check` | required (merge gate) |
-| Lint | `pnpm lint` | required (merge gate) |
-| Typecheck | `pnpm typecheck` | required (merge gate) |
-| Build | `pnpm build` | required (merge gate) |
-| e2e | `pnpm test:e2e` (needs Postgres + Redis + `pnpm db:push`) | required (merge gate); run locally when UI/auth/flows touched |
+| Format | `pnpm format:check` (via `pnpm ci:check`) | required (merge gate) |
+| Lint | `pnpm lint` (via `pnpm ci:check`) | required (merge gate) |
+| Typecheck | `pnpm typecheck` (via `pnpm ci:check`) | required (merge gate) |
+| Build | `pnpm build` (via `pnpm ci:check`) | required (merge gate) |
+| e2e | `pnpm ci:e2e` (compose + `db:push` + Playwright) | required (merge gate); run locally when UI/auth/flows touched |
 
 **Rules**
 

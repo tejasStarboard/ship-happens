@@ -28,23 +28,45 @@ sb-client / library
 
 | Module      | Purpose                                                                   |
 | ----------- | ------------------------------------------------------------------------- |
-| `rates`     | Contract search, spot search, **`resolve`**, recommend, **rate-doc signed URL** |
+| `rates`     | Contract search, spot, **`resolve` / `resolveMany`**, **`normalizeForFill` / `pickForFill`**, recommend, rate-doc URL |
 | `margins`   | Apply %/$ markup, floor guardrails (`min_amount` / `min_pct`)             |
 | `globals`   | List / match company rate items; classify & rollup for BCO columns        |
-| `locations` | Name → UN/LOCODE; resolve lane (+ via split)                              |
+| `locations` | Name → UN/LOCODE; **`canonicalize` / `resolveLaneForFill`** (sheet aliases) |
+| `carriers`  | Active vocab; **`lookupScac`** prefers initials/`*U` (never invents)      |
+
+### Contract fill vs schedule
+
+Contract **`rates.resolve`** returns money + carrier + transit + free time + validity when present on the hit. It does **not** return vessel schedule (cutoff / ETD / ETA / vessel name) — that needs Foundry spot and is out of scope until that epic. `normalizeForFill` always sets `unsupported.schedule = { supported: false, reason: "contract_resolve" }` so agents do not treat blanks as a bug.
 
 ## Library
 
 ```ts
-import { createClient } from "@ship-happens/sb-client"
+import {
+  createClient,
+  normalizeForFill,
+  pickForFill,
+} from "@ship-happens/sb-client"
 
 const client = await createClient() // reads env
+
+const lane = await client.locations.resolveLaneForFill({
+  origin: "SHA",
+  destination: "TCM/SEA - CY",
+})
 const { rates } = await client.rates.resolve({
   service_type: "ocean_fcl",
-  origin_locodes: ["CNSHA"],
-  destination_locodes: ["USLAX"],
+  origin_locodes: lane.origin_locodes,
+  destination_locodes: lane.destination_locodes,
   cargo: { cargo_type: "container", container_types: ["40HC"] },
 })
+const picked = pickForFill(rates, "40HC")
+const view = picked?.view ?? normalizeForFill(rates[0], "40HC")
+
+// Batch (shared session + optional disk cache):
+const many = await client.rates.resolveMany(
+  [{ id: "1", origins: ["CNSHA"], dests: ["USSEA"], containers: ["40HC"] }],
+  { concurrency: 10, cacheDir: ".sb-client-rate-cache" }
+)
 ```
 
 ## Read-only rate search smoke (Ship Happens)
@@ -83,13 +105,19 @@ sb-client auth test
 sb-client rates search-contract --body '...'
 sb-client rates search-spot --body '{"carrier":"cma",...}'
 sb-client rates resolve --body '...'
+sb-client rates resolve-many --file jobs.jsonl --cache-dir .sb-client-rate-cache
+sb-client rates fill-view --equipment 40HC --body '{"rates":[...]}'
 sb-client rates recommend --body '{"rates":[...]}'
 sb-client margins apply --body '{"buy":1000,"pct":5}'
 sb-client margins check-floor --body '{"buy":1000,"sell":1100,"min_amount":150}'
 sb-client globals list --service ocean_fcl --defaults-only
 sb-client locations resolve --query Shanghai
-sb-client locations resolve-lane --origin Shanghai --destination "Chicago via LA"
+sb-client locations canonicalize --query SHA
+sb-client locations resolve-lane-for-fill --origin SHA --destination "TCM/SEA - CY"
+sb-client carriers lookup-scac --name "CMA CGM"
 ```
+
+`resolve-many` jobs JSONL: `{"id":"…","origins":["CNSHA"],"dests":["USSEA"],"containers":["40HC"],"limit":20}` → one JSON object per line on stdout.
 
 ## Env
 

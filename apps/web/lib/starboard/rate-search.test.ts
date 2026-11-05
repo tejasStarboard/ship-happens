@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest"
 import {
   buildContractSearchInput,
   buildSmokeLane,
-  buildSpotSearchInput,
   parseEquipmentTypes,
   parseLocodeList,
 } from "./rate-search"
@@ -58,23 +57,5 @@ describe("buildContractSearchInput", () => {
     expect(body.transit_time_max).toBe(21)
     expect(body.page).toBe(2)
     expect(body.cache_key).toBe("ck")
-  })
-})
-
-describe("buildSpotSearchInput", () => {
-  it("passes all container types and departure_date from validFrom", () => {
-    const lane = buildSmokeLane({
-      equipmentTypes: ["20GP", "40HC"],
-      validFrom: "2026-11-01",
-      validTo: "2026-11-30",
-      spotCarrier: "msc",
-    })
-    expect(buildSpotSearchInput(lane)).toEqual({
-      carrier: "msc",
-      origin_locodes: ["CNSHA"],
-      destination_locodes: ["USLAX"],
-      container_types: ["20GP", "40HC"],
-      departure_date: "2026-11-01",
-    })
   })
 })

@@ -48,7 +48,7 @@ function outcomeLabel(outcome: FillReportCellView["outcome"]) {
     case "skipped":
       return "Skipped"
     case "needs_human":
-      return "Needs human"
+      return "Needs check"
     case "error":
       return "Error"
     default:
@@ -64,18 +64,18 @@ function laneLabel(cell: FillReportCellView) {
   return laneId ?? cell.columnKey ?? cell.cellRef ?? cell.id
 }
 
-function sourceSummary(cell: FillReportCellView) {
+function buySummary(cell: FillReportCellView) {
   const { starboard } = cell.audit
   if (starboard.buyTotal != null) {
     const carrier = starboard.carrier ? ` · ${starboard.carrier}` : ""
-    return `Contract ${money(starboard.buyTotal, starboard.currency)}${carrier}`
+    return `${money(starboard.buyTotal, starboard.currency)}${carrier}`
   }
-  return starboard.missReason ?? cell.reason ?? "No Starboard hit"
+  return starboard.missReason ?? cell.reason ?? "No Starboard rate"
 }
 
-function overlaySummary(cell: FillReportCellView) {
+function markupSummary(cell: FillReportCellView) {
   const overlay = cell.audit.overlay
-  if (!overlay) return "—"
+  if (!overlay) return "None"
   if (overlay.mode === "markup") {
     const parts = [
       overlay.markupPct != null ? `${overlay.markupPct}%` : null,
@@ -83,18 +83,18 @@ function overlaySummary(cell: FillReportCellView) {
         ? `+${money(overlay.markupAmount, overlay.currency)}`
         : null,
     ].filter(Boolean)
-    return `${overlay.ruleName} (markup${parts.length ? ` ${parts.join(" ")}` : ""})`
+    return `${overlay.ruleName}${parts.length ? ` · ${parts.join(" ")}` : ""}`
   }
-  return `${overlay.ruleName} (projected ${money(overlay.projectedSell ?? overlay.sellTotal, overlay.currency)})`
+  return `${overlay.ruleName} · projected`
 }
 
-function confidenceLabel(cell: FillReportCellView) {
-  const { confidence, reason } = cell.audit.pick
-  if (confidence == null) {
-    return reason === "n/a" || reason == null ? "n/a" : reason
+function sellSummary(cell: FillReportCellView) {
+  const overlay = cell.audit.overlay
+  if (overlay?.sellTotal != null) {
+    return money(overlay.sellTotal, overlay.currency)
   }
-  const pct = `${Math.round(confidence * 100)}%`
-  return reason ? `${pct} · ${reason.replaceAll("_", " ")}` : pct
+  if (cell.value) return cell.value
+  return "—"
 }
 
 function priorityLabel(cell: FillReportCellView) {
@@ -113,6 +113,50 @@ function priorityTierClass(tier: LaneBidPriorityTier) {
     default:
       return "text-muted-foreground"
   }
+}
+
+function laneGroupKey(cell: FillReportCellView) {
+  return (
+    cell.audit.laneId ??
+    `${cell.audit.originLocode ?? ""}|${cell.audit.destLocode ?? ""}|${cell.audit.equipmentType ?? ""}|${cell.sheetName ?? ""}`
+  )
+}
+
+type LaneGroup = {
+  key: string
+  base: FillReportCellView
+  extras: FillReportCellView[]
+}
+
+function groupCellsByLane(cells: FillReportCellView[]): LaneGroup[] {
+  const map = new Map<string, LaneGroup>()
+  const order: string[] = []
+
+  for (const cell of cells) {
+    const key = laneGroupKey(cell)
+    const role = cell.cellRole
+    let group = map.get(key)
+    if (!group) {
+      group = { key, base: cell, extras: [] }
+      map.set(key, group)
+      order.push(key)
+    }
+    if (role === "fee" || role === "answer") {
+      group.extras.push(cell)
+      continue
+    }
+    // Prefer an explicit base cell; otherwise keep first as lane head.
+    if (role === "base" || group.base.cellRole !== "base") {
+      if (group.base.cellRole === "fee" || group.base.cellRole === "answer") {
+        group.extras.unshift(group.base)
+      }
+      group.base = cell
+    } else if (cell.id !== group.base.id) {
+      group.extras.push(cell)
+    }
+  }
+
+  return order.map((key) => map.get(key)!)
 }
 
 function ProvenanceLinks({
@@ -158,7 +202,13 @@ function ProvenanceLinks({
   )
 }
 
-function AuditDetail({ cell }: { cell: FillReportCellView }) {
+function AuditDetail({
+  cell,
+  extras,
+}: {
+  cell: FillReportCellView
+  extras: FillReportCellView[]
+}) {
   const { starboard, overlay, pick } = cell.audit
   const priority = cell.bidPriority
   const [links, setLinks] = useState<RateProvenanceLinks | null>(null)
@@ -205,7 +255,7 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
     <div className="grid gap-4 border-t border-border bg-muted/30 px-4 py-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Bid priority
+          Priority
         </p>
         {priority ? (
           <dl className="grid gap-1.5">
@@ -220,7 +270,7 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
               <dd className="tabular font-medium">{priority.score}</dd>
             </div>
             <div className="flex flex-col gap-1">
-              <dt className="text-muted-foreground">Factors</dt>
+              <dt className="text-muted-foreground">Why</dt>
               <dd>
                 <ul className="list-inside list-disc text-right font-medium">
                   {priority.factors.map((factor) => (
@@ -233,24 +283,14 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
             </div>
           </dl>
         ) : (
-          <p className="text-muted-foreground">No priority computed.</p>
+          <p className="text-muted-foreground">No priority yet.</p>
         )}
       </div>
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Starboard source
+          Buy (Starboard)
         </p>
         <dl className="grid gap-1.5">
-          <div className="flex justify-between gap-3">
-            <dt className="text-muted-foreground">Channel</dt>
-            <dd className="font-medium capitalize">{starboard.channel}</dd>
-          </div>
-          <div className="flex justify-between gap-3">
-            <dt className="text-muted-foreground">Hit</dt>
-            <dd className="truncate font-medium" title={starboard.hitId ?? ""}>
-              {starboard.hitId ?? "—"}
-            </dd>
-          </div>
           <div className="flex justify-between gap-3">
             <dt className="text-muted-foreground">Carrier</dt>
             <dd className="font-medium">{starboard.carrier ?? "—"}</dd>
@@ -275,7 +315,7 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
       </div>
       <div className="flex flex-col gap-2">
         <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Overlay + markup
+          Markup / overlay
         </p>
         {overlay ? (
           <dl className="grid gap-1.5">
@@ -286,8 +326,10 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
               </dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">Mode</dt>
-              <dd className="font-medium capitalize">{overlay.mode}</dd>
+              <dt className="text-muted-foreground">Type</dt>
+              <dd className="font-medium">
+                {overlay.mode === "markup" ? "Markup" : "Projected sell"}
+              </dd>
             </div>
             {overlay.mode === "markup" ? (
               <>
@@ -315,7 +357,7 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
               </>
             ) : (
               <div className="flex justify-between gap-3">
-                <dt className="text-muted-foreground">Projected sell</dt>
+                <dt className="text-muted-foreground">Projected</dt>
                 <dd className="tabular font-medium">
                   {money(overlay.projectedSell, overlay.currency)}
                 </dd>
@@ -329,7 +371,9 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
             </div>
           </dl>
         ) : (
-          <p className="text-muted-foreground">No overlay applied.</p>
+          <p className="text-muted-foreground">
+            No overlay — sell matches buy when filled.
+          </p>
         )}
       </div>
       <div className="flex flex-col gap-2">
@@ -352,12 +396,36 @@ function AuditDetail({ cell }: { cell: FillReportCellView }) {
             </dd>
           </div>
           <div className="flex justify-between gap-3">
-            <dt className="text-muted-foreground">Candidates</dt>
+            <dt className="text-muted-foreground">Options</dt>
             <dd className="tabular font-medium">
               {pick.candidateCount ?? "—"}
             </dd>
           </div>
         </dl>
+        {extras.length > 0 ? (
+          <div className="mt-2 border-t border-border/70 pt-2">
+            <p className="mb-1 text-xs font-medium text-muted-foreground uppercase">
+              Fees & answers
+            </p>
+            <ul className="grid gap-1">
+              {extras.map((extra) => (
+                <li
+                  key={extra.id}
+                  className="flex justify-between gap-2 text-xs"
+                >
+                  <span className="truncate text-muted-foreground">
+                    {extra.cellRole === "fee"
+                      ? (extra.feeHeading ?? "Fee")
+                      : (extra.answerId ?? "Answer")}
+                  </span>
+                  <span className="tabular font-medium">
+                    {extra.value ?? outcomeLabel(extra.outcome)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </div>
   )
@@ -368,18 +436,21 @@ export function FillReviewPanel({
 }: {
   fillReport: RfpFillReportView | null
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [tierFilter, setTierFilter] = useState<LaneBidPriorityTier | "all">(
     "all"
   )
 
-  const cells = useMemo(() => {
+  const lanes = useMemo(() => {
     const list = [...(fillReport?.cells ?? [])]
     list.sort((a, b) =>
       compareLaneBidPriorityDesc(a.bidPriority, b.bidPriority)
     )
-    if (tierFilter === "all") return list
-    return list.filter((cell) => cell.bidPriority?.tier === tierFilter)
+    const filtered =
+      tierFilter === "all"
+        ? list
+        : list.filter((cell) => cell.bidPriority?.tier === tierFilter)
+    return groupCellsByLane(filtered)
   }, [fillReport?.cells, tierFilter])
 
   const counts = useMemo(() => {
@@ -402,11 +473,11 @@ export function FillReviewPanel({
           <EmptyMedia variant="icon">
             <IconChartBar aria-hidden />
           </EmptyMedia>
-          <EmptyTitle>No pricing audit yet</EmptyTitle>
+          <EmptyTitle>No quote lines yet</EmptyTitle>
           <EmptyDescription>
-            Run rates resolve (and overlays) after mapping so each lane gets a
-            Starboard source, overlay, and markup row. Misses show as “No
-            Starboard hit” once cells exist.
+            After mapping and rates pull, each lane shows Starboard buy, any
+            markup/overlay, and the sell you are quoting. Ask the agent in Chat
+            to fill this sheet, or clear open items in Reviews.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
@@ -414,13 +485,13 @@ export function FillReviewPanel({
   }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="grid gap-3 sm:grid-cols-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto">
+      <div className="grid shrink-0 gap-3 sm:grid-cols-4">
         {(
           [
             ["Filled", counts.filled],
             ["Skipped", counts.skipped],
-            ["Needs human", counts.needsHuman],
+            ["Needs check", counts.needsHuman],
             ["Errors", counts.error],
           ] as const
         ).map(([label, value]) => (
@@ -435,11 +506,13 @@ export function FillReviewPanel({
       </div>
 
       {fillReport.summary ? (
-        <p className="text-sm text-muted-foreground">{fillReport.summary}</p>
+        <p className="shrink-0 text-sm text-muted-foreground">
+          {fillReport.summary}
+        </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-2">
-        <p className="text-xs text-muted-foreground">Priority</p>
+      <div className="flex shrink-0 flex-wrap items-center gap-2">
+        <p className="text-xs text-muted-foreground">Focus</p>
         {(
           [
             ["all", "All"],
@@ -462,7 +535,8 @@ export function FillReviewPanel({
           </button>
         ))}
         <p className="text-xs text-muted-foreground">
-          Sorted by bid priority (needs attention first)
+          {lanes.length} lane{lanes.length === 1 ? "" : "s"} · buy → markup →
+          sell
         </p>
       </div>
 
@@ -477,32 +551,30 @@ export function FillReviewPanel({
                 Lane
               </TableHead>
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
-                Outcome
+                Status
               </TableHead>
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
-                Value
+                Buy
               </TableHead>
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
-                Starboard
+                Markup
               </TableHead>
               <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
-                Overlay
-              </TableHead>
-              <TableHead className="h-[38px] text-xs font-medium text-muted-foreground">
-                Confidence
+                Sell
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {cells.map((cell) => {
-              const open = selectedId === cell.id
+            {lanes.map((group) => {
+              const cell = group.base
+              const open = selectedKey === group.key
               const tier = cell.bidPriority?.tier
               return (
-                <Fragment key={cell.id}>
+                <Fragment key={group.key}>
                   <TableRow
                     className="cursor-pointer"
                     data-state={open ? "selected" : undefined}
-                    onClick={() => setSelectedId(open ? null : cell.id)}
+                    onClick={() => setSelectedKey(open ? null : group.key)}
                   >
                     <TableCell
                       className={`align-top text-sm font-medium ${
@@ -514,11 +586,10 @@ export function FillReviewPanel({
                     <TableCell className="align-top font-medium">
                       <div className="flex flex-col gap-0.5">
                         <span>{laneLabel(cell)}</span>
-                        {cell.cellRef || cell.sheetName ? (
+                        {group.extras.length > 0 ? (
                           <span className="text-xs text-muted-foreground">
-                            {[cell.sheetName, cell.cellRef]
-                              .filter(Boolean)
-                              .join(" · ")}
+                            {group.extras.length} fee/answer
+                            {group.extras.length === 1 ? "" : "s"}
                           </span>
                         ) : null}
                       </div>
@@ -526,23 +597,20 @@ export function FillReviewPanel({
                     <TableCell className="align-top text-sm">
                       {outcomeLabel(cell.outcome)}
                     </TableCell>
-                    <TableCell className="tabular align-top text-sm">
-                      {cell.value ?? "—"}
+                    <TableCell className="align-top text-sm text-muted-foreground">
+                      {buySummary(cell)}
                     </TableCell>
                     <TableCell className="align-top text-sm text-muted-foreground">
-                      {sourceSummary(cell)}
+                      {markupSummary(cell)}
                     </TableCell>
-                    <TableCell className="align-top text-sm text-muted-foreground">
-                      {overlaySummary(cell)}
-                    </TableCell>
-                    <TableCell className="align-top text-sm text-muted-foreground">
-                      {confidenceLabel(cell)}
+                    <TableCell className="tabular align-top text-sm font-medium">
+                      {sellSummary(cell)}
                     </TableCell>
                   </TableRow>
                   {open ? (
                     <TableRow className="hover:bg-transparent">
-                      <TableCell colSpan={7} className="p-0">
-                        <AuditDetail cell={cell} />
+                      <TableCell colSpan={6} className="p-0">
+                        <AuditDetail cell={cell} extras={group.extras} />
                       </TableCell>
                     </TableRow>
                   ) : null}
@@ -552,10 +620,9 @@ export function FillReviewPanel({
           </TableBody>
         </Table>
       </DataTableShell>
-      <p className="text-xs text-muted-foreground">
-        Click a row for bid priority factors, Starboard source, overlay/markup,
-        and pick confidence. Weak / missing rates sort to the top. Same audit
-        via <code className="text-xs">sh-client cells</code>.
+      <p className="shrink-0 text-xs text-muted-foreground">
+        Click a lane for buy source, markup rule, and sell. Excel preview stays
+        under Files.
       </p>
     </div>
   )

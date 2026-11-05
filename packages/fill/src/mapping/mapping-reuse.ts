@@ -247,6 +247,13 @@ function cloneLane(lane: MappedLane): MappedLane {
     ...(lane.feeBindings
       ? { feeBindings: lane.feeBindings.map((binding) => ({ ...binding })) }
       : {}),
+    ...(lane.answerBindings
+      ? {
+          answerBindings: lane.answerBindings.map((binding) => ({
+            ...binding,
+          })),
+        }
+      : {}),
   }
 }
 

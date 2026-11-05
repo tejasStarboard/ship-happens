@@ -43,15 +43,24 @@ export function StartNextRoundDialog({
   parentName,
   parentCustomer,
   roundNumber,
+  hideTrigger = false,
+  open: openProp,
+  onOpenChange,
 }: {
   parentFillId: string
   parentName: string
   parentCustomer: string
   roundNumber: number
+  /** When true, only the dialog is rendered (open via controlled props). */
+  hideTrigger?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
   const router = useRouter()
   const nextRound = roundNumber + 1
-  const [open, setOpen] = useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false)
+  const open = openProp ?? uncontrolledOpen
+  const setOpen = onOpenChange ?? setUncontrolledOpen
   const [name, setName] = useState(`${parentName} (round ${nextRound})`)
   const [customer, setCustomer] = useState(
     parentCustomer && parentCustomer !== "—" ? parentCustomer : ""
@@ -125,9 +134,11 @@ export function StartNextRoundDialog({
         if (!next) reset()
       }}
     >
-      <DialogTrigger render={<Button variant="secondary" size="sm" />}>
-        Start next round
-      </DialogTrigger>
+      {hideTrigger ? null : (
+        <DialogTrigger render={<Button variant="secondary" size="sm" />}>
+          Start next round
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Start round {nextRound}</DialogTitle>

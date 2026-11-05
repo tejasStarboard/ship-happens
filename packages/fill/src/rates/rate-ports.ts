@@ -27,6 +27,16 @@ export type ResolvedSurchargeCandidate = {
   source?: string
 }
 
+/** Free-time days from contract hit rate_items (mirrors Starboard SB-4132). */
+export type ResolvedFreeTimeCandidate = {
+  originDays: number | null
+  destDays: number | null
+  detentionOrigin: number | null
+  detentionDest: number | null
+  demurrageOrigin: number | null
+  demurrageDest: number | null
+}
+
 /** Portable buy-side candidate after `rates.resolve`. */
 export type ResolvedRateCandidate = {
   id?: string
@@ -38,6 +48,14 @@ export type ResolvedRateCandidate = {
   vendor_rate_doc_id?: string | null
   /** Short-lived signed vendor email URL when the hit carried one. */
   vendor_email_url?: string | null
+  /** Transit days from hit `transit_time` / `transit_time_days`. */
+  transit_time_days?: number | null
+  service_name?: string | null
+  effective_from?: string | null
+  expires_on?: string | null
+  free_time?: ResolvedFreeTimeCandidate | null
+  /** Optional SCAC when host looked up Starboard carrier vocab (T5). */
+  carrier_scac?: string | null
 }
 
 export type StarboardRatesPort = {

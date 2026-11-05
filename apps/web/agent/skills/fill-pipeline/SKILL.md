@@ -29,32 +29,34 @@ Typical flow:
 1. `agentStartStep(rfpId, "map")`
 2. Do work
 3. `agentCompleteStep(rfpId, "map", "Mapped 12 columns")` or `agentFailStep(...)`
-4. For **rates**: prefer `sh-client rates resolve` (server Starboard resolve + Progress `rates` + logs, then overlays + Progress `overlay`). Do not invent money cells. Manual `agentStartStep`/`agentCompleteStep` for `rates` / `overlay` only if debugging.
+4. For **rates**: prefer `sh-client rates resolve` (server Starboard resolve + Progress `rates` + fill-report cells for base / `feeBindings` / `answerBindings`). Do not invent money, free days, or SCACs. Manual `agentStartStep`/`agentCompleteStep` for `rates` / `overlay` only when debugging **or** after HITL Confirm left `rates` stuck at `running` / “Review cleared — continue step” (sandbox has **no** `progress complete` CLI — host must `agentCompleteStep`).
 5. Overlay rules are configured in the Overlays UI (org/customer). Resolve applies projected sells on no-buy lanes and markup on priced buys automatically.
 6. Floor-margin rules live under **Settings → Floor margins**. After overlay apply, buy+sell lanes that breach the matched floor open Phase 2b reviews (`source: margin-floor`, `stepKey: overlay`) and hold Progress until cleared. Projected-only (no buy) lanes are not floor-checked. Confirm keeps the proposed sell; then `agentCompleteStep` for `overlay` if still open.
-   6b. Rate-pick confidence (threshold `0.75`): each audit cell stores pick confidence (or n/a). Near-tie contract picks and projected overlays open Phase 2b reviews (`source: rate-pick`) on `rates` / `overlay` alongside floor-margin waits. Strong rows stay unblocked. Confirm keeps the proposed value.
-7. For **export**: prefer `sh-client export` (writes sells into the original BCO template via `agent-xlsx`, stores Blob + workspace `filled/`). Opens a Phase 2b **Final export sign-off** review (`source: export-signoff`, `stepKey: export`) and holds Progress `export` + `review` until the analyst **Confirm**s on Overview — do **not** `agentCompleteStep` for `export`/`review` while that wait is open. Confirm unlocks download and completes those steps; Reject keeps download blocked.
+   6b. Rate-pick confidence (threshold `0.75`): near-tie picks open `source: rate-pick` waits. Strong rows stay unblocked.
+   6c. Unexpected fees (`source: unexpected-fee`, `stepKey: rates`): Starboard globals not mapped to fee columns. Soft-warn. After human Confirm, **do not** re-run `rates resolve` — cells are already persisted; call `agentCompleteStep(rfpId, "rates", detail)` from this skill / host.
+7. For **export**: prefer `sh-client export` (writes fill-report cells with `sheetName`+`cellRef` into the BCO template under a new `filled/<UTC-timestamp>/` folder; older fills stay on disk). Opens **Final export sign-off**. Do **not** `agentCompleteStep` for `export`/`review` while that wait is open. Confirm unlocks download.
 8. When the fill finishes: `agentSetRfpStatus(rfpId, "done")` or `"needs_review"` / `"failed"`
 
 ## Open review waits
 
-`sh-client reviews create` **or** server floor-margin enforcement force-holds Progress
+`sh-client reviews create` **or** server unexpected-fee / floor / rate-pick force-holds Progress
 (fill → `needs_review`; step with `stepKey` stays running until pending waits
 clear). Do **not** call `agentCompleteStep` for a step that still has open
 (`pending`) reviews — it errors. After the human leaves pending (Confirm / Edit /
-Reject), continue or complete the step yourself.
+Reject), **complete the step yourself** with `agentCompleteStep` — do not tell the
+sandbox agent to re-run `rates resolve` as a substitute.
 
-## Demo templates (SB-6673)
+## M3 answer columns
 
-Verified local workbooks for live demos (not committed — live under repo `tmp/`):
+Mapping must include `answerBindings` / `feeBindings` / base `cellRef` for bid-complete rows. Contract can fill: carrier_name, carrier_scac, transit_days, free_time.*, service_name, currency, validity, all_in, fee headings (LSS/BAF…). Schedule (cutoff/ETD/ETA) is out of scope.
 
-1. `tmp/sb-tournament/Auto Zone Bid Sheet clean.xlsx`
-2. `tmp/fwdfwbidexamples/Vivint - Sun Chief Express - 4.7.25.xlsx`
+## Demo templates
 
-Happy path: upload → `sh-client mapping propose` with O-D labels (Jev geo;
-low-confidence opens Map reviews) → Confirm Map waits → `sh-client rates resolve`
-→ clear remaining reviews → `sh-client export` → Confirm export sign-off on
-Overview → Download. Download stays blocked until Confirm.
+1. Nordstrom golden: `tmp/fwdfwbidexamples/Bid Examples/2024_Ocean_RFP_-_Bid_Worksheet.xlsx` (Lanes K/L/M/P/U/A/B — see `.project/docs/qa.md`)
+2. `tmp/sb-tournament/Auto Zone Bid Sheet clean.xlsx`
+3. `tmp/fwdfwbidexamples/Vivint - Sun Chief Express - 4.7.25.xlsx`
+
+Happy path: upload → `mapping propose` → Confirm map → `mapping put` with bindings → Confirm mapping → `rates resolve` **once** → Confirm unexpected-fee/rate-pick → **host `agentCompleteStep` rates if still running** → overlay if needed → `export` → Confirm sign-off → Download.
 
 ## Not this skill
 

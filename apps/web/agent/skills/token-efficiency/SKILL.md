@@ -26,7 +26,7 @@ Context is a working desk, not a filing cabinet. Skills already use progressive 
 probe --brief  →  search (limit)  →  read range/limit  →  write only changed cells
 ```
 
-- Start: `uvx agent-xlsx probe file.xlsx --brief` (or `--types`). No `--full` unless needed.
+- Start: `agent-xlsx probe file.xlsx --brief` (or `--types`). No `--full` unless needed. Do not re-run `uvx` (preinstalled in sandbox).
 - Find cells: `search … --limit 25` with `--columns` / `--range` when known.
 - Read: explicit ranges (`A1:G50`) or `--limit` / `--offset`. Multi-range in one call beats many calls.
 - Export huge sheets to CSV **on disk**, then sample with `head` / `wc` / a filter script — don’t stream megabytes into chat.
@@ -56,7 +56,7 @@ probe --brief  →  search (limit)  →  read range/limit  →  write only chang
 
 ## Fallback without `agent-xlsx`
 
-If `uvx agent-xlsx` is unavailable, use a **short** sandbox script (pandas/openpyxl or Node) that prints:
+If `agent-xlsx` is unavailable, use a **short** sandbox script (pandas/openpyxl or Node) that prints:
 
 - sheet names + dimensions
 - header row

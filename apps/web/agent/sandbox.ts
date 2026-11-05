@@ -1,6 +1,7 @@
 import { DefaultSandbox, defineSandbox } from "eve/sandbox"
 import { MicrosandboxSandbox } from "eve/sandbox/microsandbox"
 import {
+  injectAgentXlsxCli,
   injectSbClientCli,
   prepareStarboardSandbox,
   starboardSandboxEnv,
@@ -39,6 +40,11 @@ export default defineSandbox(async () => {
   } catch (error) {
     // Don't brick bash/xlsx if CLI vendoring failed — Starboard CLI just won't be on PATH.
     console.error("[sandbox] sb-client inject failed:", error)
+  }
+  try {
+    await injectAgentXlsxCli(sandbox)
+  } catch (error) {
+    console.error("[sandbox] agent-xlsx inject failed:", error)
   }
   return sandbox
 })
