@@ -59,14 +59,14 @@ sb-client margins check-floor --body '{"buy":1000,"sell":1100,"min_amount":150}'
 
 Large sheets repeat the same POL→POD across rows/tabs. A naive “one CLI resolve per Excel row” is dominated by process cold start + duplicate network work.
 
-| Do | Don’t |
-| --- | --- |
-| Dedupe unique `(origins, dests, containers)` then fan out | Resolve every row independently |
-| `resolve-many` + `--cache-dir` (or equivalent disk cache) | Fresh `sb-client` subprocess per OD |
-| Parallel unique jobs (~8–12 workers) | Unbounded process spam or fully serial when N≫100 |
-| Batch all equipment sizes for one OD when possible | Four serial calls for 20/40/40HC/45 on the same lane |
-| Skip rows with no locode/coast mapping | Call Starboard with empty origins/dests |
-| Resolve → then one workbook save | `save()` after every cell write |
+| Do                                                        | Don’t                                                |
+| --------------------------------------------------------- | ---------------------------------------------------- |
+| Dedupe unique `(origins, dests, containers)` then fan out | Resolve every row independently                      |
+| `resolve-many` + `--cache-dir` (or equivalent disk cache) | Fresh `sb-client` subprocess per OD                  |
+| Parallel unique jobs (~8–12 workers)                      | Unbounded process spam or fully serial when N≫100    |
+| Batch all equipment sizes for one OD when possible        | Four serial calls for 20/40/40HC/45 on the same lane |
+| Skip rows with no locode/coast mapping                    | Call Starboard with empty origins/dests              |
+| Resolve → then one workbook save                          | `save()` after every cell write                      |
 
 See **`rfp-fill`** → “Custom Python scripts” for the full checklist.
 

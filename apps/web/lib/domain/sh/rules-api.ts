@@ -71,8 +71,7 @@ function parseCreateOverlay(body: unknown): CreateOverlayRuleInput {
     projectedAmount: optionalString(raw.projectedAmount),
     markupPct: optionalString(raw.markupPct),
     markupAmount: optionalString(raw.markupAmount),
-    currency:
-      typeof raw.currency === "string" ? raw.currency : undefined,
+    currency: typeof raw.currency === "string" ? raw.currency : undefined,
     enabled: optionalBoolean(raw.enabled),
     priority: optionalInt(raw.priority),
   }
@@ -117,8 +116,7 @@ function parseCreateFloor(body: unknown): CreateMarginFloorRuleInput {
     customer: optionalString(raw.customer),
     minAmount: optionalString(raw.minAmount),
     minPct: optionalString(raw.minPct),
-    currency:
-      typeof raw.currency === "string" ? raw.currency : undefined,
+    currency: typeof raw.currency === "string" ? raw.currency : undefined,
     enabled: optionalBoolean(raw.enabled),
     priority: optionalInt(raw.priority),
   }

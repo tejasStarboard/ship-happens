@@ -29,14 +29,20 @@ type CompiledRule = {
 }
 
 function normalizeRel(relativePath: string): string {
-  return relativePath.replaceAll("\\", "/").replace(/^\.\//, "").replace(/^\/+/, "")
+  return relativePath
+    .replaceAll("\\", "/")
+    .replace(/^\.\//, "")
+    .replace(/^\/+/, "")
 }
 
 /**
  * Convert one gitignore pattern to a regex over a relative path.
  * Supports `*`, `**`, `?`, leading `/` (root-anchored), trailing `/` (dirs).
  */
-function patternToRegex(raw: string): { directoryOnly: boolean; regex: RegExp } {
+function patternToRegex(raw: string): {
+  directoryOnly: boolean
+  regex: RegExp
+} {
   let pattern = raw
   let directoryOnly = false
   if (pattern.endsWith("/")) {

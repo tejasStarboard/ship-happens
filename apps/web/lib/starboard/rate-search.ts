@@ -366,8 +366,7 @@ export async function searchRatesReadOnly(
         contract.status === "error"
           ? contract.message
           : "Contract rate search failed against Starboard",
-      statusCode:
-        contract.status === "error" ? contract.statusCode : undefined,
+      statusCode: contract.status === "error" ? contract.statusCode : undefined,
       companyId: client.companyId,
       lane,
       contract,

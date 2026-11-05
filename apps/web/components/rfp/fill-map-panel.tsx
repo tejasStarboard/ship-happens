@@ -358,8 +358,8 @@ export function FillMapPanel({
             Schema confirm
           </h2>
           <p className="text-sm text-muted-foreground">
-            Review and confirm O-D / equipment lanes, fee columns (BAF, LSS,
-            …), and answer columns (carrier, transit, free days, all-in). Rates
+            Review and confirm O-D / equipment lanes, fee columns (BAF, LSS, …),
+            and answer columns (carrier, transit, free days, all-in). Rates
             resolve reads only this confirmed store; pending map reviews block
             resolve.
           </p>

@@ -16,7 +16,10 @@ export async function POST(request: Request) {
       userId?: unknown
     }
 
-    if (typeof body.sessionId !== "string" || !isValidSessionId(body.sessionId)) {
+    if (
+      typeof body.sessionId !== "string" ||
+      !isValidSessionId(body.sessionId)
+    ) {
       return NextResponse.json(
         { error: "Valid sessionId is required" },
         { status: 400 }
@@ -27,7 +30,10 @@ export async function POST(request: Request) {
       typeof body.organizationId === "string" &&
       body.organizationId !== organizationId
     ) {
-      return NextResponse.json({ error: "Organization mismatch" }, { status: 403 })
+      return NextResponse.json(
+        { error: "Organization mismatch" },
+        { status: 403 }
+      )
     }
 
     if (typeof body.userId === "string" && body.userId !== session.user.id) {

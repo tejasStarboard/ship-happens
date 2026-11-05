@@ -65,11 +65,11 @@ O-D labels — high-confidence (≥0.9) lanes upsert automatically; weaker rows 
 
 **M3 (required for bid-complete rows):** each lane should set:
 
-| Field | Purpose | Nordstrom example |
-| --- | --- | --- |
-| `cellRef` | Base / ocean money column | `K{row}` |
-| `feeBindings` | Accessorial money columns | `LSS` → `M{row}` |
-| `answerBindings` | Non-money (+ derived all_in) | see below |
+| Field            | Purpose                      | Nordstrom example |
+| ---------------- | ---------------------------- | ----------------- |
+| `cellRef`        | Base / ocean money column    | `K{row}`          |
+| `feeBindings`    | Accessorial money columns    | `LSS` → `M{row}`  |
+| `answerBindings` | Non-money (+ derived all_in) | see below         |
 
 **Answer ids contract resolve can fill** (skip honestly if missing — never invent):
 
@@ -148,11 +148,11 @@ Do **not** invent rate amounts, free days, or SCACs. Exploratory Starboard CLI l
 
 Resolve may open soft-warn reviews (do **not** treat as hard failure):
 
-| `source` | Meaning |
-| --- | --- |
+| `source`         | Meaning                                                         |
+| ---------------- | --------------------------------------------------------------- |
 | `unexpected-fee` | Starboard globals/charges not bound to any `feeBindings` column |
-| `rate-pick` | Low pick confidence (&lt;0.75) |
-| `margin-floor` | Overlay sell below floor (usually after overlay) |
+| `rate-pick`      | Low pick confidence (&lt;0.75)                                  |
+| `margin-floor`   | Overlay sell below floor (usually after overlay)                |
 
 **Critical workflow:**
 
@@ -214,11 +214,11 @@ sh-client reviews resolve --id rev_… --body '{"resolution":{"applied":true}}'
 
 ## vs `fill-pipeline` / `sb-client`
 
-| Concern | Tool |
-| --- | --- |
-| Progress complete / start / fail / status writes | Host `fill-pipeline` / `agent-pipeline` |
-| Mapping, rates resolve, export, reviews, cells | **`sh-client`** |
-| Exploratory Starboard search (not fill write-back) | `sb-client` |
+| Concern                                            | Tool                                    |
+| -------------------------------------------------- | --------------------------------------- |
+| Progress complete / start / fail / status writes   | Host `fill-pipeline` / `agent-pipeline` |
+| Mapping, rates resolve, export, reviews, cells     | **`sh-client`**                         |
+| Exploratory Starboard search (not fill write-back) | `sb-client`                             |
 
 ## Rules
 

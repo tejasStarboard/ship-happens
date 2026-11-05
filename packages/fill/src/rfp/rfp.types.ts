@@ -3,12 +3,7 @@ import type { FillReportCellView } from "../rates/lane-price-audit"
 import type { RfpBidOutcome } from "./fill-bid-outcome"
 
 export type RfpStatus =
-  | "queued"
-  | "running"
-  | "needs_review"
-  | "done"
-  | "failed"
-  | "cancelled"
+  "queued" | "running" | "needs_review" | "done" | "failed" | "cancelled"
 
 export type { RfpBidOutcome }
 

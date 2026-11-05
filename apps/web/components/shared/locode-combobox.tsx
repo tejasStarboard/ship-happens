@@ -20,10 +20,9 @@ type LocodeComboboxProps = {
 async function searchLocations(query: string): Promise<LocationSearchHit[]> {
   const q = query.trim()
   if (q.length < 2) return []
-  const res = await fetch(
-    `/api/locations/search?q=${encodeURIComponent(q)}`,
-    { credentials: "same-origin" }
-  )
+  const res = await fetch(`/api/locations/search?q=${encodeURIComponent(q)}`, {
+    credentials: "same-origin",
+  })
   if (!res.ok) return []
   const body = (await res.json()) as { options?: LocationSearchHit[] }
   return body.options ?? []

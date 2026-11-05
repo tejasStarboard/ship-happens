@@ -146,9 +146,7 @@ export async function ensureShClientCli(
   options: ShClientInjectOptions | { fillId: string }
 ): Promise<void> {
   const normalized: ShClientInjectOptions =
-    "kind" in options
-      ? options
-      : { kind: "fill", fillId: options.fillId }
+    "kind" in options ? options : { kind: "fill", fillId: options.fillId }
 
   const appUrl = env.APP_URL.replace(/\/$/, "")
   const probe = await sandbox.run({
@@ -197,9 +195,7 @@ export async function injectShClientCli(
   options: ShClientInjectOptions | { fillId: string }
 ): Promise<void> {
   const normalized: ShClientInjectOptions =
-    "kind" in options
-      ? options
-      : { kind: "fill", fillId: options.fillId }
+    "kind" in options ? options : { kind: "fill", fillId: options.fillId }
 
   let envVars: Record<string, string>
 

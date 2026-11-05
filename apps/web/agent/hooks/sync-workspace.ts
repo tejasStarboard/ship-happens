@@ -30,11 +30,14 @@ export default defineHook({
           const sandbox = await ctx.getSandbox()
           const count = await pushWorkspaceToSandbox(rules.workspaceId, sandbox)
           if (count > 0) {
-            console.info("[workspace-sync] account-rules pushed host → sandbox", {
-              sessionId,
-              workspaceId: rules.workspaceId,
-              files: count,
-            })
+            console.info(
+              "[workspace-sync] account-rules pushed host → sandbox",
+              {
+                sessionId,
+                workspaceId: rules.workspaceId,
+                files: count,
+              }
+            )
           }
           try {
             await ensureShClientCli(sandbox, {
@@ -88,10 +91,7 @@ export default defineHook({
         const rules = await getAccountRulesSession(sessionId)
         if (rules) {
           const sandbox = await ctx.getSandbox()
-          const count = await pullSandboxToWorkspace(
-            rules.workspaceId,
-            sandbox
-          )
+          const count = await pullSandboxToWorkspace(rules.workspaceId, sandbox)
           console.info("[workspace-sync] account-rules pulled sandbox → host", {
             sessionId,
             workspaceId: rules.workspaceId,

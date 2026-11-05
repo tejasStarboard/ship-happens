@@ -343,8 +343,7 @@ export class RateResolutionService {
 
     const cells = cellGroups.flat()
     const baseCells = cells.filter(
-      (c) =>
-        c.metadata?.cellRole !== "fee" && c.metadata?.cellRole !== "answer"
+      (c) => c.metadata?.cellRole !== "fee" && c.metadata?.cellRole !== "answer"
     )
     const hitCount = baseCells.filter((c) => c.outcome === "filled").length
     const noHitCount = baseCells.filter((c) => c.outcome === "skipped").length

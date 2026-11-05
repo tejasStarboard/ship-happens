@@ -46,7 +46,10 @@ export type ExportWorkbookResult = {
 
 /** Filesystem-safe UTC run folder under `filled/` (e.g. `2026-11-05T18-30-22Z`). */
 export function filledExportRunId(now = new Date()): string {
-  return now.toISOString().replaceAll(":", "-").replace(/\.\d{3}Z$/, "Z")
+  return now
+    .toISOString()
+    .replaceAll(":", "-")
+    .replace(/\.\d{3}Z$/, "Z")
 }
 
 export const FILLED_EXPORT_META_NAME = "meta.json"

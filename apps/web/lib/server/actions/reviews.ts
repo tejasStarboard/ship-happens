@@ -34,10 +34,5 @@ export async function decideReviewItemsBulk(
 ) {
   const { organizationId, session } = await requireOrgSession()
   const ctx = createAppContext()
-  return ctx.reviews.decideMany(
-    organizationId,
-    fillId,
-    input,
-    session.user.id
-  )
+  return ctx.reviews.decideMany(organizationId, fillId, input, session.user.id)
 }

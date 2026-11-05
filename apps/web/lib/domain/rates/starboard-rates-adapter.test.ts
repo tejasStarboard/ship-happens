@@ -21,11 +21,12 @@ describe("createStarboardRatesPort", () => {
         },
       ],
     })
-    const port = createStarboardRatesPort(async () =>
-      ({
-        rates: { resolve },
-        carriers: { lookupScac: vi.fn().mockResolvedValue("MSCU") },
-      }) as never
+    const port = createStarboardRatesPort(
+      async () =>
+        ({
+          rates: { resolve },
+          carriers: { lookupScac: vi.fn().mockResolvedValue("MSCU") },
+        }) as never
     )
 
     const out = await port.resolve({

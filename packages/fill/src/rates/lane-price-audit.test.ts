@@ -186,7 +186,11 @@ describe("lane-price-audit", () => {
       outcome: "filled",
       value: "18",
       reason: null,
-      metadata: { cellRole: "answer", answerId: "transit_days", laneId: "lane_1" },
+      metadata: {
+        cellRole: "answer",
+        answerId: "transit_days",
+        laneId: "lane_1",
+      },
     })
     expect(answer.cellRole).toBe("answer")
     expect(answer.answerId).toBe("transit_days")

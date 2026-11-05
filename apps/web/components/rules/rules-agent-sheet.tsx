@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react"
 import { AnimatePresence, motion, useReducedMotion } from "motion/react"
-import { IconMessageChatbot, IconRotateClockwise, IconX } from "@tabler/icons-react"
+import {
+  IconMessageChatbot,
+  IconRotateClockwise,
+  IconX,
+} from "@tabler/icons-react"
 import { Button } from "@ship-happens/ui/components/button"
 import { cn } from "@ship-happens/ui/lib/utils"
 import { AgentChat } from "@/app/_components/agent-chat"
@@ -101,7 +105,7 @@ export function RulesAgentSheet({
             )}
           >
             <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
-              <p className="text-sm font-medium leading-none">
+              <p className="text-sm leading-none font-medium">
                 {ASSISTANT_NAME}
               </p>
               <div className="flex shrink-0 items-center gap-0.5">
@@ -159,7 +163,9 @@ export function RulesAgentSheet({
           <Button
             type="button"
             size="icon"
-            aria-label={open ? `Close ${ASSISTANT_NAME}` : `Open ${ASSISTANT_NAME}`}
+            aria-label={
+              open ? `Close ${ASSISTANT_NAME}` : `Open ${ASSISTANT_NAME}`
+            }
             aria-expanded={open}
             aria-haspopup="dialog"
             className={cn(

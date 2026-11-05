@@ -125,7 +125,7 @@ function FillCard({
         </div>
         {!disabled ? (
           <div
-            className="relative z-10 -mr-1.5 -mt-1 shrink-0"
+            className="relative z-10 -mt-1 -mr-1.5 shrink-0"
             onClick={(event) => {
               event.preventDefault()
               event.stopPropagation()
@@ -155,7 +155,7 @@ function FillCard({
           {rfp.customer || "No customer"}
         </p>
         <p
-          className="mt-1 truncate text-[11px] text-muted-foreground tabular"
+          className="tabular mt-1 truncate text-[11px] text-muted-foreground"
           title={formatDateTime(rfp.updatedAt)}
         >
           {formatDateTime(rfp.updatedAt)}

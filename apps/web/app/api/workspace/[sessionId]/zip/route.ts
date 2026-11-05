@@ -43,11 +43,7 @@ export async function GET(
     for (const file of files) {
       if (isAgentPrivateWorkspacePath(file.path)) continue
       const facing = toUserFacingWorkspacePath(file.path)
-      if (
-        prefix &&
-        facing !== prefix &&
-        !facing.startsWith(`${prefix}/`)
-      ) {
+      if (prefix && facing !== prefix && !facing.startsWith(`${prefix}/`)) {
         continue
       }
       // Keep folder-relative paths inside the zip when downloading a subdir.

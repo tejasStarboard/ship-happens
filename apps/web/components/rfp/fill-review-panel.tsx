@@ -574,9 +574,7 @@ export function FillReviewPanel({
                   <TableRow
                     className="cursor-pointer"
                     data-state={open ? "selected" : undefined}
-                    onClick={() =>
-                      setSelectedKey(open ? null : group.key)
-                    }
+                    onClick={() => setSelectedKey(open ? null : group.key)}
                   >
                     <TableCell
                       className={`align-top text-sm font-medium ${

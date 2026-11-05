@@ -222,8 +222,7 @@ function WorkspaceDirNode({
 } & WorkspaceTreeActions) {
   const containsSelected = Boolean(
     selectedPath &&
-      (selectedPath === entry.path ||
-        selectedPath.startsWith(`${entry.path}/`))
+    (selectedPath === entry.path || selectedPath.startsWith(`${entry.path}/`))
   )
   const [open, setOpen] = useState(containsSelected || depth < 1)
 

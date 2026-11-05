@@ -183,11 +183,11 @@ function isFoldableTool(
   if (part.type !== "dynamic-tool") return false
   if (questionsFor(part.toolCallId).length > 0) return false
   if (part.state === "approval-requested") return false
-  if (part.toolMetadata?.eve?.inputRequest && part.state !== "output-available") {
-    if (
-      part.state === "approval-responded" ||
-      part.state === "output-denied"
-    ) {
+  if (
+    part.toolMetadata?.eve?.inputRequest &&
+    part.state !== "output-available"
+  ) {
+    if (part.state === "approval-responded" || part.state === "output-denied") {
       return false
     }
   }
@@ -546,8 +546,8 @@ function ReviewCreatedCard({ review }: { review: ReviewCreatedNotify }) {
           <p className="text-sm font-medium">Review waiting on you</p>
           <p className="text-sm text-muted-foreground">{review.title}</p>
           <p className="text-xs text-muted-foreground">
-            Open Reviews to Confirm, Edit, or Reject. Chat alone does not
-            decide this item.
+            Open Reviews to Confirm, Edit, or Reject. Chat alone does not decide
+            this item.
           </p>
           <Button
             size="sm"

@@ -262,8 +262,7 @@ export function FillManageMenu({
                     <DropdownMenuItem
                       disabled
                       title={
-                        downloadBlocked ??
-                        "Export + sign-off unlocks download"
+                        downloadBlocked ?? "Export + sign-off unlocks download"
                       }
                     >
                       <IconDownload />

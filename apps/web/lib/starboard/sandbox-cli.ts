@@ -199,8 +199,8 @@ export async function ensureSandboxUv(sandbox: SandboxHandle): Promise<void> {
       "mkdir -p /workspace/.eve/home/.local/bin /workspace/.eve/uv-cache /workspace/.eve/uv-tools /workspace/.eve/xdg-cache /workspace/.eve/xdg-data",
       "curl -LsSf https://astral.sh/uv/install.sh | sh",
       home,
-      'if [[ -x /workspace/.eve/home/.local/bin/uv ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uv /usr/local/bin/uv; fi',
-      'if [[ -x /workspace/.eve/home/.local/bin/uvx ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uvx /usr/local/bin/uvx; fi',
+      "if [[ -x /workspace/.eve/home/.local/bin/uv ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uv /usr/local/bin/uv; fi",
+      "if [[ -x /workspace/.eve/home/.local/bin/uvx ]]; then sudo ln -sfn /workspace/.eve/home/.local/bin/uvx /usr/local/bin/uvx; fi",
       `if command -v uvx >/dev/null 2>&1; then uvx --version; else echo "${UV_INSTALL_FAILED}"; fi`,
       "exit 0",
     ].join("; "),
@@ -281,7 +281,9 @@ export async function ensureSandboxAgentXlsx(
  * Re-install the PATH wrapper on each sandbox open (prepare may be cached;
  * `/usr/local/bin` may not persist the tool, but `/workspace/.eve` does).
  */
-export async function injectAgentXlsxCli(sandbox: SandboxHandle): Promise<void> {
+export async function injectAgentXlsxCli(
+  sandbox: SandboxHandle
+): Promise<void> {
   await sandbox.run({
     command:
       "mkdir -p /workspace/.eve/bin /workspace/.eve/home/.local/bin /workspace/.eve/uv-cache /workspace/.eve/uv-tools /workspace/.eve/xdg-cache /workspace/.eve/xdg-data",
@@ -298,7 +300,7 @@ export async function injectAgentXlsxCli(sandbox: SandboxHandle): Promise<void> 
       // If prepare already installed the tool under .eve/home, we're done.
       // Otherwise best-effort install (may download once per fresh workspace).
       sandboxHomeExports(),
-      'if [[ ! -x /workspace/.eve/home/.local/bin/agent-xlsx ]]; then uv tool install --force --with click agent-xlsx || true; fi',
+      "if [[ ! -x /workspace/.eve/home/.local/bin/agent-xlsx ]]; then uv tool install --force --with click agent-xlsx || true; fi",
       "exit 0",
     ].join("; "),
   })

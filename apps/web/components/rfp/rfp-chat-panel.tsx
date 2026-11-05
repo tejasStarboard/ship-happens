@@ -67,7 +67,8 @@ export function RfpChatPanel({
           setBootError("Failed to create chat")
           return
         }
-        const chatBody = (await created.json()) as WorkspacePayload["chats"][number]
+        const chatBody =
+          (await created.json()) as WorkspacePayload["chats"][number]
         setChat({
           id: chatBody.id,
           sessionId: chatBody.sessionId,

@@ -98,10 +98,8 @@ export async function resetFillWorkspace(
       throw new DomainError(`Fill not found: ${fillId}`, "NOT_FOUND")
     }
 
-    const {
-      resetWorkspaceAgentChats,
-      restoreWorkspaceSheetFromSources,
-    } = await import("@/lib/workspace-registry")
+    const { resetWorkspaceAgentChats, restoreWorkspaceSheetFromSources } =
+      await import("@/lib/workspace-registry")
 
     let agentCleared = 0
     let sheetFiles = 0

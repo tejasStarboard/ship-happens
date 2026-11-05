@@ -146,7 +146,10 @@ async function ensureDefaultWorkspaceIgnore(root: string): Promise<void> {
     WORKSPACE_IGNORE_FILE
   )
   try {
-    const existing = await readFile(/*turbopackIgnore: true*/ ignorePath, "utf8")
+    const existing = await readFile(
+      /*turbopackIgnore: true*/ ignorePath,
+      "utf8"
+    )
     // Drop legacy un-ignore so `.workspaceignore` stays internal-only.
     if (existing.includes("!.workspaceignore")) {
       await writeFile(

@@ -43,10 +43,7 @@ export class FillDeskOpsService {
       }
     }
 
-    if (
-      input.name === undefined &&
-      input.customer === undefined
-    ) {
+    if (input.name === undefined && input.customer === undefined) {
       throw new DomainError("Nothing to update", "VALIDATION")
     }
 

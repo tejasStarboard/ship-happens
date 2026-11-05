@@ -109,9 +109,7 @@ export function CommandPalette({
     >
       <CommandInput placeholder="Search fills, templates, overlays…" />
       <CommandList>
-        <CommandEmpty>
-          {loadingIndex ? "Loading…" : "No matches."}
-        </CommandEmpty>
+        <CommandEmpty>{loadingIndex ? "Loading…" : "No matches."}</CommandEmpty>
         <CommandGroup heading="Navigate">
           {NAV.map((item) => (
             <CommandItem

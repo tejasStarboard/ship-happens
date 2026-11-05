@@ -59,4 +59,3 @@ describe("buildContractSearchInput", () => {
     expect(body.cache_key).toBe("ck")
   })
 })
-

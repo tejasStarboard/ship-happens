@@ -396,9 +396,7 @@ export async function ensureRfpWorkspace(input: {
 }
 
 /** Prefer session-bound chat, else most recently updated — one chat per fill. */
-function preferSingleChat(
-  chats: WorkspaceChatRecord[]
-): WorkspaceChatRecord[] {
+function preferSingleChat(chats: WorkspaceChatRecord[]): WorkspaceChatRecord[] {
   if (chats.length <= 1) return chats
   const sorted = [...chats].sort((a, b) => {
     const aSession = a.sessionId ? 0 : 1

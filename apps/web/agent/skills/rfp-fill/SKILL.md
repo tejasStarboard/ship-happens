@@ -61,19 +61,19 @@ After probe, record expected data-row count (or unique O–D × equipment). Befo
 
 From headers, map what the BCO asks for:
 
-| BCO concept | Binding | Notes |
-| --- | --- | --- |
-| Ocean / base rate | `cellRef` | Required for money rows |
-| LSS / BAF / bunker | `feeBindings` heading | Only when column exists |
-| Origin/dest arbitrary | `feeBindings` | When present |
-| Carrier name | `answerBindings` `carrier_name` | |
-| SCAC | `carrier_scac` | Vocab only — never invent |
-| Transit days | `transit_days` | |
-| Free time origin/dest | `free_time.origin_days` / `dest_days` | |
-| Service / string | `service_name` | |
-| Currency / validity | `currency`, `validity_*` | See validity rule below |
-| All-in | `all_in` | **Only if the cell is an input**, not a formula |
-| Cutoff / ETD / ETA / vessel | **leave unbound** | Schedule unsupported on contract resolve |
+| BCO concept                 | Binding                               | Notes                                           |
+| --------------------------- | ------------------------------------- | ----------------------------------------------- |
+| Ocean / base rate           | `cellRef`                             | Required for money rows                         |
+| LSS / BAF / bunker          | `feeBindings` heading                 | Only when column exists                         |
+| Origin/dest arbitrary       | `feeBindings`                         | When present                                    |
+| Carrier name                | `answerBindings` `carrier_name`       |                                                 |
+| SCAC                        | `carrier_scac`                        | Vocab only — never invent                       |
+| Transit days                | `transit_days`                        |                                                 |
+| Free time origin/dest       | `free_time.origin_days` / `dest_days` |                                                 |
+| Service / string            | `service_name`                        |                                                 |
+| Currency / validity         | `currency`, `validity_*`              | See validity rule below                         |
+| All-in                      | `all_in`                              | **Only if the cell is an input**, not a formula |
+| Cutoff / ETD / ETA / vessel | **leave unbound**                     | Schedule unsupported on contract resolve        |
 
 ### Formula columns — do not overwrite
 

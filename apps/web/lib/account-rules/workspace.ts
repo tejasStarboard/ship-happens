@@ -108,8 +108,7 @@ export async function getAccountRulesSession(
       organizationId: parsed.organizationId,
       userId: parsed.userId,
       workspaceId: parsed.workspaceId,
-      boundAt:
-        typeof parsed.boundAt === "number" ? parsed.boundAt : Date.now(),
+      boundAt: typeof parsed.boundAt === "number" ? parsed.boundAt : Date.now(),
     }
   } catch {
     return null

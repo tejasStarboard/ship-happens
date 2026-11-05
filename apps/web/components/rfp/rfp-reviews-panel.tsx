@@ -171,7 +171,9 @@ function ReviewDetailSheet({
         </SheetHeader>
         <div className="flex flex-1 flex-col gap-4 overflow-auto px-4">
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Proposal</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              Proposal
+            </p>
             <p className="mt-1 text-sm whitespace-pre-wrap">{summary}</p>
           </div>
           {rationale ? (
@@ -351,7 +353,7 @@ export function RfpReviewsPanel({
     const keys = new Set(
       pendingReviews.map((r) => r.stepKey).filter(Boolean) as string[]
     )
-    return keys.size <= 1 ? [...keys][0] ?? null : null
+    return keys.size <= 1 ? ([...keys][0] ?? null) : null
   }, [pendingReviews])
 
   useEffect(() => {
@@ -389,7 +391,9 @@ export function RfpReviewsPanel({
         }),
       {
         successMessage:
-          bulkKind === "approve" ? "Approved all pending" : "Rejected all pending",
+          bulkKind === "approve"
+            ? "Approved all pending"
+            : "Rejected all pending",
       }
     )
     setBulkKind(null)
@@ -542,7 +546,9 @@ export function RfpReviewsPanel({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {bulkKind === "approve" ? "Approve all pending?" : "Cancel all pending?"}
+              {bulkKind === "approve"
+                ? "Approve all pending?"
+                : "Cancel all pending?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {bulkKind === "approve"
@@ -567,8 +573,7 @@ export function RfpReviewsPanel({
             <AlertDialogCancel disabled={pending}>Back</AlertDialogCancel>
             <AlertDialogAction
               disabled={
-                pending ||
-                (bulkKind === "reject" && !bulkRejectNote.trim())
+                pending || (bulkKind === "reject" && !bulkRejectNote.trim())
               }
               onClick={(e) => {
                 e.preventDefault()

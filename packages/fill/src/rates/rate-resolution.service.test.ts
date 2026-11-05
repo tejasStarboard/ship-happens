@@ -218,21 +218,17 @@ describe("RateResolutionService", () => {
           c.metadata?.cellRole === "answer"
       )
     ).toBe(true)
-    expect(
-      cells.some((c) => c.cellRef === "P3" && c.value === "18")
-    ).toBe(true)
-    expect(
-      cells.some((c) => c.cellRef === "U3" && c.value === "7")
-    ).toBe(true)
-    expect(
-      cells.some((c) => c.cellRef === "L3" && c.value === "1700")
-    ).toBe(true)
-    expect(
-      cells.some((c) => c.cellRef === "M3" && c.value === "200")
-    ).toBe(true)
-    expect(
-      cells.some((c) => c.cellRef === "K3" && c.value === "1500")
-    ).toBe(true)
+    expect(cells.some((c) => c.cellRef === "P3" && c.value === "18")).toBe(true)
+    expect(cells.some((c) => c.cellRef === "U3" && c.value === "7")).toBe(true)
+    expect(cells.some((c) => c.cellRef === "L3" && c.value === "1700")).toBe(
+      true
+    )
+    expect(cells.some((c) => c.cellRef === "M3" && c.value === "200")).toBe(
+      true
+    )
+    expect(cells.some((c) => c.cellRef === "K3" && c.value === "1500")).toBe(
+      true
+    )
   })
 
   it("resolves hits, persists cells, and completes rates step", async () => {
